@@ -182,9 +182,19 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_2s = BOK_2_lines.objects.filter(
                 fk_header_id=bok_1.pk_header_id, is_deleted=False
             )
+            fp_names = [quote.freight_provider for quote in quotes]
+            fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
+            client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
+
+            # Delete existing Surcharges
+            Surcharge.objects.filter(quote__in=quotes).delete()
 
             for quote in quotes:
-                gen_surcharges(bok_1, bok_2s, quote, "bok_1")
+                for fp in fps:
+                    if quote.freight_provider.lower() == fp.fp_company_name.lower():
+                        quote_fp = fp
+
+                gen_surcharges(bok_1, bok_2s, quote, client, quote_fp, "bok_1")
 
             res_json = {"success": True, "message": "Freigth options are updated."}
             return Response(res_json, status=HTTP_200_OK)

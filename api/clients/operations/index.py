@@ -33,7 +33,9 @@ def get_client(user, kf_client_id=None):
         if kf_client_id:
             client = DME_clients.objects.get(dme_account_num=kf_client_id)
         else:
-            client_employee = Client_employees.objects.get(fk_id_user_id=user.pk)
+            client_employee = Client_employees.objects.select_related(
+                "fk_id_dme_client"
+            ).get(fk_id_user=user)
             client = client_employee.fk_id_dme_client
 
         logger.info(f"{LOG_ID} Client: {client.company_name}")

@@ -2,9 +2,10 @@ import json
 import logging
 import asyncio
 import requests_async
-from datetime import datetime
+from datetime import date, datetime
 
 from django.conf import settings
+from sqlalchemy import false
 from api.common import trace_error
 from api.common.build_object import Struct
 from api.common.convert_price import interpolate_gaps, apply_markups
@@ -18,6 +19,8 @@ from api.models import (
     Client_FP,
     FP_Service_ETDs,
     Surcharge,
+    DME_clients,
+    Fp_freight_providers,
 )
 
 from api.fp_apis.operations.common import _set_error
@@ -34,7 +37,7 @@ from api.fp_apis.constants import (
     AVAILABLE_FPS_4_FC,
 )
 from api.fp_apis.utils import _convert_UOM
-
+from django.db import connection
 
 logger = logging.getLogger(__name__)
 
@@ -95,16 +98,18 @@ def pricing(
     """
     booking_lines = []
     booking = None
-
+    start_time = datetime.now()
+    start_hit_count = len(connection.queries)
     # Only quote
     if is_pricing_only and not booking_id:
         booking = Struct(**body["booking"])
 
         for booking_line in body["booking_lines"]:
             booking_lines.append(Struct(**booking_line))
-
+            
     if not is_pricing_only:
-        booking = Bookings.objects.filter(id=booking_id).first()
+        booking = Bookings.objects.filter(id=booking_id).order_by("id").first()
+        # print("@PRICING-1-", datetime.now(), len(connection.queries))
 
         if not booking:
             return None, False, "Booking does not exist", None
@@ -130,6 +135,12 @@ def pricing(
             packed_status__in=packed_statuses,
         ).update(is_used=True)
 
+    try:
+        client = DME_clients.objects.get(company_name__iexact=booking.b_client_name)
+        # print("@GET_CLIENT", datetime.now(), len(connection.queries))
+        
+    except:
+        client = None
     if not booking_lines:
         for packed_status in packed_statuses:
             booking_lines = Booking_lines.objects.filter(
@@ -144,6 +155,7 @@ def pricing(
                     booking_lines,
                     is_pricing_only,
                     packed_status,
+                    client,
                     pu_zones,
                     de_zones,
                 )
@@ -154,6 +166,7 @@ def pricing(
                 booking_lines,
                 is_pricing_only,
                 packed_status,
+                client,
                 pu_zones,
                 de_zones,
             )
@@ -161,13 +174,18 @@ def pricing(
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
     )
-
+    
+    end_time = datetime.now()
+    end_hit_count = len(connection.queries)
+    print("@PRICING-1E-", "---Time Delay: ", end_time - start_time, "---Func Hits: ", end_hit_count - start_hit_count, "---Total Hits:", end_hit_count)
     return booking, True, "Retrieved all Pricing info", quotes
 
 
 def _loop_process(
-    booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
+    booking, booking_lines, is_pricing_only, packed_status, client, pu_zones, de_zones
 ):
+    start_time = datetime.now()
+    start_hit_count = len(connection.queries)
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -185,27 +203,63 @@ def _loop_process(
         loop.close()
 
     quotes = API_booking_quotes.objects.filter(
-        fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status
+        fk_booking_id=booking.pk_booking_id, is_used=false
     )
 
+    fp_names = [quote.freight_provider for quote in quotes]
+    fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
+
     if quotes.exists():
-        # Interpolate gaps (for Plum client now)
-        quotes = interpolate_gaps(quotes)
+        if client:
+            # Interpolate gaps (for Plum client now)
+            s_time = datetime.now()
+            s_hits = len(connection.queries)
+            quotes = interpolate_gaps(quotes, client)
+            e_time = datetime.now()
+            e_hits = len(connection.queries)
+            print("------@interpolate_gaps-3E-", "---Time Delay: ", e_time - s_time, "---Func Hits: ", e_hits - s_hits, "---Total Hits:", e_hits)
+
+
 
         # Calculate Surcharges
         for quote in quotes:
-            gen_surcharges(booking, booking_lines, quote, "booking")
+            for fp in fps:
+                if quote.freight_provider.lower() == fp.fp_company_name.lower():
+                    quote_fp = fp
+            
+            s_time = datetime.now()
+            s_hits = len(connection.queries)
+            gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
+            e_time = datetime.now()
+            e_hits = len(connection.queries)
+            print("------@gen_surcharges-3E-", "---Time Delay: ", e_time - s_time, "---Func Hits: ", e_hits - s_hits, "---Total Hits:", e_hits)
 
         # Apply Markups (FP Markup and Client Markup)
-        quotes = apply_markups(quotes)
+        s_time = datetime.now()
+        s_hits = len(connection.queries)
+        quotes = apply_markups(quotes, client, fp)
+        e_time = datetime.now()
+        e_hits = len(connection.queries)
+        print("------@gen_surcharges-3E-", "---Time Delay: ", e_time - s_time, "---Func Hits: ", e_hits - s_hits, "---Total Hits:", e_hits)
 
         # Confirm visible
+        s_time = datetime.now()
+        s_hits = len(connection.queries)
         quotes = _confirm_visible(booking, booking_lines, quotes)
+        e_time = datetime.now()
+        e_hits = len(connection.queries)
+        print("------@_confirm_visible-3E-", "---Time Delay: ", e_time - s_time, "---Func Hits: ", e_hits - s_hits, "---Total Hits:", e_hits)
+
+    end_time = datetime.now()
+    end_hit_count = len(connection.queries)
+    print("----@_loop_process-2E-", "---Time Delay: ", end_time - start_time, "---Func Hits: ", end_hit_count - start_hit_count, "---Total Hits:", end_hit_count)
 
 
 async def _pricing_process(
     booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
 ):
+    start_time = datetime.now()
+    start_hit_count = len(connection.queries)
     try:
         await asyncio.wait_for(
             pricing_workers(
@@ -221,10 +275,15 @@ async def _pricing_process(
     except asyncio.TimeoutError:
         logger.info(f"#990 [PRICING] - {PRICING_TIME}s Timeout! stop threads! ;)")
 
+    end_time = datetime.now()
+    end_hit_count = len(connection.queries)
+    print("------@_pricing_process-3E-", "---Time Delay: ", end_time - start_time, "---Func Hits: ", end_hit_count - start_hit_count, "---Total Hits:", end_hit_count)
 
 async def pricing_workers(
     booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
 ):
+    start_time = datetime.now()
+    start_hit_count = len(connection.queries)
     # Schedule n pricing works *concurrently*:
     _workers = set()
     logger.info("#910 [PRICING] - Building Pricing workers...")
@@ -303,7 +362,7 @@ async def pricing_workers(
 
                     logger.info(f"#906 [PRICING] - {_fp_name}, {client_name}")
 
-                    if _fp_name == "auspost" and services:
+                    if _fp_name == "auspost":
                         for service in services:
                             _worker = _api_pricing_worker_builder(
                                 _fp_name,
@@ -343,6 +402,9 @@ async def pricing_workers(
     logger.info("#911 [PRICING] - Pricing workers will start soon")
     await asyncio.gather(*_workers)
     logger.info("#919 [PRICING] - Pricing workers finished all")
+    end_time = datetime.now()
+    end_hit_count = len(connection.queries)
+    print("--------@pricing_workers-4E-", "---Time Delay: ", end_time - start_time, "---Func Hits: ", end_hit_count - start_hit_count, "---Total Hits:", end_hit_count)
 
 
 async def _api_pricing_worker_builder(
@@ -355,6 +417,8 @@ async def _api_pricing_worker_builder(
     service_code=None,
     service_name=None,
 ):
+    start_time = datetime.now()
+    start_hit_count = len(connection.queries)
     payload = get_pricing_payload(
         booking, _fp_name, account_detail, booking_lines, service_code
     )
@@ -414,7 +478,7 @@ async def _api_pricing_worker_builder(
                 #     del parse_result["surcharges"]
 
                 parse_result["packed_status"] = packed_status
-                serializer = ApiBookingQuotesSerializer(data=parse_result)
+                serializer = ApiBookingQuotesSerializer(data=parse_result)           
                 if serializer.is_valid():
                     quote = serializer.save()
 
@@ -434,6 +498,9 @@ async def _api_pricing_worker_builder(
         trace_error.print()
         logger.info(f"@402 [PRICING] Exception: {str(e)}")
 
+    end_time = datetime.now()
+    end_hit_count = len(connection.queries)
+    print("----------@_api_pricing_worker_builder-5E-", "---Time Delay: ", end_time - start_time, "---Func Hits: ", end_hit_count - start_hit_count, "---Total Hits:", end_hit_count)
 
 async def _built_in_pricing_worker_builder(
     _fp_name,
@@ -444,6 +511,8 @@ async def _built_in_pricing_worker_builder(
     pu_zones,
     de_zones,
 ):
+    start_time = datetime.now()
+    start_hit_count = len(connection.queries)
     results = get_self_pricing(
         _fp_name, booking, booking_lines, is_pricing_only, pu_zones, de_zones
     )
@@ -461,3 +530,7 @@ async def _built_in_pricing_worker_builder(
                 serializer.save()
             else:
                 logger.info(f"@402 [PRICING] Serializer error: {serializer.errors}")
+    end_time = datetime.now()
+    end_hit_count = len(connection.queries)
+    print("----------@_built_in_pricing_worker_builder-5E-", "---Time Delay: ", end_time - start_time, "---Func Hits: ", end_hit_count - start_hit_count, "---Total Hits:", end_hit_count)
+

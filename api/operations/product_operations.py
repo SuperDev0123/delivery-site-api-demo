@@ -34,6 +34,18 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
     """
     results = []
 
+    model_numbers = []
+    for bok_2 in bok_2s:
+        model_number = bok_2.get("model_number")
+
+        if model_number:
+            model_numbers.append(model_number)
+
+    products = Client_Products.objects.filter(
+        Q(parent_model_number__in=model_numbers)
+        | Q(child_model_number__in=model_numbers)
+    ).filter(fk_id_dme_client=client)
+
     for bok_2 in bok_2s:
         model_number = bok_2.get("model_number")
         qty = bok_2.get("qty")
@@ -48,13 +60,19 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                 "'model_number' and 'qty' are required for each booking_line"
             )
 
-        products = Client_Products.objects.filter(
-            Q(parent_model_number=model_number) | Q(child_model_number=model_number)
-        ).filter(fk_id_dme_client=client)
+        bok_products = []
+        bok_products_cnt = 0
+        for product in products:
+            if (
+                product.parent_model_number == model_number
+                or product.child_model_number == model_number
+            ):
+                bok_products.append(product)
+                bok_products_cnt += 1
 
         # JasonL
         if (
-            products.count() == 0
+            bok_products_cnt == 0
             and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002"
         ):
             # raise ValidationError(
@@ -78,9 +96,9 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
 
             results = _append_line(results, line, qty, is_bundle_by_model_number)
         elif is_web:  # Web - Magento, Shopify
-            for product in products:
+            for product in bok_products:
                 if (
-                    products.count() > 1
+                    bok_products_cnt > 1
                     and product.child_model_number == product.parent_model_number
                 ):
                     continue
@@ -103,14 +121,14 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
                 results = _append_line(results, line, qty, is_bundle_by_model_number)
         else:  # Biz - Sap/b1, Pronto
             has_product = False
-            for product in products:
+            for product in bok_products:
                 if product.child_model_number == product.parent_model_number:
                     has_product = True
 
-            if has_product and products.count() > 1:
+            if has_product and bok_products_cnt > 1:
                 continue
             else:
-                product = products.first()
+                product = bok_products.first()
                 line = {
                     "e_item_type": product.child_model_number,
                     "description": product.description

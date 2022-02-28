@@ -63,6 +63,11 @@ logger = logging.getLogger(__name__)
 
 
 def partial_pricing(payload, client, warehouse):
+    from django.db import connection
+
+    p1 = datetime.now()
+    print("@1-", datetime.now(), len(connection.queries))
+
     LOG_ID = "[PP Jason L]"
     pk_header_id = str(uuid.uuid4())
     bok_2s = parse_sku_string(payload.get("sku"))
@@ -141,7 +146,7 @@ def partial_pricing(payload, client, warehouse):
             "e_weightPerEach": item["e_weightPerEach"],
         }
         booking_lines.append(booking_line)
-
+    print("@7-", datetime.now(), len(connection.queries))
     # fps = Fp_freight_providers.objects.filter(fp_company_name__in=AVAILABLE_FPS_4_FC)
     pu_zones = FP_zones.objects.filter(Q(suburb__iexact=warehouse.suburb) | Q(fk_fp=12))
     de_zones = FP_zones.objects.filter(Q(suburb__iexact=de_suburb) | Q(fk_fp=12))
@@ -154,6 +159,7 @@ def partial_pricing(payload, client, warehouse):
     logger.info(
         f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set}"
     )
+    print("@8-", datetime.now(), len(connection.queries))
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
@@ -168,6 +174,7 @@ def partial_pricing(payload, client, warehouse):
 
         # delete quotes
         quote_set.delete()
+        print("@81-", datetime.now(), len(connection.queries))
 
     # Set Express or Standard
     if len(json_results) == 1:
@@ -191,6 +198,8 @@ def partial_pricing(payload, client, warehouse):
                 json_results[0]["eta"] = eta
 
     if json_results:
+        print("@9-", datetime.now(), len(connection.queries))
+        print("@10 - ", datetime.now() - p1)
         logger.info(f"@818 {LOG_ID} Success!")
         return json_results
     else:

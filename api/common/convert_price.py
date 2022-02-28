@@ -88,7 +88,7 @@ def _apply_mu(quote, fp, client):
     return quoted_dollar, fuel_levy_base, client_mu
 
 
-def apply_markups(quotes):
+def apply_markups(quotes, client, fp):
     logger.info(f"[APPLY MU] Start")
 
     if not quotes:
@@ -97,17 +97,7 @@ def apply_markups(quotes):
 
     logger.info(f"[APPLY MU] Booking.fk_booking_id: {quotes[0].fk_booking_id}")
 
-    try:
-        client_name = quotes[0].fk_client_id.lower()
-        client = DME_clients.objects.get(company_name__iexact=client_name)
-    except:
-        # Do not apply MU(s) when doing "Pricing-Only"
-        logger.info(f"[APPLY MU] Pricing only!")
-        return quotes
-
     for quote in quotes:
-        fp_name = quote.freight_provider.lower()
-        fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
         client_mu_1_minimum_values, fuel_levy_base, client_mu = _apply_mu(
             quote, fp, client
         )
@@ -142,7 +132,7 @@ def _get_lowest_client_pricing(quotes):
     return _lowest_pricing
 
 
-def interpolate_gaps(quotes):
+def interpolate_gaps(quotes, client):
     """
     Interpolate DME pricings if has gap with lowest client pricing
 
@@ -151,6 +141,11 @@ def interpolate_gaps(quotes):
     """
     logger.info(f"[$ INTERPOLATE] Start")
 
+    if not client:
+        # Do not interpolate gaps when doing "Pricing-Only"
+        logger.info(f"[$ INTERPOLATE] Pricing only!")
+        return quotes
+
     if not quotes.exists():
         logger.info(f"[$ INTERPOLATE] No Quotes!")
         return quotes
@@ -158,13 +153,6 @@ def interpolate_gaps(quotes):
     logger.info(f"[$ INTERPOLATE] Booking.fk_booking_id: {quotes[0].fk_booking_id}")
     fp_name = quotes[0].freight_provider.lower()
     client_name = quotes[0].fk_client_id.lower()
-
-    try:
-        client = DME_clients.objects.get(company_name__iexact=client_name)
-    except:
-        # Do not interpolate gaps when doing "Pricing-Only"
-        logger.info(f"[$ INTERPOLATE] Pricing only!")
-        return quotes
 
     # Do not interpolate if gap_percent is not set
     # (gap_percent is set only clients which has its FP credentials)
