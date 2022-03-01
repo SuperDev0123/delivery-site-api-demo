@@ -2089,10 +2089,13 @@ class BookingViewSet(viewsets.ViewSet):
 
                 client_customer_mark_up = 0
                 if not client_customer_mark_up and booking.kf_client_id:
-                    client = DME_clients.objects.get(
-                        dme_account_num=booking.kf_client_id
-                    )
-                    client_customer_mark_up = client.client_customer_mark_up
+                    try:
+                        client = DME_clients.objects.get(
+                            dme_account_num=booking.kf_client_id
+                        )
+                        client_customer_mark_up = client.client_customer_mark_up
+                    except:
+                        pass
 
                 # Get count for 'Attachments'
                 cnt_attachments = Dme_attachments.objects.filter(
