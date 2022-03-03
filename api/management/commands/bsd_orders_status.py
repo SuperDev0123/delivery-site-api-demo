@@ -46,10 +46,8 @@ class Command(BaseCommand):
                 b_client_name="Bathroom Sales Direct",
                 b_client_order_num__in=order_id_list,
             )
-            .exclude(
+            .filter(
                 b_status__in=[
-                    "Closed",
-                    "Cancelled",
                     "Parent Booking",
                     "Entered",
                     "Imported / Integrated",

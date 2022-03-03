@@ -9,6 +9,7 @@ from api.models import (
     API_booking_quotes,
 )
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
+from api.operations.booking.quote import get_quote_again
 from api.operations.genesis.index import create_shared_lines
 from api.common.booking_quote import set_booking_quote
 from api.helpers.list import *
@@ -47,27 +48,41 @@ def post_save_handler(instance, created, update_fields):
             create_shared_lines(booking)
 
         logger.info(f"{LOG_ID} Created new or updated important field.")
-        packed_status = instance.packed_status
-        if (
-            booking.api_booking_quote
-            and booking.api_booking_quote.packed_status == packed_status
-        ):
-            set_booking_quote(booking, None)
+        # Reset selected Quote and connected Quotes
+        if booking.booking_type != "DMEA":
+            set_booking_quote(instance, None)
+            quotes = API_booking_quotes.objects.filter(
+                fk_booking_id=booking.pk_booking_id,
+                is_used=False,
+            )
+            for quote in quotes:
+                quote.is_used = True
+                quote.save()
+        elif booking.booking_type == "DMEA":
+            get_quote_again(booking)
 
+
+def post_delete_handler(instance):
+    booking = instance.booking()
+
+    if not booking:
+        return
+
+    # Reset selected Quote and connected Quotes
+    if booking.booking_type != "DMEA":
+        set_booking_quote(instance, None)
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id,
-            packed_status=packed_status,
             is_used=False,
         )
         for quote in quotes:
             quote.is_used = True
             quote.save()
+    elif booking.booking_type == "DMEA":
+        get_quote_again(booking)
 
-
-def post_delete_handler(instance):
-    booking = instance.booking()
+    # Client_Process_Mgr
     cl_procs = Client_Process_Mgr.objects.filter(fk_booking_id=booking.pk)
-
     if cl_procs.exists():
         # Get client_auto_augment
         dme_client = DME_clients.objects.filter(

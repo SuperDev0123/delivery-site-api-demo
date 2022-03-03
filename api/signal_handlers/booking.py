@@ -13,10 +13,12 @@ from api.fp_apis.utils import get_status_category_from_status
 from api.operations.labels.index import build_label
 from api.operations.pronto_xi.index import update_note as update_pronto_note
 from api.operations.genesis.index import create_shared_booking, update_shared_booking
+from api.operations.booking.quote import get_quote_again
 from api.common.booking_quote import set_booking_quote
 from api.common import trace_error
 from api.helpers.list import *
 from api.convertors.pdf import pdf_merge
+
 
 logger = logging.getLogger(__name__)
 IMPORTANT_FIELDS = [
@@ -41,6 +43,7 @@ IMPORTANT_FIELDS = [
     "de_to_floor_access_by",
     "pu_service",
     "de_service",
+    "booking_type",
 ]
 
 GENESIS_FIELDS = [
@@ -187,15 +190,19 @@ def post_save_handler(instance, created, update_fields):
         != "461162D2-90C7-BF4E-A905-000000000004"  # Ignore when plum scans
     ):
         logger.info(f"{LOG_ID} Updated important field.")
-        set_booking_quote(instance, None)
 
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=instance.pk_booking_id,
-            is_used=False,
-        )
-        for quote in quotes:
-            quote.is_used = True
-            quote.save()
+        # Reset selected Quote and connected Quotes
+        if instance.booking_type != "DMEA":
+            set_booking_quote(instance, None)
+            quotes = API_booking_quotes.objects.filter(
+                fk_booking_id=instance.pk_booking_id,
+                is_used=False,
+            )
+            for quote in quotes:
+                quote.is_used = True
+                quote.save()
+        elif instance.booking_type == "DMEA":
+            get_quote_again(instance)
 
     if (
         instance.vx_freight_provider

@@ -15,9 +15,9 @@ def set_booking_quote(booking, quote=None):
         booking.vx_account_code = None
         booking.vx_serviceName = None
         booking.inv_cost_quoted = None
-        # booking.inv_sell_quoted = None
+        booking.inv_sell_quoted = None
         booking.s_02_Booking_Cutoff_Time = None
-        booking.v_vehicle_Type = ""
+        booking.v_vehicle_Type = None
     else:
         booking.api_booking_quote = quote
         booking.vx_freight_provider = quote.freight_provider

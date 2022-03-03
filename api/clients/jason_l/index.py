@@ -1111,7 +1111,7 @@ def scanned(payload, client):
         )
         new_fc_log.save()
         logger.info(
-            f"#371 {LOG_ID} {booking.b_bookingID_Visual} - getting Quotes again..."
+            f"#371 {LOG_ID} {booking.b_bookingID_Visual} - Getting Quotes again..."
         )
         _, success, message, quotes = pricing_oper(
             body=None,
