@@ -70,7 +70,7 @@ def post_delete_handler(instance):
 
     # Reset selected Quote and connected Quotes
     if booking.booking_type != "DMEA":
-        set_booking_quote(instance, None)
+        set_booking_quote(booking, None)
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id,
             is_used=False,
