@@ -50,7 +50,7 @@ def post_save_handler(instance, created, update_fields):
         logger.info(f"{LOG_ID} Created new or updated important field.")
         # Reset selected Quote and connected Quotes
         if booking.booking_type != "DMEA":
-            set_booking_quote(instance, None)
+            set_booking_quote(booking, None)
             quotes = API_booking_quotes.objects.filter(
                 fk_booking_id=booking.pk_booking_id,
                 is_used=False,
