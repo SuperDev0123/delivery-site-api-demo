@@ -3594,6 +3594,8 @@ class FPViewSet(viewsets.ViewSet):
                         "id": resultObjects.id,
                         "fp_company_name": resultObjects.fp_company_name,
                         "fp_address_country": resultObjects.fp_address_country,
+                        "fp_markupfuel_levy_percent": resultObjects.fp_markupfuel_levy_percent,
+                        "hex_color_code": resultObjects.hex_color_code,
                     }
                 )
             return JsonResponse({"results": return_data})
@@ -3607,8 +3609,11 @@ class FPViewSet(viewsets.ViewSet):
             resultObject = Fp_freight_providers.objects.get_or_create(
                 fp_company_name=request.data["fp_company_name"],
                 fp_address_country=request.data["fp_address_country"],
+                fp_markupfuel_levy_percent=request.data["fp_markupfuel_levy_percent"],
+                hex_color_code=request.data["hex_color_code"],
+                z_createdByAccount=request.user.username
             )
-
+           
             return JsonResponse(
                 {
                     "result": FpSerializer(resultObject[0]).data,
@@ -3622,6 +3627,9 @@ class FPViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
         fp_freight_providers = Fp_freight_providers.objects.get(pk=pk)
+        request.data["z_modifiedByAccount"] = request.user.username
+        request.data.pop("id")
+        print(request.data)
         serializer = FpSerializer(fp_freight_providers, data=request.data)
 
         try:
@@ -3635,13 +3643,14 @@ class FPViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["delete"])
     def delete(self, request, pk, format=None):
+        print(request.data, pk)
         fp_freight_providers = Fp_freight_providers.objects.get(pk=pk)
-
+        print(fp_freight_providers)
         try:
             fp_freight_providers.delete()
-            return JsonResponse({"results": fp_freight_providers})
+            return JsonResponse({"results": "OK"})
         except Exception as e:
-            # print('@Exception', e)
+            print('@Exception', e)
             return JsonResponse({"results": ""})
 
     @action(detail=False, methods=["get"])

@@ -347,7 +347,7 @@ class Fp_freight_providers(models.Model):
     prices_count = models.IntegerField(default=1, blank=True, null=True)
     service_cutoff_time = models.TimeField(default=None, blank=True, null=True)
     rule_type = models.ForeignKey(RuleTypes, on_delete=models.CASCADE, null=True)
-    hex_color_code = models.CharField(max_length=6, blank=True, null=True)
+    hex_color_code = models.CharField(max_length=8, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -366,7 +366,7 @@ class Fp_freight_providers(models.Model):
         blank=True,
         auto_now=True,
     )
-    hex_color_code = models.CharField(max_length=6, blank=True, null=True)
+    hex_color_code = models.CharField(max_length=8, blank=True, null=True)
 
     class Meta:
         db_table = "fp_freight_providers"

@@ -889,6 +889,9 @@ class FpSerializer(serializers.ModelSerializer):
             "rule_type",
             "rule_type_code",
             "fp_markupfuel_levy_percent",
+            "z_modifiedByAccount",
+            "z_modifiedTimeStamp",
+            "hex_color_code"
         )
 
 
