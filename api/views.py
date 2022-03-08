@@ -934,9 +934,15 @@ class BookingsViewSet(viewsets.ViewSet):
         if active_tab_index == 2:  # Missing labels
             queryset = queryset.filter(Q(z_label_url__isnull=True) | Q(z_label_url=""))
         elif active_tab_index == 3:  # To manifest
-            queryset = queryset.filter(
-                b_status__in=["Picked", "Ready for Despatch", "Ready for Booking"]
-            )
+            # BioPak
+            if client.dme_account_num == "7EAA4B16-484B-3944-902E-BC936BFEF535":
+                queryset = queryset.filter(b_status="Booked").filter(
+                    Q(z_manifest_url__isnull=True) | Q(z_manifest_url="")
+                )
+            else:
+                queryset = queryset.filter(
+                    b_status__in=["Picked", "Ready for Despatch", "Ready for Booking"]
+                )
         elif active_tab_index == 40:  # Booked
             queryset = queryset.filter(
                 b_status__in=["Booked", "Futile Pickup", "Pickup Rebooked"]
