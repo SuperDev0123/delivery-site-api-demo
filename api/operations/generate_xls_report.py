@@ -74,7 +74,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             filename = f"Bookings Delivered {_tail}"
 
     workbook = xlsxwriter.Workbook(filename, {"remove_timezone": True})
-    worksheet = workbook.add_worksheet()
+
+    if xls_type != "Whse":
+        worksheet = workbook.add_worksheet()
+
     bold = workbook.add_format({"bold": 1, "align": "left"})
     date_format = workbook.add_format({"num_format": "dd/mm/yyyy"})
     time_format = workbook.add_format({"num_format": "hh:mm:ss"})
@@ -1481,378 +1484,444 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         shutil.move(filename, local_filepath + filename)
         logger.info("#375 Finished - `BookingsWithGaps` XLS")
     elif xls_type == "Whse":
+        from api.serializers import SimpleBookingSerializer
         from api.fp_apis.utils import get_etd_in_hour
-        from api.utils import get_sydney_now_time
+        from api.utils import get_sydney_now_time, get_utc_now_time
 
         logger.info("#360 Get started to build `Whse` XLS")
-        worksheet.set_column(0, 50, width=25)
-        worksheet.set_column(7, 9, width=50)
-        worksheet.set_column(10, 10, width=70)
-
-        fields = [
-            ["b_bookingID_Visual", bold],
-            ["b_dateBookedDate(Date)", bold],
-            ["fp_received_date_time/b_given_to_transport_date_time", bold],
-            ["delivery_actual_kpi_days", bold],
-            ["z_calculated_ETA", bold],
-            ["Pickup Days Late", red_bold],
-            ["Query With", bold],
-            ["s_21_Actual_Delivery_TimeStamp", bold],
-            ["b_client_sales_inv_num", bold],
-            ["vx_freight_provider", bold],
-            ["delivery_days_from_booked", bold],
-            ["v_FPBookingNumber", bold],
-            ["Delivery Days Early / Late ", red_bold],
-            ["b_status", bold],
-            ["dme_status_detail", bold],
-            ["dme_status_action", bold],
-            ["b_booking_Notes", bold],
-            ["", bold],
-            ["e_qty", bold],
-            ["e_qty_scanned_fp_total", bold],
-            ["Booked to Scanned Variance", bold],
-            ["b_fp_qty_delivered", bold],
-            ["pu_Address_State", bold],
-            ["business_group", bold],
-            ["deToCompanyName", bold],
-            ["de_To_Address_Suburb", bold],
-            ["de_To_Address_State", bold],
-            ["de_To_Address_PostalCode", bold],
-            ["b_client_order_num", bold],
-            ["zc_pod_or_no_pod", bold],
-            ["z_pod_url", bold],
-            ["z_pod_signed_url", bold],
-            ["delivery_kpi_days", bold],
-            ["fp_store_event_date", bold],
-            ["fp_store_event_desc", bold],
-        ]
-        columns = [
-            ["Booking ID", bold],
-            ["Booked Date", bold],
-            ["Given to / Received by Transport", bold],
-            ["Actual Delivery KPI (Days)", bold],
-            ["Calculated ETA", bold],
-            ["Pickup Days Late", red_bold],
-            ["Query With", bold],
-            ["Actual Delivery", bold],
-            ["Client Sales Invoice", bold],
-            ["Freight Provider", bold],
-            ["Delivery Days from Booked", bold],
-            ["Consignment No", bold],
-            ["Delivery Days Early / Late", red_bold],
-            ["Status", bold],
-            ["Status Detail", bold],
-            ["Status Action", bold],
-            ["Status History Note", bold],
-            [
-                "Please put your Feedback / updates in the column if different to Column G, H and / or I",
-                red_bold,
-            ],
-            ["Qty Booked", bold],
-            ["Qty Scanned", bold],
-            ["Booked to Scanned Variance", bold],
-            ["Total Delivered", bold],
-            ["From State", bold],
-            ["To Entity Group Name", bold],
-            ["To Entity", bold],
-            ["To Suburb", bold],
-            ["To State", bold],
-            ["To Postal Code", bold],
-            ["Client Order Number", bold],
-            ["POD?", bold],
-            ["POD LINK", bold],
-            ["POD Signed on Glass Link", bold],
-            ["Target Delivery KPI (Days)", bold],
-            ["1st Contact For Delivery Booking Date", bold],
-            ["FP Store Activity Description", bold],
-        ]
-
         sydney_now = get_sydney_now_time("datetime")
-        logger.info(f"#361 Total cnt: {len(bookings)}")
-        rows = []
-        for booking_ind, booking in enumerate(bookings):
-            row = []
+        utc_now = get_utc_now_time("datetime")
 
-            if booking_ind % 500 == 0:
-                logger.info(f"#362 Current index: {booking_ind}")
+        for index in range(4):
+            # 1 Booked sheet - just show booked that are more than 1 day old (sort by oldest booked date to newest booked date)
+            if index == 0:
+                worksheet = workbook.add_worksheet("Booked")
+                booked_bookings = bookings.filter(b_status="Booked")
 
-            booking_lines = Booking_lines.objects.only(
-                "e_qty", "e_qty_scanned_fp", "pk_lines_id"
-            ).filter(fk_booking_id=booking.pk_booking_id)
+                filtered_bookings = []
+                for booking in booked_bookings:
+                    if (utc_now - booking.b_dateBookedDate).days > 1:
+                        filtered_bookings.append(booking)
+            # 2 "In Transit" with these statuses (In Transit, On Board for Delivery, Scanned into depot (Sort by ETA date/time)
+            elif index == 1:
+                worksheet = workbook.add_worksheet("In Transit")
+                filtered_bookings = bookings.filter(
+                    b_status__in=[
+                        "In Transit",
+                        "On Board for Delivery",
+                        "Scanned into depot",
+                    ]
+                ).order_by("s_06_Estimated_Delivery_TimeStamp")
+            # 3 "Statuses to Review" with statuses (Futile Pickup. Futile Delivery, Lost in Transit, On Hold, Partial Delivery) (Sort by Status name then ETA)
+            elif index == 2:
+                worksheet = workbook.add_worksheet("Statuses to Review")
+                filtered_bookings = bookings.filter(
+                    b_status__in=[
+                        "Futile Pickup",
+                        "Futile Delivery",
+                        "Lost in Transit",
+                        "On Hold",
+                        "Partial Delivery",
+                    ]
+                ).order_by("b_status", "s_06_Estimated_Delivery_TimeStamp")
+            # 3 "Statuses to Review" with statuses (Futile Pickup. Futile Delivery, Lost in Transit, On Hold, Partial Delivery) (Sort by Status name then ETA)
+            elif index == 3:
+                worksheet = workbook.add_worksheet("Housekeeping")
+                housekeeping_bookings = bookings.filter(
+                    b_status__in=[
+                        "Returned",
+                        "Imported / Integrated",
+                        "Entered",
+                        "Picking",
+                        "Picked",
+                    ]
+                ).order_by("b_status")
 
-            e_qty_total = 0
-            e_qty_scanned_fp_total = 0
+                filtered_bookings = []
+                for booking in housekeeping_bookings:
+                    if (utc_now - booking.z_CreatedTimestamp).days > 5:
+                        filtered_bookings.append(booking)
+            worksheet.set_column(0, 50, width=25)
+            worksheet.set_column(7, 9, width=50)
+            worksheet.set_column(10, 10, width=70)
+            worksheets.append(worksheet)
 
-            for booking_line in booking_lines:
-                if booking_line.e_qty is not None:
-                    e_qty_total = e_qty_total + booking_line.e_qty
+            fields = [
+                ["b_bookingID_Visual", bold],
+                ["b_dateBookedDate(Date)", bold],
+                ["fp_received_date_time/b_given_to_transport_date_time", bold],
+                ["delivery_actual_kpi_days", bold],
+                ["z_calculated_ETA", bold],
+                ["Pickup Days Late", red_bold],
+                ["Query With", bold],
+                ["s_21_Actual_Delivery_TimeStamp", bold],
+                ["b_client_sales_inv_num", bold],
+                ["vx_freight_provider", bold],
+                ["delivery_days_from_booked", bold],
+                ["v_FPBookingNumber", bold],
+                ["Delivery Days Early / Late ", red_bold],
+                ["b_status", bold],
+                ["b_status_category", bold],
+                ["dme_status_detail", bold],
+                ["dme_status_action", bold],
+                ["b_booking_Notes", bold],
+                ["", bold],
+                ["e_qty", bold],
+                ["e_qty_scanned_fp_total", bold],
+                ["Booked to Scanned Variance", bold],
+                ["b_fp_qty_delivered", bold],
+                ["pu_Address_State", bold],
+                ["business_group", bold],
+                ["deToCompanyName", bold],
+                ["de_To_Address_Suburb", bold],
+                ["de_To_Address_State", bold],
+                ["de_To_Address_PostalCode", bold],
+                ["b_client_order_num", bold],
+                ["zc_pod_or_no_pod", bold],
+                ["z_pod_url", bold],
+                ["z_pod_signed_url", bold],
+                ["delivery_kpi_days", bold],
+                ["fp_store_event_date", bold],
+                ["fp_store_event_desc", bold],
+            ]
+            columns = [
+                ["Booking ID", bold],
+                ["Booked Date", bold],
+                ["Given to / Received by Transport", bold],
+                ["Actual Delivery KPI (Days)", bold],
+                ["Calculated ETA", bold],
+                ["Pickup Days Late", red_bold],
+                ["Query With", bold],
+                ["Actual Delivery", bold],
+                ["Client Sales Invoice", bold],
+                ["Freight Provider", bold],
+                ["Delivery Days from Booked", bold],
+                ["Consignment No", bold],
+                ["Delivery Days Early / Late", red_bold],
+                ["Status", bold],
+                ["Status Category", bold],
+                ["Status Detail", bold],
+                ["Status Action", bold],
+                ["Status History Note", bold],
+                [
+                    "Please put your Feedback / updates in the column if different to Column G, H and / or I",
+                    red_bold,
+                ],
+                ["Qty Booked", bold],
+                ["Qty Scanned", bold],
+                ["Booked to Scanned Variance", bold],
+                ["Total Delivered", bold],
+                ["From State", bold],
+                ["To Entity Group Name", bold],
+                ["To Entity", bold],
+                ["To Suburb", bold],
+                ["To State", bold],
+                ["To Postal Code", bold],
+                ["Client Order Number", bold],
+                ["POD?", bold],
+                ["POD LINK", bold],
+                ["POD Signed on Glass Link", bold],
+                ["Target Delivery KPI (Days)", bold],
+                ["1st Contact For Delivery Booking Date", bold],
+                ["FP Store Activity Description", bold],
+            ]
 
-                if booking_line.e_qty_scanned_fp is not None:
-                    e_qty_scanned_fp_total = (
-                        e_qty_scanned_fp_total + booking_line.e_qty_scanned_fp
-                    )
+            logger.info(f"#361 Total cnt: {len(bookings)}")
+            rows = []
+            for booking_ind, booking in enumerate(filtered_bookings):
+                row = []
 
-            actual_delivery_days, kpi_delivery_days = None, None
-            if (
-                booking.b_status == "Delivered"
-                and booking.b_dateBookedDate
-                and booking.s_21_Actual_Delivery_TimeStamp
-            ):
-                # Actual delivery days = Delivered Dated - Booked Date
-                actual_delivery_days = (
-                    booking.s_21_Actual_Delivery_TimeStamp - booking.b_dateBookedDate
-                ).days
+                if booking_ind % 500 == 0:
+                    logger.info(f"#362 Current index: {booking_ind}")
 
-                if booking.api_booking_quote:
-                    # KPI Deliver Days = The number of days we get from the pricing service table or provider API the service should take - e.g. 3 days
-                    etd_in_hour = get_etd_in_hour(booking.api_booking_quote)
-                    etd_in_days = math.ceil(etd_in_hour / 24)
-                    kpi_delivery_days = etd_in_days
+                booking_lines = Booking_lines.objects.only(
+                    "e_qty", "e_qty_scanned_fp", "pk_lines_id"
+                ).filter(fk_booking_id=booking.pk_booking_id)
 
-            # "Booking ID"
-            row.append([booking.b_bookingID_Visual, None])
+                e_qty_total = 0
+                e_qty_scanned_fp_total = 0
 
-            # "Booked Date"
-            if booking.b_dateBookedDate and booking.b_dateBookedDate:
-                value = convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate).date()
-                row.append([value, date_format])
-            else:
-                row.append(["", None])
+                for booking_line in booking_lines:
+                    if booking_line.e_qty is not None:
+                        e_qty_total = e_qty_total + booking_line.e_qty
 
-            # "Given to / Received by Transport"
-            if booking.fp_received_date_time:
-                value = convert_to_AU_SYDNEY_tz(booking.fp_received_date_time).date()
-                row.append([value, date_format])
-            elif booking.b_given_to_transport_date_time:
-                value = convert_to_AU_SYDNEY_tz(
-                    booking.b_given_to_transport_date_time
-                ).date()
-                row.append([value, date_format])
-            else:
-                row.append(["", None])
+                    if booking_line.e_qty_scanned_fp is not None:
+                        e_qty_scanned_fp_total = (
+                            e_qty_scanned_fp_total + booking_line.e_qty_scanned_fp
+                        )
 
-            # Actual Delivery KPI (Days)
-            if actual_delivery_days:
-                row.append([actual_delivery_days, None])
-            else:
-                row.append(["", None])
-
-            # "Calculated ETA"
-            if booking.z_calculated_ETA:
-                value = convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA)
-                row.append([value, date_format])
-            else:
-                row.append(["", None])
-
-            # Pickup Days Late
-            if (
-                booking.b_dateBookedDate is not None
-                and booking.b_status is not None
-                and "booked" in booking.b_status.lower()
-            ):
-                pickup_days_late = (
-                    booking.b_dateBookedDate.date()
-                    + timedelta(days=2)
-                    - sydney_now.date()
-                ).days
-
-                if pickup_days_late < 0:
-                    cell_format = workbook.add_format({"font_color": "red"})
-                    value = f"({str(abs(pickup_days_late))})"
-                    row.append([value, cell_format])
-                else:
-                    row.append([pickup_days_late, cell_format])
-            else:
-                row.append(["", None])
-
-            # "Query With"
-            query_with = ""
-            if booking.dme_status_action is None or booking.dme_status_action == "":
-                query_with = booking.vx_freight_provider
-
-                if e_qty_total == e_qty_scanned_fp_total:
-                    query_with = "Freight Provider"
-                elif e_qty_scanned_fp_total == 0:
-                    query_with = (
-                        "Warehouse: Nothing sent yet, warehouse to send "
-                        + str(e_qty_total)
-                    )
-                elif e_qty_scanned_fp_total is not 0:
-                    query_with = (
-                        "Warehouse: Partial qty of "
-                        + str(e_qty_total - e_qty_scanned_fp_total)
-                        + " short, warehouse to send"
-                    )
-            else:
-                query_with = booking.dme_status_action
-            row.append([query_with, None])
-
-            # "Actual Delivery"
-            if booking.s_21_Actual_Delivery_TimeStamp:
-                value = convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp)
-                row.append([value, date_format])
-            else:
-                value = ""
-                row.append([value, None])
-
-            # "Client Sales Invoice"
-            row.append([booking.b_client_sales_inv_num, None])
-
-            # "Freight Provider"
-            row.append([booking.vx_freight_provider, None])
-
-            # Delivery Days from Booked
-            if kpi_delivery_days:
-                row.append([kpi_delivery_days, None])
-            else:
-                row.append(["", None])
-
-            # "Consignment No"
-            row.append([booking.v_FPBookingNumber, None])
-
-            # Number of Days early / late - 1 above minus 2 above
-            if actual_delivery_days != None and kpi_delivery_days != None:
-                if (actual_delivery_days - kpi_delivery_days) < 0:
-                    cell_format = workbook.add_format({"font_color": "red"})
-                    value = f"{kpi_delivery_days-actual_delivery_days}"
-                    row.append([value, cell_format])
-                else:
-                    value = actual_delivery_days - kpi_delivery_days
-                    row.append([value, None])
-            else:
-                row.append(["", None])
-
-            # "Status"
-            row.append([booking.b_status, None])
-            cell_format = workbook.add_format({"text_wrap": True})
-
-            # "Status Detail"
-            row.append([booking.dme_status_detail, cell_format])
-
-            # "Status Action"
-            row.append([booking.dme_status_action, cell_format])
-
-            # "Status History Note"
-            row.append([booking.b_booking_Notes, cell_format])
-
-            # "Please put your Feedback / updates in the column if different to Column G, H and / or I"
-            row.append(["", cell_format])
-
-            # "Qty Booked"
-            row.append([e_qty_total, None])
-
-            # "Qty Scanned"
-            row.append([e_qty_scanned_fp_total, None])
-
-            # "Booked to Scanned Variance"
-            row.append([e_qty_total - e_qty_scanned_fp_total, None])
-
-            # "Total Delivered"
-            row.append([booking.b_fp_qty_delivered, None])
-
-            # "From State"
-            row.append([booking.pu_Address_State, None])
-
-            # "To Entity Group Name"
-            customer_group_name = ""
-            customer_groups = Dme_utl_client_customer_group.objects.all()
-            for customer_group in customer_groups:
+                actual_delivery_days, kpi_delivery_days = None, None
                 if (
-                    booking.deToCompanyName
-                    and customer_group.name_lookup
-                    and customer_group.name_lookup.lower()
-                    in booking.deToCompanyName.lower()
+                    booking.b_status == "Delivered"
+                    and booking.b_dateBookedDate
+                    and booking.s_21_Actual_Delivery_TimeStamp
                 ):
-                    customer_group_name = customer_group.group_name
-            row.append([customer_group_name, None])
+                    # Actual delivery days = Delivered Dated - Booked Date
+                    actual_delivery_days = (
+                        booking.s_21_Actual_Delivery_TimeStamp
+                        - booking.b_dateBookedDate
+                    ).days
 
-            # "To Entity"
-            row.append([booking.deToCompanyName, None])
+                    if booking.api_booking_quote:
+                        # KPI Deliver Days = The number of days we get from the pricing service table or provider API the service should take - e.g. 3 days
+                        etd_in_hour = get_etd_in_hour(booking.api_booking_quote)
+                        etd_in_days = math.ceil(etd_in_hour / 24)
+                        kpi_delivery_days = etd_in_days
 
-            # "To Suburb"
-            row.append([booking.de_To_Address_Suburb, None])
+                # "Booking ID"
+                row.append([booking.b_bookingID_Visual, None])
 
-            # "To State"
-            row.append([booking.de_To_Address_State, None])
-
-            # "To Postal Code"
-            row.append([booking.de_To_Address_PostalCode, None])
-
-            # "Client Order Number"
-            row.append([booking.b_client_order_num, None])
-
-            # "POD?"
-            if booking.z_pod_url or booking.z_pod_signed_url:
-                row.append(["Y", None])
-            else:
-                row.append(["", None])
-
-            # "POD LINK"
-            if booking.z_pod_url:
-                url = settings.S3_URL + "/imgs/" + booking.z_pod_url
-                string = booking.z_pod_url
-            else:
-                url, string = "", ""
-            row.append([url, "url", string])
-
-            # "POD Signed on Glass Link"
-            if booking.z_pod_signed_url:
-                url = settings.S3_URL + "/imgs/" + booking.z_pod_signed_url
-                string = booking.z_pod_signed_url
-            else:
-                url, string = "", ""
-            row.append([url, "url", string])
-
-            # "Target Delivery KPI (Days)"
-            if booking.api_booking_quote:
-                etd_in_hour = get_etd_in_hour(booking.api_booking_quote)
-
-                if etd_in_hour:
-                    etd_in_days = math.ceil(etd_in_hour / 24)
-                    row.append([etd_in_days, None])
+                # "Booked Date"
+                if booking.b_dateBookedDate and booking.b_dateBookedDate:
+                    value = convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate).date()
+                    row.append([value, date_format])
                 else:
                     row.append(["", None])
-            else:
-                row.append([booking.delivery_kpi_days, None])
 
-            # "1st Contact For Delivery Booking Date"
-            if booking.fp_store_event_date:
-                value = convert_to_AU_SYDNEY_tz(booking.fp_store_event_date)
-                row.append([value, date_format])
-            else:
-                row.append(["", None])
-
-            # "FP Store Activity Description"
-            row.append([booking.fp_store_event_desc, None])
-            rows.append(row)
-
-        # Populate cells
-        row_index = 0
-        if show_field_name:
-            for index, field in enumerate(fields):
-                worksheet.write(row_index, index, field[0], field[1])
-            row_index += 1
-
-            for index, column in enumerate(columns):
-                worksheet.write(row_index, index, column[0], column[1])
-            row_index += 1
-        else:
-            for index, column in enumerate(columns):
-                worksheet.write(row_index, index, column[0], column[1])
-            row_index += 1
-
-        for index, row in enumerate(rows):
-            for col_index, value in enumerate(row):
-                if value[1] == date_format:
-                    worksheet.write_datetime(
-                        index + row_index, col_index, value[0], value[1]
-                    )
-                elif value[1] == "url":
-                    worksheet.write_url(
-                        index + row_index, col_index, value[0], string=value[2]
-                    )
+                # "Given to / Received by Transport"
+                if booking.fp_received_date_time:
+                    value = convert_to_AU_SYDNEY_tz(
+                        booking.fp_received_date_time
+                    ).date()
+                    row.append([value, date_format])
+                elif booking.b_given_to_transport_date_time:
+                    value = convert_to_AU_SYDNEY_tz(
+                        booking.b_given_to_transport_date_time
+                    ).date()
+                    row.append([value, date_format])
                 else:
-                    worksheet.write(index + row_index, col_index, value[0], value[1])
+                    row.append(["", None])
+
+                # Actual Delivery KPI (Days)
+                if actual_delivery_days:
+                    row.append([actual_delivery_days, None])
+                else:
+                    row.append(["", None])
+
+                # "Calculated ETA"
+                if booking.z_calculated_ETA:
+                    value = convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA)
+                    row.append([value, date_format])
+                else:
+                    row.append(["", None])
+
+                # Pickup Days Late
+                if (
+                    booking.b_dateBookedDate is not None
+                    and booking.b_status is not None
+                    and "booked" in booking.b_status.lower()
+                ):
+                    pickup_days_late = (
+                        booking.b_dateBookedDate.date()
+                        + timedelta(days=2)
+                        - sydney_now.date()
+                    ).days
+
+                    if pickup_days_late < 0:
+                        cell_format = workbook.add_format({"font_color": "red"})
+                        value = f"({str(abs(pickup_days_late))})"
+                        row.append([value, cell_format])
+                    else:
+                        row.append([pickup_days_late, cell_format])
+                else:
+                    row.append(["", None])
+
+                # "Query With"
+                query_with = ""
+                if booking.dme_status_action is None or booking.dme_status_action == "":
+                    query_with = booking.vx_freight_provider
+
+                    if e_qty_total == e_qty_scanned_fp_total:
+                        query_with = "Freight Provider"
+                    elif e_qty_scanned_fp_total == 0:
+                        query_with = (
+                            "Warehouse: Nothing sent yet, warehouse to send "
+                            + str(e_qty_total)
+                        )
+                    elif e_qty_scanned_fp_total is not 0:
+                        query_with = (
+                            "Warehouse: Partial qty of "
+                            + str(e_qty_total - e_qty_scanned_fp_total)
+                            + " short, warehouse to send"
+                        )
+                else:
+                    query_with = booking.dme_status_action
+                row.append([query_with, None])
+
+                # "Actual Delivery"
+                if booking.s_21_Actual_Delivery_TimeStamp:
+                    value = convert_to_AU_SYDNEY_tz(
+                        booking.s_21_Actual_Delivery_TimeStamp
+                    )
+                    row.append([value, date_format])
+                else:
+                    value = ""
+                    row.append([value, None])
+
+                # "Client Sales Invoice"
+                row.append([booking.b_client_sales_inv_num, None])
+
+                # "Freight Provider"
+                row.append([booking.vx_freight_provider, None])
+
+                # Delivery Days from Booked
+                if kpi_delivery_days:
+                    row.append([kpi_delivery_days, None])
+                else:
+                    row.append(["", None])
+
+                # "Consignment No"
+                row.append([booking.v_FPBookingNumber, None])
+
+                # Number of Days early / late - 1 above minus 2 above
+                if actual_delivery_days != None and kpi_delivery_days != None:
+                    if (actual_delivery_days - kpi_delivery_days) < 0:
+                        cell_format = workbook.add_format({"font_color": "red"})
+                        value = f"{kpi_delivery_days-actual_delivery_days}"
+                        row.append([value, cell_format])
+                    else:
+                        value = actual_delivery_days - kpi_delivery_days
+                        row.append([value, None])
+                else:
+                    row.append(["", None])
+
+                # "Status"
+                row.append([booking.b_status, None])
+                cell_format = workbook.add_format({"text_wrap": True})
+
+                # "Status Category"
+                row.append([booking.b_status_category, None])
+                cell_format = workbook.add_format({"text_wrap": True})
+
+                # "Status Detail"
+                row.append([booking.dme_status_detail, cell_format])
+
+                # "Status Action"
+                row.append([booking.dme_status_action, cell_format])
+
+                # "Status History Note"
+                row.append([booking.b_booking_Notes, cell_format])
+
+                # "Please put your Feedback / updates in the column if different to Column G, H and / or I"
+                row.append(["", cell_format])
+
+                # "Qty Booked"
+                row.append([e_qty_total, None])
+
+                # "Qty Scanned"
+                row.append([e_qty_scanned_fp_total, None])
+
+                # "Booked to Scanned Variance"
+                row.append([e_qty_total - e_qty_scanned_fp_total, None])
+
+                # "Total Delivered"
+                row.append([booking.b_fp_qty_delivered, None])
+
+                # "From State"
+                row.append([booking.pu_Address_State, None])
+
+                # "To Entity Group Name"
+                customer_group_name = ""
+                customer_groups = Dme_utl_client_customer_group.objects.all()
+                for customer_group in customer_groups:
+                    if (
+                        booking.deToCompanyName
+                        and customer_group.name_lookup
+                        and customer_group.name_lookup.lower()
+                        in booking.deToCompanyName.lower()
+                    ):
+                        customer_group_name = customer_group.group_name
+                row.append([customer_group_name, None])
+
+                # "To Entity"
+                row.append([booking.deToCompanyName, None])
+
+                # "To Suburb"
+                row.append([booking.de_To_Address_Suburb, None])
+
+                # "To State"
+                row.append([booking.de_To_Address_State, None])
+
+                # "To Postal Code"
+                row.append([booking.de_To_Address_PostalCode, None])
+
+                # "Client Order Number"
+                row.append([booking.b_client_order_num, None])
+
+                # "POD?"
+                if booking.z_pod_url or booking.z_pod_signed_url:
+                    row.append(["Y", None])
+                else:
+                    row.append(["", None])
+
+                # "POD LINK"
+                if booking.z_pod_url:
+                    url = settings.S3_URL + "/imgs/" + booking.z_pod_url
+                    string = booking.z_pod_url
+                else:
+                    url, string = "", ""
+                row.append([url, "url", string])
+
+                # "POD Signed on Glass Link"
+                if booking.z_pod_signed_url:
+                    url = settings.S3_URL + "/imgs/" + booking.z_pod_signed_url
+                    string = booking.z_pod_signed_url
+                else:
+                    url, string = "", ""
+                row.append([url, "url", string])
+
+                # "Target Delivery KPI (Days)"
+                if booking.api_booking_quote:
+                    etd_in_hour = get_etd_in_hour(booking.api_booking_quote)
+
+                    if etd_in_hour:
+                        etd_in_days = math.ceil(etd_in_hour / 24)
+                        row.append([etd_in_days, None])
+                    else:
+                        row.append(["", None])
+                else:
+                    row.append([booking.delivery_kpi_days, None])
+
+                # "1st Contact For Delivery Booking Date"
+                if booking.fp_store_event_date:
+                    value = convert_to_AU_SYDNEY_tz(booking.fp_store_event_date)
+                    row.append([value, date_format])
+                else:
+                    row.append(["", None])
+
+                # "FP Store Activity Description"
+                row.append([booking.fp_store_event_desc, None])
+                rows.append(row)
+
+            # Populate cells
+            row_index = 0
+            if show_field_name:
+                for index, field in enumerate(fields):
+                    worksheet.write(row_index, index, field[0], field[1])
+                row_index += 1
+
+                for index, column in enumerate(columns):
+                    worksheet.write(row_index, index, column[0], column[1])
+                row_index += 1
+            else:
+                for index, column in enumerate(columns):
+                    worksheet.write(row_index, index, column[0], column[1])
+                row_index += 1
+
+            for index, row in enumerate(rows):
+                for col_index, value in enumerate(row):
+                    if value[1] == date_format:
+                        worksheet.write_datetime(
+                            index + row_index, col_index, value[0], value[1]
+                        )
+                    elif value[1] == "url":
+                        worksheet.write_url(
+                            index + row_index, col_index, value[0], string=value[2]
+                        )
+                    else:
+                        worksheet.write(
+                            index + row_index, col_index, value[0], value[1]
+                        )
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)

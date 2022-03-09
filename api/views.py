@@ -1568,9 +1568,11 @@ class BookingsViewSet(viewsets.ViewSet):
             "b_client_order_num",
             "v_FPBookingNumber",
             "b_status",
+            "b_status_category",
             "dme_status_detail",
             "dme_status_action",
             "s_21_ActualDeliveryTimeStamp",
+            "s_06_Estimated_Delivery_TimeStamp",
             "z_pod_url",
             "z_pod_signed_url",
             "delivery_kpi_days",
@@ -1593,6 +1595,7 @@ class BookingsViewSet(viewsets.ViewSet):
             "gap_ras",
             "s_05_LatestPickUpDateTimeFinal",
             "b_booking_Notes",
+            "z_CreatedTimestamp",
         )
 
         build_xls_and_send(

@@ -218,6 +218,18 @@ def get_sydney_now_time(return_type="char"):
         return sydney_now.strftime("%Y-%m-%d")
 
 
+def get_utc_now_time(return_type="char"):
+    utc_tz = pytz.timezone("UTC")
+    utc_now = datetime.now().replace(microsecond=0).astimezone(utc_tz)
+
+    if return_type == "char":
+        return utc_now.strftime("%Y-%m-%d %H:%M:%S")
+    elif return_type == "datetime":
+        return utc_now
+    elif return_type == "date-char":
+        return utc_now.strftime("%Y-%m-%d")
+
+
 def get_available_bookings(mysqlcon, booking_ids):
     where_clause = " WHERE "
     for id in booking_ids:
