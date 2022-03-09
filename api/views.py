@@ -1572,7 +1572,7 @@ class BookingsViewSet(viewsets.ViewSet):
             "dme_status_detail",
             "dme_status_action",
             "s_21_ActualDeliveryTimeStamp",
-            "s_06_Estimated_Delivery_TimeStamp",
+            "s_06_Latest_Delivery_Date_TimeSet",
             "z_pod_url",
             "z_pod_signed_url",
             "delivery_kpi_days",

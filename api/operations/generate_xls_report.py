@@ -1511,7 +1511,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                         "On Board for Delivery",
                         "Scanned into depot",
                     ]
-                ).order_by("s_06_Estimated_Delivery_TimeStamp")
+                ).order_by("s_06_Latest_Delivery_Date_TimeSet")
             # 3 "Statuses to Review" with statuses (Futile Pickup. Futile Delivery, Lost in Transit, On Hold, Partial Delivery) (Sort by Status name then ETA)
             elif index == 2:
                 worksheet = workbook.add_worksheet("Statuses to Review")
@@ -1523,7 +1523,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                         "On Hold",
                         "Partial Delivery",
                     ]
-                ).order_by("b_status", "s_06_Estimated_Delivery_TimeStamp")
+                ).order_by("b_status", "s_06_Latest_Delivery_Date_TimeSet")
             # 3 "Statuses to Review" with statuses (Futile Pickup. Futile Delivery, Lost in Transit, On Hold, Partial Delivery) (Sort by Status name then ETA)
             elif index == 3:
                 worksheet = workbook.add_worksheet("Housekeeping")
