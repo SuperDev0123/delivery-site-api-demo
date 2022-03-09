@@ -1544,7 +1544,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.set_column(0, 50, width=25)
             worksheet.set_column(7, 9, width=50)
             worksheet.set_column(10, 10, width=70)
-            worksheets.append(worksheet)
 
             fields = [
                 ["b_bookingID_Visual", bold],
