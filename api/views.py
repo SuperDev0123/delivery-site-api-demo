@@ -935,7 +935,10 @@ class BookingsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(Q(z_label_url__isnull=True) | Q(z_label_url=""))
         elif active_tab_index == 3:  # To manifest
             # BioPak
-            if client.dme_account_num == "7EAA4B16-484B-3944-902E-BC936BFEF535":
+            if (
+                client
+                and client.dme_account_num == "7EAA4B16-484B-3944-902E-BC936BFEF535"
+            ):
                 queryset = queryset.filter(b_status="Booked").filter(
                     Q(z_manifest_url__isnull=True) | Q(z_manifest_url="")
                 )
