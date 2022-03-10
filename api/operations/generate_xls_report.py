@@ -1548,7 +1548,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.set_column(10, 10, width=70)
 
             # Set the autofilter.
-            worksheet.autofilter("A1:AA5000")
+            worksheet.autofilter("A1:CC5000")
 
             fields = [
                 ["b_bookingID_Visual", bold],
