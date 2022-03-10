@@ -348,6 +348,7 @@ class Fp_freight_providers(models.Model):
     service_cutoff_time = models.TimeField(default=None, blank=True, null=True)
     rule_type = models.ForeignKey(RuleTypes, on_delete=models.CASCADE, null=True)
     hex_color_code = models.CharField(max_length=6, blank=True, null=True)
+    category = models.CharField(max_length=64, blank=True, null=True, default=None)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -366,7 +367,6 @@ class Fp_freight_providers(models.Model):
         blank=True,
         auto_now=True,
     )
-    hex_color_code = models.CharField(max_length=6, blank=True, null=True)
 
     class Meta:
         db_table = "fp_freight_providers"
@@ -5338,3 +5338,71 @@ class DMEBookingCSNote(models.Model):
 
     class Meta:
         db_table = "dme_booking_cs_note"
+
+
+class Linehaul(models.Model):
+    id = models.AutoField(primary_key=True)
+    number = models.CharField(max_length=32, blank=True, null=True, default=None)
+    code = models.CharField(max_length=128, blank=True, null=True, default=None)
+    vehicle = models.CharField(max_length=128, blank=True, null=True, default=None)
+    provider = models.CharField(max_length=128, blank=True, null=True, default=None)
+    suburb_from = models.CharField(max_length=32, blank=True, null=True, default=None)
+    suburb_to = models.CharField(max_length=32, blank=True, null=True, default=None)
+    linehaul_booked_date = models.DateTimeField(null=True)
+    departure_date_planned = models.DateTimeField(null=True)
+    arrival_date_planned = models.DateTimeField(null=True)
+    arrival_date_actual = models.DateTimeField(null=True)
+    inv_linehaul_cost_ex_gst = models.FloatField(blank=True, null=True)
+    guarantor = models.CharField(max_length=64, blank=True, null=True, default=None)
+    guaranteed_fill_percent = models.FloatField(blank=True, null=True)
+    notes = models.CharField(max_length=255, blank=True, null=True, default=None)
+    status = models.CharField(max_length=64, blank=True, null=True, default=None)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"),
+        null=True,
+        blank=True,
+        auto_now_add=True,
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        auto_now=True,
+    )
+
+    class Meta:
+        db_table = "dme_linehauls"
+
+
+class LinehaulOrder(models.Model):
+    id = models.AutoField(primary_key=True)
+    linehaul = models.ForeignKey(Linehaul, on_delete=models.CASCADE)
+    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    quote = models.ForeignKey(API_booking_quotes, on_delete=models.CASCADE)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"),
+        null=True,
+        blank=True,
+        auto_now_add=True,
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        auto_now=True,
+    )
+
+    class Meta:
+        db_table = "dme_linehaul_orders"
