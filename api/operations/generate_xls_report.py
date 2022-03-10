@@ -1549,16 +1549,17 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["b_bookingID_Visual", bold],
                 ["b_dateBookedDate(Date)", bold],
                 ["fp_received_date_time/b_given_to_transport_date_time", bold],
-                ["delivery_actual_kpi_days", bold],
+                ["delivery_kpi_days", bold],
                 ["z_calculated_ETA", bold],
+                ["s_21_Actual_Delivery_TimeStamp", bold],
+                ["delivery_actual_kpi_days", bold],
+                ["Delivery Days Early / Late ", red_bold],
+                ["delivery_days_from_booked", bold],
                 ["Pickup Days Late", red_bold],
                 ["Query With", bold],
-                ["s_21_Actual_Delivery_TimeStamp", bold],
                 ["b_client_sales_inv_num", bold],
                 ["vx_freight_provider", bold],
-                ["delivery_days_from_booked", bold],
                 ["v_FPBookingNumber", bold],
-                ["Delivery Days Early / Late ", red_bold],
                 ["b_status", bold],
                 ["b_status_category", bold],
                 ["dme_status_detail", bold],
@@ -1566,9 +1567,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["b_booking_Notes", bold],
                 ["", bold],
                 ["e_qty", bold],
-                ["e_qty_scanned_fp_total", bold],
-                ["Booked to Scanned Variance", bold],
-                ["b_fp_qty_delivered", bold],
+                # ["e_qty_scanned_fp_total", bold],
+                # ["Booked to Scanned Variance", bold],
+                # ["b_fp_qty_delivered", bold],
                 ["pu_Address_State", bold],
                 ["business_group", bold],
                 ["deToCompanyName", bold],
@@ -1579,7 +1580,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["zc_pod_or_no_pod", bold],
                 ["z_pod_url", bold],
                 ["z_pod_signed_url", bold],
-                ["delivery_kpi_days", bold],
                 ["fp_store_event_date", bold],
                 ["fp_store_event_desc", bold],
             ]
@@ -1587,16 +1587,17 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["Booking ID", bold],
                 ["Booked Date", bold],
                 ["Given to / Received by Transport", bold],
-                ["Actual Delivery KPI (Days)", bold],
+                ["Target Delivery KPI (Days)", bold],
                 ["Calculated ETA", bold],
+                ["Actual Delivery", bold],
+                ["Actual Delivery KPI (Days)", bold],
+                ["Delivery Days Early / Late", red_bold],
+                ["Delivery Days from Booked", bold],
                 ["Pickup Days Late", red_bold],
                 ["Query With", bold],
-                ["Actual Delivery", bold],
                 ["Client Sales Invoice", bold],
                 ["Freight Provider", bold],
-                ["Delivery Days from Booked", bold],
                 ["Consignment No", bold],
-                ["Delivery Days Early / Late", red_bold],
                 ["Status", bold],
                 ["Status Category", bold],
                 ["Status Detail", bold],
@@ -1607,9 +1608,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     red_bold,
                 ],
                 ["Qty Booked", bold],
-                ["Qty Scanned", bold],
-                ["Booked to Scanned Variance", bold],
-                ["Total Delivered", bold],
+                # ["Qty Scanned", bold],
+                # ["Booked to Scanned Variance", bold],
+                # ["Total Delivered", bold],
                 ["From State", bold],
                 ["To Entity Group Name", bold],
                 ["To Entity", bold],
@@ -1620,7 +1621,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["POD?", bold],
                 ["POD LINK", bold],
                 ["POD Signed on Glass Link", bold],
-                ["Target Delivery KPI (Days)", bold],
                 ["1st Contact For Delivery Booking Date", bold],
                 ["FP Store Activity Description", bold],
             ]
@@ -1691,16 +1691,56 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 else:
                     row.append(["", None])
 
+                # "Target Delivery KPI (Days)"
+                if booking.api_booking_quote:
+                    etd_in_hour = get_etd_in_hour(booking.api_booking_quote)
+
+                    if etd_in_hour:
+                        etd_in_days = math.ceil(etd_in_hour / 24)
+                        row.append([etd_in_days, None])
+                    else:
+                        row.append(["", None])
+                else:
+                    row.append([booking.delivery_kpi_days, None])
+
+                # "Calculated ETA"
+                if booking.z_calculated_ETA:
+                    value = convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA)
+                    row.append([value, date_format])
+                else:
+                    row.append(["", None])
+
+                # "Actual Delivery"
+                if booking.s_21_Actual_Delivery_TimeStamp:
+                    value = convert_to_AU_SYDNEY_tz(
+                        booking.s_21_Actual_Delivery_TimeStamp
+                    )
+                    row.append([value, date_format])
+                else:
+                    value = ""
+                    row.append([value, None])
+
                 # Actual Delivery KPI (Days)
                 if actual_delivery_days:
                     row.append([actual_delivery_days, None])
                 else:
                     row.append(["", None])
 
-                # "Calculated ETA"
-                if booking.z_calculated_ETA:
-                    value = convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA)
-                    row.append([value, date_format])
+                # Delivery Days Early / Late (Number of Days early / late - 1 above minus 2 above)
+                if actual_delivery_days != None and kpi_delivery_days != None:
+                    if (actual_delivery_days - kpi_delivery_days) < 0:
+                        cell_format = workbook.add_format({"font_color": "red"})
+                        value = f"{kpi_delivery_days-actual_delivery_days}"
+                        row.append([value, cell_format])
+                    else:
+                        value = actual_delivery_days - kpi_delivery_days
+                        row.append([value, None])
+                else:
+                    row.append(["", None])
+
+                # Delivery Days from Booked
+                if kpi_delivery_days:
+                    row.append([kpi_delivery_days, None])
                 else:
                     row.append(["", None])
 
@@ -1747,42 +1787,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     query_with = booking.dme_status_action
                 row.append([query_with, None])
 
-                # "Actual Delivery"
-                if booking.s_21_Actual_Delivery_TimeStamp:
-                    value = convert_to_AU_SYDNEY_tz(
-                        booking.s_21_Actual_Delivery_TimeStamp
-                    )
-                    row.append([value, date_format])
-                else:
-                    value = ""
-                    row.append([value, None])
-
                 # "Client Sales Invoice"
                 row.append([booking.b_client_sales_inv_num, None])
 
                 # "Freight Provider"
                 row.append([booking.vx_freight_provider, None])
 
-                # Delivery Days from Booked
-                if kpi_delivery_days:
-                    row.append([kpi_delivery_days, None])
-                else:
-                    row.append(["", None])
-
                 # "Consignment No"
                 row.append([booking.v_FPBookingNumber, None])
-
-                # Number of Days early / late - 1 above minus 2 above
-                if actual_delivery_days != None and kpi_delivery_days != None:
-                    if (actual_delivery_days - kpi_delivery_days) < 0:
-                        cell_format = workbook.add_format({"font_color": "red"})
-                        value = f"{kpi_delivery_days-actual_delivery_days}"
-                        row.append([value, cell_format])
-                    else:
-                        value = actual_delivery_days - kpi_delivery_days
-                        row.append([value, None])
-                else:
-                    row.append(["", None])
 
                 # "Status"
                 row.append([booking.b_status, None])
@@ -1807,14 +1819,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 # "Qty Booked"
                 row.append([e_qty_total, None])
 
-                # "Qty Scanned"
-                row.append([e_qty_scanned_fp_total, None])
+                # # "Qty Scanned"
+                # row.append([e_qty_scanned_fp_total, None])
 
-                # "Booked to Scanned Variance"
-                row.append([e_qty_total - e_qty_scanned_fp_total, None])
+                # # "Booked to Scanned Variance"
+                # row.append([e_qty_total - e_qty_scanned_fp_total, None])
 
-                # "Total Delivered"
-                row.append([booking.b_fp_qty_delivered, None])
+                # # "Total Delivered"
+                # row.append([booking.b_fp_qty_delivered, None])
 
                 # "From State"
                 row.append([booking.pu_Address_State, None])
@@ -1868,18 +1880,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 else:
                     url, string = "", ""
                 row.append([url, "url", string])
-
-                # "Target Delivery KPI (Days)"
-                if booking.api_booking_quote:
-                    etd_in_hour = get_etd_in_hour(booking.api_booking_quote)
-
-                    if etd_in_hour:
-                        etd_in_days = math.ceil(etd_in_hour / 24)
-                        row.append([etd_in_days, None])
-                    else:
-                        row.append(["", None])
-                else:
-                    row.append([booking.delivery_kpi_days, None])
 
                 # "1st Contact For Delivery Booking Date"
                 if booking.fp_store_event_date:
