@@ -3,7 +3,7 @@ import math
 import logging
 import shutil
 import xlsxwriter as xlsxwriter
-from datetime import datetime
+from datetime import datetime, date, timedelta, time
 from django.db.models import Q
 
 from django.conf import settings
@@ -1541,9 +1541,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 for booking in housekeeping_bookings:
                     if (utc_now - booking.z_CreatedTimestamp).days > 5:
                         filtered_bookings.append(booking)
+
+            # Set the column width
             worksheet.set_column(0, 50, width=25)
             worksheet.set_column(7, 9, width=50)
             worksheet.set_column(10, 10, width=70)
+
+            # Set the autofilter.
+            worksheet.autofilter("A1:AA5000")
 
             fields = [
                 ["b_bookingID_Visual", bold],
@@ -1678,37 +1683,48 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     row.append(["", None])
 
                 # "Given to / Received by Transport"
+                c_value = None
                 if booking.fp_received_date_time:
                     value = convert_to_AU_SYDNEY_tz(
                         booking.fp_received_date_time
                     ).date()
+                    c_value = value
                     row.append([value, date_format])
                 elif booking.b_given_to_transport_date_time:
                     value = convert_to_AU_SYDNEY_tz(
                         booking.b_given_to_transport_date_time
                     ).date()
+                    c_value = value
                     row.append([value, date_format])
                 else:
                     row.append(["", None])
 
                 # "Target Delivery KPI (Days)"
+                d_value = 0
                 if booking.api_booking_quote:
                     etd_in_hour = get_etd_in_hour(booking.api_booking_quote)
 
                     if etd_in_hour:
                         etd_in_days = math.ceil(etd_in_hour / 24)
+                        d_value = etd_in_days or 0
                         row.append([etd_in_days, None])
                     else:
                         row.append(["", None])
                 else:
+                    d_value = booking.delivery_kpi_days or 0
                     row.append([booking.delivery_kpi_days, None])
 
                 # "Calculated ETA"
-                if booking.z_calculated_ETA:
-                    value = convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA)
-                    row.append([value, date_format])
-                else:
+                # if booking.z_calculated_ETA:
+                #     value = convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA)
+                #     row.append([value, date_format])
+                # else:
+                #     row.append(["", None])
+
+                if not c_value:
                     row.append(["", None])
+                else:
+                    value = c_value + timedelta(days=d_value)
 
                 # "Actual Delivery"
                 if booking.s_21_Actual_Delivery_TimeStamp:
