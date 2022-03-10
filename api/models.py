@@ -12,6 +12,7 @@ from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import User
 from django.dispatch import receiver
+from api.helpers.cubic import get_cubic_meter
 
 from api.common import trace_error, constants as dme_constants
 
@@ -2340,7 +2341,16 @@ class Booking_lines(models.Model):
             cls = self.__class__
             old = cls.objects.get(pk=self.pk)
             new = self
-
+            new.e_1_Total_dimCubicMeter = round(
+                get_cubic_meter(
+                    new.e_dimLength,
+                    new.e_dimWidth,
+                    new.e_dimHeight,
+                    new.e_dimUOM,
+                    new.e_qty,
+                ),
+                5
+            )
             changed_fields = []
             for field in cls._meta.get_fields():
                 field_name = field.name
