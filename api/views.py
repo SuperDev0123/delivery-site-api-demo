@@ -1868,19 +1868,18 @@ class BookingsViewSet(viewsets.ViewSet):
         clientname = get_client_name(self.request)
 
         if clientname in ["Jason L", "BioPak", "dme"]:
-            sydney_now = get_sydney_now_time("datetime")
-            last_date = datetime.now()
-            first_date = (sydney_now - timedelta(days=10)).date()
-            bookings_with_manifest = Bookings.objects.exclude(
-                manifest_timestamp__isnull=True
-            ).filter(manifest_timestamp__range=(first_date, last_date))
+            bookings_with_manifest = Bookings.objects.prefetch_related(
+                "fk_client_warehouse"
+            ).exclude(manifest_timestamp__isnull=True)
 
             if clientname != "dme":
                 bookings_with_manifest = bookings_with_manifest.filter(
                     b_client_name=clientname
                 )
 
-            bookings_with_manifest.order_by("-manifest_timestamp")
+            bookings_with_manifest.order_by("-manifest_timestamp").only(
+                "z_manifest_url", "manifest_timestamp"
+            )
             manifest_dates = bookings_with_manifest.values_list(
                 "manifest_timestamp", flat=True
             ).distinct()
@@ -1901,13 +1900,13 @@ class BookingsViewSet(viewsets.ViewSet):
                 result["warehouse_name"] = first_booking.fk_client_warehouse.name
                 result["manifest_date"] = manifest_date
                 results.append(result)
+
+            return JsonResponse({"results": results})
         else:
             return JsonResponse(
                 {"message": "You have no permission to see this information"},
                 status=400,
             )
-
-        return JsonResponse({"results": results})
 
     @action(detail=False, methods=["get"])
     def get_project_names(self, request, format=None):
