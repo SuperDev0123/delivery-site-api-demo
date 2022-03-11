@@ -1868,16 +1868,21 @@ class BookingsViewSet(viewsets.ViewSet):
         clientname = get_client_name(self.request)
 
         if clientname in ["Jason L", "BioPak", "dme"]:
-            bookings_with_manifest = Bookings.objects.prefetch_related(
-                "fk_client_warehouse"
-            ).exclude(manifest_timestamp__isnull=True)
+            sydney_now = get_sydney_now_time("datetime")
+            last_date = datetime.now()
+            first_date = (sydney_now - timedelta(days=60)).date()
+            bookings_with_manifest = (
+                Bookings.objects.prefetch_related("fk_client_warehouse")
+                .exclude(manifest_timestamp__isnull=True)
+                .filter(manifest_timestamp__range=(first_date, last_date))
+            )
 
             if clientname != "dme":
                 bookings_with_manifest = bookings_with_manifest.filter(
                     b_client_name=clientname
                 )
 
-            bookings_with_manifest.order_by("-manifest_timestamp").only(
+            bookings_with_manifest.order_by("manifest_timestamp").only(
                 "z_manifest_url", "manifest_timestamp"
             )
             manifest_dates = bookings_with_manifest.values_list(
