@@ -23,5 +23,6 @@ class Command(BaseCommand):
                 booking_line.e_dimHeight,
                 booking_line.e_dimUOM,
             )
-        bulk_update(booking_lines)
+        update_row_count = bulk_update(booking_lines)
+        print("e_1_Total_dimCubicMeter updated on {update_row_count} of rows")
         
