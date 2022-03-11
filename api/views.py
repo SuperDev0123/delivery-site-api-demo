@@ -1882,9 +1882,9 @@ class BookingsViewSet(viewsets.ViewSet):
                     b_client_name=clientname
                 )
 
-            bookings_with_manifest.order_by("manifest_timestamp").only(
-                "z_manifest_url", "manifest_timestamp"
-            )
+            bookings_with_manifest = bookings_with_manifest.order_by(
+                "manifest_timestamp"
+            ).only("z_manifest_url", "manifest_timestamp")
             manifest_dates = bookings_with_manifest.values_list(
                 "manifest_timestamp", flat=True
             ).distinct()
