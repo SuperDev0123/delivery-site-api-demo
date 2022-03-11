@@ -284,10 +284,13 @@ def select_best_options(pricings, client=None):
     lowest_pricing = _get_lowest_price(pricings, client)
     fastest_pricing = _get_fastest_price(pricings)
 
-    if lowest_pricing.pk == fastest_pricing.pk:
-        return [lowest_pricing]
+    if lowest_pricing and fastest_pricing:
+        if lowest_pricing.pk == fastest_pricing.pk:
+            return [lowest_pricing]
+        else:
+            return [lowest_pricing, fastest_pricing]
     else:
-        return [lowest_pricing, fastest_pricing]
+        return []
 
 
 def auto_select_pricing(booking, pricings, auto_select_type, client=None):
