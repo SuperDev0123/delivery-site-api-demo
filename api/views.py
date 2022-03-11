@@ -1883,7 +1883,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 )
 
             bookings_with_manifest = bookings_with_manifest.order_by(
-                "manifest_timestamp"
+                "-manifest_timestamp"
             ).only("z_manifest_url", "manifest_timestamp")
             manifest_dates = bookings_with_manifest.values_list(
                 "manifest_timestamp", flat=True
