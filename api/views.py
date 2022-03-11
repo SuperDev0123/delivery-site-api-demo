@@ -1870,7 +1870,7 @@ class BookingsViewSet(viewsets.ViewSet):
         if clientname in ["Jason L", "BioPak", "dme"]:
             sydney_now = get_sydney_now_time("datetime")
             last_date = datetime.now()
-            first_date = (sydney_now - timedelta(days=60)).date()
+            first_date = (sydney_now - timedelta(days=660)).date()
             bookings_with_manifest = (
                 Bookings.objects.prefetch_related("fk_client_warehouse")
                 .exclude(manifest_timestamp__isnull=True)
@@ -1884,7 +1884,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
             bookings_with_manifest = bookings_with_manifest.order_by(
                 "-manifest_timestamp"
-            ).only("z_manifest_url", "manifest_timestamp")
+            ).only("b_bookingID_Visual", "z_manifest_url", "manifest_timestamp")
             manifest_dates = bookings_with_manifest.values_list(
                 "manifest_timestamp", flat=True
             ).distinct()
@@ -1894,16 +1894,19 @@ class BookingsViewSet(viewsets.ViewSet):
                 result = {}
                 daily_count = 0
                 first_booking = None
+                b_bookingID_Visuals = []
 
                 for booking in bookings_with_manifest:
                     if booking.manifest_timestamp == manifest_date:
                         first_booking = booking
                         daily_count += 1
+                        b_bookingID_Visuals.append(booking.b_bookingID_Visual)
 
                 result["count"] = daily_count
                 result["z_manifest_url"] = first_booking.z_manifest_url
                 result["warehouse_name"] = first_booking.fk_client_warehouse.name
                 result["manifest_date"] = manifest_date
+                result["b_bookingID_Visuals"] = b_bookingID_Visuals
                 results.append(result)
 
             return JsonResponse({"results": results})
