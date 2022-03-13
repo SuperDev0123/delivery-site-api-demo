@@ -2352,19 +2352,22 @@ class Booking_lines(models.Model):
             kwargs["update_fields"] = changed_fields
 
         if not creating and self.picked_up_timestamp:
-            booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+            try:
+                booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
 
-            if "plum" in booking.b_client_name.lower():
-                booking_lines = Booking_lines.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                ).exclude(pk=self.pk)
-                booking_lines_cnt = booking_lines.count()
-                picked_up_lines_cnt = booking_lines.filter(
-                    picked_up_timestamp__isnull=False
-                ).count()
+                if "plum" in booking.b_client_name.lower():
+                    booking_lines = Booking_lines.objects.filter(
+                        fk_booking_id=booking.pk_booking_id
+                    ).exclude(pk=self.pk)
+                    booking_lines_cnt = booking_lines.count()
+                    picked_up_lines_cnt = booking_lines.filter(
+                        picked_up_timestamp__isnull=False
+                    ).count()
 
-                if booking_lines_cnt - 1 == picked_up_lines_cnt:
-                    status_history.create(booking, "Ready for Booking", "DME_BE")
+                    if booking_lines_cnt - 1 == picked_up_lines_cnt:
+                        status_history.create(booking, "Ready for Booking", "DME_BE")
+            except:
+                pass
 
         return super(Booking_lines, self).save(*args, **kwargs)
 
