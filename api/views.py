@@ -2015,13 +2015,14 @@ class BookingsViewSet(viewsets.ViewSet):
                     )
                     result[booking.vx_freight_provider][
                         "totalCubicMeter"
-                    ] += get_cubic_meter(
-                        booking_line.e_dimLength,
-                        booking_line.e_dimWidth,
-                        booking_line.e_dimHeight,
-                        booking_line.e_dimUOM,
-                        booking_line.e_qty,
-                    )
+                    ] += booking_line.e_1_Total_dimCubicMeter
+                    # get_cubic_meter(
+                    #     booking_line.e_dimLength,
+                    #     booking_line.e_dimWidth,
+                    #     booking_line.e_dimHeight,
+                    #     booking_line.e_dimUOM,
+                    #     booking_line.e_qty,
+                    # )
 
         return JsonResponse(result, status=200)
 
