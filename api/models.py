@@ -2338,11 +2338,11 @@ class Booking_lines(models.Model):
         self.z_modifiedTimeStamp = datetime.now()
         self.e_1_Total_dimCubicMeter = round(
             get_cubic_meter(
-                new.e_dimLength,
-                new.e_dimWidth,
-                new.e_dimHeight,
-                new.e_dimUOM,
-                new.e_qty,
+                self.e_dimLength,
+                self.e_dimWidth,
+                self.e_dimHeight,
+                self.e_dimUOM,
+                self.e_qty,
             ),
             5,
         )
