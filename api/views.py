@@ -3257,10 +3257,11 @@ class BookingLineDetailsViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["delete"])
     def delete_booking_line_detail(self, request, pk, format=None):
         booking_line_detail = Booking_lines_data.objects.get(pk=pk)
+        serializer = BookingLineDetailSerializer(booking_line_detail)
 
         try:
             booking_line_detail.delete()
-            return JsonResponse({"Deleted BookingLineDetail ": booking_line_detail})
+            return JsonResponse({"Deleted BookingLineDetail ": serializer.data})
         except Exception as e:
             trace_error.print()
             logger.error(f"#331 - booking lines data delete: {str(e)}")
