@@ -1914,6 +1914,7 @@ class Bookings(models.Model):
     booking_type = models.CharField(
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
+    selected = models.BooleanField(default=None, null=True)
 
     class Meta:
         db_table = "dme_bookings"
