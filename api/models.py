@@ -1,5 +1,6 @@
 import pytz
 import logging
+import math
 from datetime import datetime, date, timedelta, time
 
 from django.utils import timezone
@@ -12,7 +13,7 @@ from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import User
 from django.dispatch import receiver
-from api.helpers.cubic import get_cubic_meter
+from api.helpers.cubic import get_cubic_meter, getM3ToKgFactor
 
 from api.common import trace_error, constants as dme_constants
 
@@ -2347,6 +2348,20 @@ class Booking_lines(models.Model):
             5,
         )
 
+        booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+        if booking:
+            m3ToKgFactor = getM3ToKgFactor(
+                booking.vx_freight_provider,
+                self.e_dimLength,
+                self.e_dimWidth,
+                self.e_dimHeight,
+                self.e_weightPerEach,
+                self.e_dimUOM,
+                self.e_weightUOM
+            )
+
+            self.total_2_cubic_mass_factor_calc = math.ceil(self.e_1_Total_dimCubicMeter * m3ToKgFactor)
+
         if self.pk:
             cls = self.__class__
             old = cls.objects.get(pk=self.pk)
@@ -2363,8 +2378,6 @@ class Booking_lines(models.Model):
 
         if not creating and self.picked_up_timestamp:
             try:
-                booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
-
                 if "plum" in booking.b_client_name.lower():
                     booking_lines = Booking_lines.objects.filter(
                         fk_booking_id=booking.pk_booking_id
