@@ -2336,21 +2336,21 @@ class Booking_lines(models.Model):
         # Check if all other lines are picked at Warehouse
         creating = self._state.adding
         self.z_modifiedTimeStamp = datetime.now()
+        self.e_1_Total_dimCubicMeter = round(
+            get_cubic_meter(
+                new.e_dimLength,
+                new.e_dimWidth,
+                new.e_dimHeight,
+                new.e_dimUOM,
+                new.e_qty,
+            ),
+            5,
+        )
 
         if self.pk:
             cls = self.__class__
             old = cls.objects.get(pk=self.pk)
             new = self
-            new.e_1_Total_dimCubicMeter = round(
-                get_cubic_meter(
-                    new.e_dimLength,
-                    new.e_dimWidth,
-                    new.e_dimHeight,
-                    new.e_dimUOM,
-                    new.e_qty,
-                ),
-                5
-            )
             changed_fields = []
             for field in cls._meta.get_fields():
                 field_name = field.name
