@@ -31,7 +31,12 @@ def _extract(fp_name, consignmentStatus):
         status_desc = consignmentStatus.get("statusDescription")
         event_time = consignmentStatus["statusUpdate"]
         # is_UTC = len(event_time) == 19
-        event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
+
+        if len(event_time) > 18:
+            event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
+        else:
+            event_time = datetime.strptime(event_time[:16], "%Y-%m-%dT%H:%M")
+
         event_time = str(convert_to_UTC_tz(event_time))
     else:
         event_time = None
@@ -68,7 +73,12 @@ def _extract_bulk(fp_name, consignmentStatuses):
             status_desc = consignmentStatus.get("statusDescription")
             event_time = consignmentStatus["statusUpdate"]
             # is_UTC = len(event_time) == 19
-            event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
+
+            if len(event_time) > 18:
+                event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
+            else:
+                event_time = datetime.strptime(event_time[:16], "%Y-%m-%dT%H:%M")
+
             event_time = str(convert_to_UTC_tz(event_time))
         else:
             event_time = None
