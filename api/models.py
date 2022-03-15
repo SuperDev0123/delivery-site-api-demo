@@ -2095,6 +2095,19 @@ class Bookings(models.Model):
             old = cls.objects.get(pk=self.pk)
             new = self
 
+            if (
+                old.vx_freight_provider != new.vx_freight_provider
+                and new.vx_freight_provider == "Deliver-ME"
+                and not new.b_booking_project
+            ):
+                self.b_booking_project = "not assigned yet"
+            elif (
+                old.vx_freight_provider != new.vx_freight_provider
+                and old.vx_freight_provider == "Deliver-ME"
+                and new.b_booking_project == "not assigned yet"
+            ):
+                self.b_booking_project = None
+
             changed_fields = []
             for field in cls._meta.get_fields():
                 field_name = field.name
