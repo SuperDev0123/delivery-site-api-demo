@@ -35,7 +35,7 @@ def _extract(fp_name, consignmentStatus):
         if len(event_time) > 18:
             event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
         else:
-            event_time = datetime.strptime(event_time[:16], "%Y-%m-%dT%H:%M")
+            event_time = datetime.strptime(event_time[:16], "%Y-%m-%d %H:%M")
 
         event_time = str(convert_to_UTC_tz(event_time))
     else:
@@ -77,7 +77,7 @@ def _extract_bulk(fp_name, consignmentStatuses):
             if len(event_time) > 18:
                 event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
             else:
-                event_time = datetime.strptime(event_time[:16], "%Y-%m-%dT%H:%M")
+                event_time = datetime.strptime(event_time[:16], "%Y-%m-%d %H:%M")
 
             event_time = str(convert_to_UTC_tz(event_time))
         else:
