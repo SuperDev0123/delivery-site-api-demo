@@ -2367,7 +2367,7 @@ class Booking_lines(models.Model):
         )
         if bookings:
             m3ToKgFactor = getM3ToKgFactor(
-                booking[0].vx_freight_provider,
+                bookings[0].vx_freight_provider,
                 self.e_dimLength,
                 self.e_dimWidth,
                 self.e_dimHeight,
