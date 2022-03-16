@@ -34,13 +34,19 @@ class Command(BaseCommand):
         print("----- Calculating cubic meter... -----")
         update_row_count = 0
         for index, booking_line in enumerate(booking_lines):
-            booking = Bookings.objects.filter(pk_booking_id=booking_line.fk_booking_id).only("vx_freight_provider").first()
-            if (not booking):
+            booking = (
+                Bookings.objects.filter(pk_booking_id=booking_line.fk_booking_id)
+                .only("vx_freight_provider")
+                .first()
+            )
+            if not booking:
                 continue
             if (index + 1) % 1000 == 0:
                 print(f"Processed {index + 1}/{fetched_row_count} lines")
 
-            old_total_2_cubic_mass_factor_calc = booking_line.total_2_cubic_mass_factor_calc
+            old_total_2_cubic_mass_factor_calc = (
+                booking_line.total_2_cubic_mass_factor_calc
+            )
             m3ToKgFactor = getM3ToKgFactor(
                 booking.vx_freight_provider,
                 booking_line.e_dimLength,
@@ -51,11 +57,18 @@ class Command(BaseCommand):
                 booking_line.e_weightUOM,
             )
 
-            self.total_2_cubic_mass_factor_calc = math.ceil(booking_line.e_1_Total_dimCubicMeter * m3ToKgFactor)
+            booking_line.total_2_cubic_mass_factor_calc = math.ceil(
+                booking_line.e_1_Total_dimCubicMeter * m3ToKgFactor
+            )
 
-            if old_total_2_cubic_mass_factor_calc != booking_line.total_2_cubic_mass_factor_calc:
+            if (
+                old_total_2_cubic_mass_factor_calc
+                != booking_line.total_2_cubic_mass_factor_calc
+            ):
                 update_row_count += 1
                 booking_line.save()
 
-        print(f"\n'total_2_cubic_mass_factor_calc' updated on {update_row_count} of rows")
+        print(
+            f"\n'total_2_cubic_mass_factor_calc' updated on {update_row_count} of rows"
+        )
         print("\n----- Finished! -----")

@@ -2362,19 +2362,23 @@ class Booking_lines(models.Model):
             5,
         )
 
-        booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
-        if booking:
+        bookings = Bookings.objects.filter(pk_booking_id=self.fk_booking_id).only(
+            "vx_freight_provider"
+        )
+        if bookings:
             m3ToKgFactor = getM3ToKgFactor(
-                booking.vx_freight_provider,
+                booking[0].vx_freight_provider,
                 self.e_dimLength,
                 self.e_dimWidth,
                 self.e_dimHeight,
                 self.e_weightPerEach,
                 self.e_dimUOM,
-                self.e_weightUOM
+                self.e_weightUOM,
             )
 
-            self.total_2_cubic_mass_factor_calc = math.ceil(self.e_1_Total_dimCubicMeter * m3ToKgFactor)
+            self.total_2_cubic_mass_factor_calc = math.ceil(
+                self.e_1_Total_dimCubicMeter * m3ToKgFactor
+            )
 
         if self.pk:
             cls = self.__class__
