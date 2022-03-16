@@ -5401,6 +5401,8 @@ class Linehaul(models.Model):
     guaranteed_fill_percent = models.FloatField(blank=True, null=True)
     notes = models.CharField(max_length=255, blank=True, null=True, default=None)
     status = models.CharField(max_length=64, blank=True, null=True, default=None)
+    active = models.BooleanField(null=True, default=None)
+    paid_for_by = models.CharField(max_length=32, blank=True, null=True, default=None)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
