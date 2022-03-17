@@ -1870,7 +1870,7 @@ class BookingsViewSet(viewsets.ViewSet):
         if clientname in ["Jason L", "BioPak", "dme"]:
             sydney_now = get_sydney_now_time("datetime")
             last_date = datetime.now()
-            first_date = (sydney_now - timedelta(days=60)).date()
+            first_date = (sydney_now - timedelta(days=660)).date()
             bookings_with_manifest = (
                 Bookings.objects.prefetch_related("fk_client_warehouse")
                 .exclude(manifest_timestamp__isnull=True)
@@ -1880,7 +1880,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "b_bookingID_Visual",
                     "z_manifest_url",
                     "manifest_timestamp",
-                    "freight_provider",
+                    "vx_freight_provider",
                     "kf_client_id",
                 )
             )
