@@ -1750,7 +1750,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     if not c_value or not f_value:
                         row.append(["", None])
                     else:
-                        value = busday_count(c_value.date(), f_value.date()) - 1
+                        value = busday_count(c_value, f_value.date()) - 1
 
                 # Delivery Days Early / Late
                 if booking.b_status == "Delivered":
