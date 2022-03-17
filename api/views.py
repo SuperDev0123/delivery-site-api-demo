@@ -1875,6 +1875,14 @@ class BookingsViewSet(viewsets.ViewSet):
                 Bookings.objects.prefetch_related("fk_client_warehouse")
                 .exclude(manifest_timestamp__isnull=True)
                 .filter(manifest_timestamp__range=(first_date, last_date))
+                .order_by("-manifest_timestamp")
+                .only(
+                    "b_bookingID_Visual",
+                    "z_manifest_url",
+                    "manifest_timestamp",
+                    "freight_provider",
+                    "kf_client_id",
+                )
             )
 
             if clientname != "dme":
@@ -1882,12 +1890,10 @@ class BookingsViewSet(viewsets.ViewSet):
                     b_client_name=clientname
                 )
 
-            bookings_with_manifest = bookings_with_manifest.order_by(
-                "-manifest_timestamp"
-            ).only("b_bookingID_Visual", "z_manifest_url", "manifest_timestamp")
-            manifest_dates = bookings_with_manifest.values_list(
-                "manifest_timestamp", flat=True
-            ).distinct()
+            manifest_dates = []
+            for booking in bookings_with_manifest:
+                if not booking.manifest_timestamp in manifest_dates:
+                    manifest_dates.append(booking.manifest_timestamp)
 
             results = []
             for manifest_date in manifest_dates:
