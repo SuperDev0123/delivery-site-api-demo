@@ -1908,6 +1908,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 result["manifest_date"] = manifest_date
                 result["b_bookingID_Visuals"] = b_bookingID_Visuals
                 result["freight_provider"] = first_booking.vx_freight_provider
+                result["kf_client_id"] = first_booking.kf_client_id
                 results.append(result)
 
             return JsonResponse({"results": results})
