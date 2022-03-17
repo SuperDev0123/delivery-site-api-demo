@@ -402,6 +402,7 @@ class FP_vehicles(models.Model):
         default=None,
     )
     max_mass = models.IntegerField(default=0, null=True, blank=True)
+    max_cbm = models.FloatField(default=None, null=True)  # Cubic Meter
     pallets = models.IntegerField(default=0, null=True, blank=True)
     pallet_UOM = models.CharField(
         max_length=16,
