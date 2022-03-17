@@ -1787,7 +1787,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                 if b_value and f_value:
                     # IF(NETWORKDAYS(F4;B4)>0;NETWORKDAYS(F4;B4)-1;NETWORKDAYS(F4;B4)+1)))
-                    between_f_and_b = busday_count(f_value.date(), b_value.date())
+                    between_f_and_b = busday_count(f_value.date(), b_value)
                     if between_f_and_b > 0:
                         value = between_f_and_b - 1
                     else:
