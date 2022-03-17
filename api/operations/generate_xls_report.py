@@ -1756,7 +1756,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking.b_status == "Delivered":
                     # IF(NETWORKDAYS(F2;E2)>0;NETWORKDAYS(F2;E2)-1;NETWORKDAYS(F2;E2)+1);
                     if e_value and f_value:
-                        between_e_and_f = busday_count(f_value.date(), e_value.date())
+                        between_e_and_f = busday_count(f_value.date(), e_value)
                         if between_e_and_f > 0:
                             value = between_e_and_f - 1
                         else:
@@ -1769,9 +1769,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     # IF(NETWORKDAYS(TODAY();E2)>0;NETWORKDAYS(TODAY();E2)-1;NETWORKDAYS(TODAY();E2)+1)
                     sydney_now = convert_to_AU_SYDNEY_tz(datetime.now())
                     if e_value:
-                        between_today_and_e = busday_count(
-                            sydney_now.date(), e_value.date()
-                        )
+                        between_today_and_e = busday_count(sydney_now.date(), e_value)
                         if between_today_and_e > 0:
                             value = between_today_and_e - 1
                         else:
