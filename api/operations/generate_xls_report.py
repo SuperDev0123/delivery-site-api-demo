@@ -3,9 +3,10 @@ import math
 import logging
 import shutil
 import xlsxwriter as xlsxwriter
+from numpy import busday_count
 from datetime import datetime, date, timedelta, time
-from django.db.models import Q
 
+from django.db.models import Q
 from django.conf import settings
 
 from api.models import *
@@ -1677,9 +1678,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                 # "Booked Date"
                 if booking.b_dateBookedDate and booking.b_dateBookedDate:
-                    value = convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate).date()
-                    row.append([value, date_format])
+                    b_value = convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate).date()
+                    row.append([b_value, date_format])
                 else:
+                    b_value = None
                     row.append(["", None])
 
                 # "Given to / Received by Transport"
@@ -1720,43 +1722,80 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 #     row.append([value, date_format])
                 # else:
                 #     row.append(["", None])
-
                 if not c_value:
+                    e_value = ""
                     row.append(["", None])
                 else:
-                    value = c_value + timedelta(days=d_value)
+                    e_value = c_value + timedelta(days=d_value)
+                    row.append([e_value, date_format])
 
                 # "Actual Delivery"
                 if booking.s_21_Actual_Delivery_TimeStamp:
-                    value = convert_to_AU_SYDNEY_tz(
+                    f_value = convert_to_AU_SYDNEY_tz(
                         booking.s_21_Actual_Delivery_TimeStamp
                     )
-                    row.append([value, date_format])
+                    row.append([f_value, date_format])
                 else:
-                    value = ""
-                    row.append([value, None])
+                    f_value = None
+                    row.append(["", None])
 
                 # Actual Delivery KPI (Days)
-                if actual_delivery_days:
-                    row.append([actual_delivery_days, None])
-                else:
+                # if actual_delivery_days:
+                #     row.append([actual_delivery_days, None])
+                # else:
+                #     row.append(["", None])
+                if not c_value:
                     row.append(["", None])
-
-                # Delivery Days Early / Late (Number of Days early / late - 1 above minus 2 above)
-                if actual_delivery_days != None and kpi_delivery_days != None:
-                    if (actual_delivery_days - kpi_delivery_days) < 0:
-                        cell_format = workbook.add_format({"font_color": "red"})
-                        value = f"{kpi_delivery_days-actual_delivery_days}"
-                        row.append([value, cell_format])
+                else:
+                    if not c_value or not f_value:
+                        row.append(["", None])
                     else:
-                        value = actual_delivery_days - kpi_delivery_days
+                        value = busday_count(c_value.date(), f_value.date()) - 1
+
+                # Delivery Days Early / Late
+                if booking.b_status == "Delivered":
+                    # IF(NETWORKDAYS(F2;E2)>0;NETWORKDAYS(F2;E2)-1;NETWORKDAYS(F2;E2)+1);
+                    if e_value and f_value:
+                        between_e_and_f = busday_count(f_value.date(), e_value.date())
+                        if between_e_and_f > 0:
+                            value = between_e_and_f - 1
+                        else:
+                            value = between_e_and_f + 1
+
                         row.append([value, None])
+                    else:
+                        row.append(["", None])
                 else:
-                    row.append(["", None])
+                    # IF(NETWORKDAYS(TODAY();E2)>0;NETWORKDAYS(TODAY();E2)-1;NETWORKDAYS(TODAY();E2)+1)
+                    sydney_now = convert_to_AU_SYDNEY_tz(datetime.now())
+                    if e_value:
+                        between_today_and_e = busday_count(
+                            sydney_now.date(), e_value.date()
+                        )
+                        if between_today_and_e > 0:
+                            value = between_today_and_e - 1
+                        else:
+                            value = between_today_and_e + 1
+
+                        row.append([value, None])
+                    else:
+                        row.append(["", None])
 
                 # Delivery Days from Booked
-                if kpi_delivery_days:
-                    row.append([kpi_delivery_days, None])
+                # if kpi_delivery_days:
+                #     row.append([kpi_delivery_days, None])
+                # else:
+                #     row.append(["", None])
+
+                if b_value and f_value:
+                    # IF(NETWORKDAYS(F4;B4)>0;NETWORKDAYS(F4;B4)-1;NETWORKDAYS(F4;B4)+1)))
+                    between_f_and_b = busday_count(f_value.date(), b_value.date())
+                    if between_f_and_b > 0:
+                        value = between_f_and_b - 1
+                    else:
+                        value = between_f_and_b + 1
+
+                    row.append([value, None])
                 else:
                     row.append(["", None])
 
