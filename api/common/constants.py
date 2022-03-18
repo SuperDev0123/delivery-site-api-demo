@@ -21,7 +21,7 @@ AU_STATE_ABBRS = ["NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA", "ACT"]
 PALLETS = ["PALLET", "PLT", "PAL"]
 
 # Booking fields for AllBookings table
-BOOKING_FIELDS_4_ALLBOOKING_TABLE = (
+BOOKING_FIELDS_4_ALLBOOKING_TABLE = [
     "id",
     "pk_booking_id",
     "b_bookingID_Visual",
@@ -90,4 +90,4 @@ BOOKING_FIELDS_4_ALLBOOKING_TABLE = (
     "b_booking_Priority",
     "b_booking_Category",
     "b_promo_code",
-)
+]

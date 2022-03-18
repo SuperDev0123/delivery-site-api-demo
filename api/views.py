@@ -1283,7 +1283,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     queryset = queryset.order_by(sort_field)
 
         # Assign to bookings value!
-        bookings = queryset.only(BOOKING_FIELDS_4_ALLBOOKING_TABLE)
+        bookings = queryset.only(*BOOKING_FIELDS_4_ALLBOOKING_TABLE)
 
         filtered_booking_ids = []
         for booking in queryset:

@@ -181,7 +181,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
             "cheapest_quote",
             "cost_dollar",
         )
-        fields = read_only_fields + BOOKING_FIELDS_4_ALLBOOKING_TABLE
+        fields = read_only_fields + tuple(BOOKING_FIELDS_4_ALLBOOKING_TABLE)
 
 
 class BookingSerializer(serializers.ModelSerializer):
