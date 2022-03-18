@@ -86,6 +86,8 @@ from api.outputs.email import send_email
 from api.common import status_history
 from api.common.common_times import convert_to_UTC_tz, TIME_DIFFERENCE
 from api.common.postal_code import get_postal_codes
+from api.common.booking_quote import set_booking_quote
+from api.common.constants import BOOKING_FIELDS_4_ALLBOOKING_TABLE
 from api.stats.pricing import analyse_booking_quotes_table
 from api.file_operations import (
     uploads as upload_lib,
@@ -95,7 +97,6 @@ from api.file_operations import (
 from api.file_operations.operations import doesFileExist
 from api.helpers.cubic import get_cubic_meter
 from api.convertors.pdf import pdf_merge, rotate_pdf, pdf_to_zpl
-from api.common.booking_quote import set_booking_quote
 from api.operations.packing.booking import (
     reset_repack as booking_reset_repack,
     auto_repack as booking_auto_repack,
@@ -1281,14 +1282,15 @@ class BookingsViewSet(viewsets.ViewSet):
                 else:
                     queryset = queryset.order_by(sort_field)
 
-        # Count
-        bookings_cnt = queryset.count()
+        # Assign to bookings value!
+        bookings = queryset.only(BOOKING_FIELDS_4_ALLBOOKING_TABLE)
 
         filtered_booking_ids = []
         for booking in queryset:
             filtered_booking_ids.append(booking.id)
 
-        bookings = queryset
+        # Count
+        bookings_cnt = len(filtered_booking_ids)
 
         # Pagination
         page_cnt = (
