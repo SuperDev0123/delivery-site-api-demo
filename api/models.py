@@ -1948,26 +1948,26 @@ class Bookings(models.Model):
 
         return status_histories
 
-    @property
-    def business_group(self):
-        customer_group_name = ""
-        customer_groups = Dme_utl_client_customer_group.objects.all()
+    # @property
+    # def business_group(self):
+    #     customer_group_name = ""
+    #     customer_groups = Dme_utl_client_customer_group.objects.all()
 
-        for customer_group in customer_groups:
-            if (
-                customer_group
-                and self.deToCompanyName
-                and customer_group.name_lookup.lower() in self.deToCompanyName.lower()
-            ):
-                customer_group_name = customer_group.group_name
+    #     for customer_group in customer_groups:
+    #         if (
+    #             customer_group
+    #             and self.deToCompanyName
+    #             and customer_group.name_lookup.lower() in self.deToCompanyName.lower()
+    #         ):
+    #             customer_group_name = customer_group.group_name
 
-        return customer_group_name
+    #     return customer_group_name
 
-    @property
-    def dme_delivery_status_category(self):
-        from api.fp_apis.utils import get_status_category_from_status
+    # @property
+    # def dme_delivery_status_category(self):
+    #     from api.fp_apis.utils import get_status_category_from_status
 
-        return get_status_category_from_status(self.b_status)
+    #     return get_status_category_from_status(self.b_status)
 
     def lines(self):
         return Booking_lines.objects.filter(fk_booking_id=self.pk_booking_id)
@@ -1992,23 +1992,23 @@ class Bookings(models.Model):
             logger.error(f"#552 [get_total_lines_qty] - {str(e)}")
             return 0
 
-    @property
-    def client_item_references(self):
-        try:
-            client_item_references = []
-            booking_lines = Booking_lines.objects.filter(
-                fk_booking_id=self.pk_booking_id
-            )
+    # @property
+    # def client_item_references(self):
+    #     try:
+    #         client_item_references = []
+    #         booking_lines = Booking_lines.objects.filter(
+    #             fk_booking_id=self.pk_booking_id
+    #         )
 
-            for booking_line in booking_lines:
-                if booking_line.client_item_reference is not None:
-                    client_item_references.append(booking_line.client_item_reference)
+    #         for booking_line in booking_lines:
+    #             if booking_line.client_item_reference is not None:
+    #                 client_item_references.append(booking_line.client_item_reference)
 
-            return ", ".join(client_item_references)
-        except Exception as e:
-            trace_error.print()
-            logger.error(f"#553 [client_item_references] - {str(e)}")
-            return ""
+    #         return ", ".join(client_item_references)
+    #     except Exception as e:
+    #         trace_error.print()
+    #         logger.error(f"#553 [client_item_references] - {str(e)}")
+    #         return ""
 
     @property
     def clientRefNumbers(self):

@@ -1,6 +1,7 @@
 import re
 import os
 import io
+from collections import OrderedDict
 import pytz
 import json
 import uuid
@@ -103,7 +104,7 @@ from api.operations.packing.booking import (
     manual_repack as booking_manual_repack,
 )
 from api.operations.booking.parent_child import get_run_out_bookings
-
+from api.operations.booking.line_refs import get_gapRas, get_clientRefNumbers
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -1335,10 +1336,19 @@ class BookingsViewSet(viewsets.ViewSet):
         # Sort on `remaining time` on 'Delivery Management' tab
         if active_tab_index == 6:
             bookings = sorted(bookings, key=lambda k: k["remaining_time_in_seconds"])
+        results = []
+        for booking in bookings:
+            gapRas = ('gapRas', get_gapRas(booking))
+            clientRefNumbers = ('clientRefNumbers', get_clientRefNumbers(booking))
+            items = list(booking.items())
+            items.append(gapRas)
+            items.append(clientRefNumbers)
+            booking = OrderedDict(items)
+            results.append(booking)
 
         return JsonResponse(
             {
-                "bookings": bookings,
+                "bookings": results,
                 "filtered_booking_ids": filtered_booking_ids,
                 "count": bookings_cnt,
                 "page_cnt": page_cnt,
@@ -1593,8 +1603,8 @@ class BookingsViewSet(viewsets.ViewSet):
             "inv_billing_status",
             "inv_billing_status_note",
             "b_booking_Category",
-            "clientRefNumbers",
-            "gap_ras",
+            # "clientRefNumbers",
+            # "gap_ras",
             "s_05_LatestPickUpDateTimeFinal",
             "b_booking_Notes",
             "z_CreatedTimestamp",
