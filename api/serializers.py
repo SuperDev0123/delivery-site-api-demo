@@ -172,8 +172,8 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookings
         read_only_fields = (
-            "clientRefNumbers",  # property
-            "gap_ras",  # property
+            # "clientRefNumbers",  # property
+            # "gap_ras",  # property
             "de_Deliver_By_Time",
             "remaining_time",
             "remaining_time_in_seconds",
@@ -419,10 +419,10 @@ class BookingSerializer(serializers.ModelSerializer):
             "pricing_cost",  # serializer method
             "pricing_account_code",  # serializer method
             "pricing_service_name",  # serializer method
-            "business_group",  # property
-            "client_item_references",  # property
-            "clientRefNumbers",  # property
-            "gap_ras",  # property
+            # "business_group",  # property
+            # "client_item_references",  # property
+            # "clientRefNumbers",  # property
+            # "gap_ras",  # property
             "is_auto_augmented",  # Auto Augmented
             "customer_cost",  # Customer cost (Client: Plum)
             "quote_packed_status",
@@ -508,7 +508,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "de_Deliver_By_Date",
             "de_Deliver_By_Hours",
             "de_Deliver_By_Minutes",
-            "client_item_references",
+            # "client_item_references",
             "v_service_Type",
             "vx_serviceName",
             "vx_account_code",

@@ -10,6 +10,7 @@ from django.conf import settings
 
 from api.models import *
 from api.common.common_times import convert_to_AU_SYDNEY_tz
+from api.operations.booking.line_refs import get_gapRas, get_clientRefNumbers
 
 logger = logging.getLogger(__name__)
 
@@ -1901,7 +1902,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
             worksheet.write(row, col + 1, booking.b_status)
             worksheet.write(row, col + 2, booking.b_booking_Category)
-            worksheet.write(row, col + 3, booking.gap_ras)
+            worksheet.write(row, col + 3, get_gapRas(booking))
             worksheet.write(row, col + 4, booking.get_total_lines_qty())
             worksheet.write(row, col + 5, booking.puCompany)
             worksheet.write(row, col + 6, booking.deToCompanyName)
@@ -1989,7 +1990,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             worksheet.write(row, col + 3, booking.b_status)
             worksheet.write(row, col + 4, booking.b_booking_Category)
-            worksheet.write(row, col + 5, booking.gap_ras)
+            worksheet.write(row, col + 5, get_gapRas(booking))
             worksheet.write(row, col + 6, booking.get_total_lines_qty())
             worksheet.write(row, col + 7, booking.puCompany)
             worksheet.write(row, col + 8, booking.deToCompanyName)
@@ -2070,7 +2071,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 )
 
             worksheet.write(row, col + 2, booking.b_booking_Category)
-            worksheet.write(row, col + 3, booking.clientRefNumbers)
+            worksheet.write(row, col + 3, get_clientRefNumbers(booking))
             worksheet.write(row, col + 4, booking.get_total_lines_qty())
             worksheet.write(row, col + 5, booking.puCompany)
             worksheet.write(row, col + 6, booking.deToCompanyName)
@@ -2150,7 +2151,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     date_format,
                 )
 
-            worksheet.write(row, col + 3, booking.clientRefNumbers)
+            worksheet.write(row, col + 3, get_clientRefNumbers(booking))
             worksheet.write(row, col + 4, booking.puCompany)
             worksheet.write(row, col + 5, booking.pu_Address_Suburb)
             worksheet.write(row, col + 6, booking.pu_Address_State)
@@ -2241,7 +2242,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 )
 
             worksheet.write(row, col + 2, booking.b_booking_Category)
-            worksheet.write(row, col + 3, f"{booking.gap_ras}")
+            worksheet.write(row, col + 3, f"{get_gapRas(booking)}")
             worksheet.write(row, col + 4, booking.puCompany)
             worksheet.write(row, col + 5, booking.pu_Address_Suburb)
             worksheet.write(row, col + 6, booking.pu_Address_State)
@@ -2330,7 +2331,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         logger.info(f"#351 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
-            worksheet.write(row, col + 1, booking.gap_ras)
+            worksheet.write(row, col + 1, get_gapRas(booking))
             worksheet.write(row, col + 2, booking.b_status)
 
             if booking.s_21_Actual_Delivery_TimeStamp:
@@ -2351,7 +2352,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 11, booking.de_To_Address_State)
             worksheet.write(row, col + 12, booking.de_To_Address_PostalCode)
             worksheet.write(row, col + 13, booking.b_booking_Notes)
-            worksheet.write(row, col + 14, booking.clientRefNumbers)
+            worksheet.write(row, col + 14, get_clientRefNumbers(booking))
             worksheet.write(row, col + 15, booking.get_total_lines_qty())
 
             modelNumbers = []
