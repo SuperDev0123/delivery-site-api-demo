@@ -4,11 +4,12 @@ from api.common import trace_error, constants as dme_constants
 
 logger = logging.getLogger(__name__)
 
+
 def get_gapRas(booking):
     try:
         gap_ras = []
         booking_lines_data = Booking_lines_data.objects.filter(
-            fk_booking_id=booking["pk_booking_id"]
+            fk_booking_id=booking.pk_booking_id
         )
         for booking_line_data in booking_lines_data:
             if booking_line_data.gap_ra:
@@ -19,11 +20,12 @@ def get_gapRas(booking):
         logger.error(f"#555 [gap_ras] - {str(e)}")
         return ""
 
+
 def get_clientRefNumbers(booking):
     try:
         client_item_references = []
         booking_lines = Booking_lines.objects.filter(
-            fk_booking_id = booking["pk_booking_id"]
+            fk_booking_id=booking.pk_booking_id
         )
         for booking_line in booking_lines:
             if booking_line.client_item_reference is not None:
