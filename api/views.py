@@ -1336,15 +1336,25 @@ class BookingsViewSet(viewsets.ViewSet):
         # Sort on `remaining time` on 'Delivery Management' tab
         if active_tab_index == 6:
             bookings = sorted(bookings, key=lambda k: k["remaining_time_in_seconds"])
+
+        # clientRefNumber & gapRa
         results = []
-        for booking in bookings:
-            gapRas = ('gapRas', get_gapRas(booking))
-            clientRefNumbers = ('clientRefNumbers', get_clientRefNumbers(booking))
-            items = list(booking.items())
-            items.append(gapRas)
-            items.append(clientRefNumbers)
-            booking = OrderedDict(items)
-            results.append(booking)
+        if multi_find_field == "gap_ra":
+            for booking in bookings:
+                gapRas = ("gapRas", get_gapRas(booking))
+                items = list(booking.items())
+                items.append(gapRas)
+                booking = OrderedDict(items)
+                results.append(booking)
+        elif multi_find_field == "clientRefNumber":
+            for booking in bookings:
+                clientRefNumbers = ("clientRefNumbers", get_clientRefNumbers(booking))
+                items = list(booking.items())
+                items.append(clientRefNumbers)
+                booking = OrderedDict(items)
+                results.append(booking)
+        else:
+            results = bookings
 
         return JsonResponse(
             {
