@@ -2018,12 +2018,19 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
+        line_datas_with_gapRas = get_gapRas(bookings)
         logger.info(f"#306 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
             worksheet.write(row, col + 1, booking.b_status)
             worksheet.write(row, col + 2, booking.b_booking_Category)
-            worksheet.write(row, col + 3, get_gapRas(booking))
+
+            booking_gap_ras = []
+            for line_data in line_datas_with_gapRas:
+                if booking.pk_booking_id == line_data.fk_booking_id:
+                    booking_gap_ras.append(line_data.gap_ra)
+
+            worksheet.write(row, col + 3, ", ".join(booking_gap_ras))
             worksheet.write(row, col + 4, booking.get_total_lines_qty())
             worksheet.write(row, col + 5, booking.puCompany)
             worksheet.write(row, col + 6, booking.deToCompanyName)
@@ -2087,6 +2094,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
+        line_datas_with_gapRas = get_gapRas(bookings)
         logger.info(f"#311 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
@@ -2111,7 +2119,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             worksheet.write(row, col + 3, booking.b_status)
             worksheet.write(row, col + 4, booking.b_booking_Category)
-            worksheet.write(row, col + 5, get_gapRas(booking))
+
+            booking_gap_ras = []
+            for line_data in line_datas_with_gapRas:
+                if booking.pk_booking_id == line_data.fk_booking_id:
+                    booking_gap_ras.append(line_data.gap_ra)
+
+            worksheet.write(row, col + 5, ", ".join(booking_gap_ras))
             worksheet.write(row, col + 6, booking.get_total_lines_qty())
             worksheet.write(row, col + 7, booking.puCompany)
             worksheet.write(row, col + 8, booking.deToCompanyName)
@@ -2177,6 +2191,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
+        line_datas_with_clientRefNumbers = get_clientRefNumbers(bookings)
         logger.info(f"#321 Total cnt: {len(filtered_bookings)}")
         for booking_ind, booking in enumerate(filtered_bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
@@ -2192,7 +2207,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 )
 
             worksheet.write(row, col + 2, booking.b_booking_Category)
-            worksheet.write(row, col + 3, get_clientRefNumbers(booking))
+
+            booking_clientRefNumbers = []
+            for line_data in line_datas_with_clientRefNumbers:
+                if booking.pk_booking_id == line_data.fk_booking_id:
+                    booking_clientRefNumbers.append(line_data.client_item_reference)
+
+            worksheet.write(row, col + 3, ", ".join(booking_clientRefNumbers))
             worksheet.write(row, col + 4, booking.get_total_lines_qty())
             worksheet.write(row, col + 5, booking.puCompany)
             worksheet.write(row, col + 6, booking.deToCompanyName)
@@ -2250,6 +2271,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
+        line_datas_with_clientRefNumbers = get_clientRefNumbers(bookings)
         logger.info(f"#331 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
@@ -2272,7 +2294,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     date_format,
                 )
 
-            worksheet.write(row, col + 3, get_clientRefNumbers(booking))
+            booking_clientRefNumbers = []
+            for line_data in line_datas_with_clientRefNumbers:
+                if booking.pk_booking_id == line_data.fk_booking_id:
+                    booking_clientRefNumbers.append(line_data.client_item_reference)
+
+            worksheet.write(row, col + 3, ", ".join(booking_clientRefNumbers))
             worksheet.write(row, col + 4, booking.puCompany)
             worksheet.write(row, col + 5, booking.pu_Address_Suburb)
             worksheet.write(row, col + 6, booking.pu_Address_State)
@@ -2344,6 +2371,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
+        line_datas_with_gapRas = get_gapRas(bookings)
         logger.info(f"#341 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             if not booking.had_status("futile"):
@@ -2363,7 +2391,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 )
 
             worksheet.write(row, col + 2, booking.b_booking_Category)
-            worksheet.write(row, col + 3, f"{get_gapRas(booking)}")
+
+            booking_gap_ras = []
+            for line_data in line_datas_with_gapRas:
+                if booking.pk_booking_id == line_data.fk_booking_id:
+                    booking_gap_ras.append(line_data.gap_ra)
+
+            worksheet.write(row, col + 3, ", ".join(booking_gap_ras))
             worksheet.write(row, col + 4, booking.puCompany)
             worksheet.write(row, col + 5, booking.pu_Address_Suburb)
             worksheet.write(row, col + 6, booking.pu_Address_State)
@@ -2449,10 +2483,18 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             row = 1
 
+        line_datas_with_gapRas = get_gapRas(bookings)
+        line_datas_with_clientRefNumbers = get_clientRefNumbers(bookings)
         logger.info(f"#351 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
-            worksheet.write(row, col + 1, get_gapRas(booking))
+
+            booking_gap_ras = []
+            for line_data in line_datas_with_gapRas:
+                if booking.pk_booking_id == line_data.fk_booking_id:
+                    booking_gap_ras.append(line_data.gap_ra)
+
+            worksheet.write(row, col + 1, ", ".join(booking_gap_ras))
             worksheet.write(row, col + 2, booking.b_status)
 
             if booking.s_21_Actual_Delivery_TimeStamp:
@@ -2473,7 +2515,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 11, booking.de_To_Address_State)
             worksheet.write(row, col + 12, booking.de_To_Address_PostalCode)
             worksheet.write(row, col + 13, booking.b_booking_Notes)
-            worksheet.write(row, col + 14, get_clientRefNumbers(booking))
+
+            booking_clientRefNumbers = []
+            for line_data in line_datas_with_clientRefNumbers:
+                if booking.pk_booking_id == line_data.fk_booking_id:
+                    booking_clientRefNumbers.append(line_data.client_item_reference)
+
+            worksheet.write(row, col + 14, ", ".join(booking_clientRefNumbers))
             worksheet.write(row, col + 15, booking.get_total_lines_qty())
 
             modelNumbers = []

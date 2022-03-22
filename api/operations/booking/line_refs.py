@@ -5,46 +5,36 @@ from api.common import trace_error, constants as dme_constants
 logger = logging.getLogger(__name__)
 
 
-def get_gapRas(booking):
+def _get_pk_booking_ids(bookings):
+    _pk_booking_ids = []
+
     try:
-        gap_ras = []
+        for booking in bookings:
+            pk_booking_id.append(booking.pk_booking_id)
+    except:
+        for booking in bookings:
+            pk_booking_id.append(booking["pk_booking_id"])
 
-        try:
-            pk_booking_id = booking.pk_booking_id
-        except:
-            pk_booking_id = booking["pk_booking_id"]
-
-        booking_lines_data = Booking_lines_data.objects.filter(
-            fk_booking_id=pk_booking_id
-        )
-        for booking_line_data in booking_lines_data:
-            if booking_line_data.gap_ra:
-                gap_ras.append(booking_line_data.gap_ra)
-        return ", ".join(gap_ras)
-    except Exception as e:
-        trace_error.print()
-        logger.error(f"#555 [gap_ras] - {str(e)}")
-        return ""
+    return _pk_booking_ids
 
 
-def get_clientRefNumbers(booking):
-    try:
-        client_item_references = []
+def get_gapRas(bookings):
+    pk_booking_ids = _get_pk_booking_ids(bookings)
+    return Booking_lines_data.objects.filter(
+        fk_booking_id__in=pk_booking_ids, gap_ra__isnull=False
+    ).only("gap_ra", "client_item_reference")
 
-        try:
-            pk_booking_id = booking.pk_booking_id
-        except:
-            pk_booking_id = booking["pk_booking_id"]
 
-        booking_lines_data = Booking_lines_data.objects.filter(
-            fk_booking_id=pk_booking_id
-        )
-        for booking_line in booking_lines:
-            if booking_line.client_item_reference is not None:
-                client_item_references.append(booking_line.client_item_reference)
+def get_clientRefNumbers(bookings):
+    pk_booking_ids = _get_pk_booking_ids(bookings)
+    return Booking_lines_data.objects.filter(
+        fk_booking_id__in=pk_booking_ids, client_item_reference__isnull=False
+    ).only("fk_booking_id", "client_item_reference")
 
-        return ", ".join(client_item_references)
-    except Exception as e:
-        trace_error.print()
-        logger.error(f"#553 [client_item_references] - {str(e)}")
-        return ""
+
+# TODO
+# def get_(bookings):
+#     pk_booking_ids = _get_pk_booking_ids(bookings)
+#     return Booking_lines.objects.filter(fk_booking_id__in=pk_booking_ids).only(
+#         "fk_booking_id", "e_Total_KG_weight", "e_1_Total_dimCubicMeter"
+#     )

@@ -1340,15 +1340,32 @@ class BookingsViewSet(viewsets.ViewSet):
         # clientRefNumber & gapRa
         results = []
         if multi_find_field == "gap_ra":
+            line_datas = get_gapRas(bookings)
             for booking in bookings:
-                gapRas = ("gapRas", get_gapRas(booking))
+
+                booking_gap_ras = []
+                for line_data in line_datas:
+                    if booking["pk_booking_id"] == line_data.fk_booking_id:
+                        booking_gap_ras.append(line_data.gap_ra)
+
+                gapRas = ("gapRas", ", ".join(booking_gap_ras))
                 items = list(booking.items())
                 items.append(gapRas)
                 booking = OrderedDict(items)
                 results.append(booking)
         elif multi_find_field == "clientRefNumber":
+            line_datas = get_clientRefNumbers(bookings)
             for booking in bookings:
-                clientRefNumbers = ("clientRefNumbers", get_clientRefNumbers(booking))
+
+                booking_clientRefNumbers = []
+                for line_data in line_datas:
+                    if booking["pk_booking_id"] == line_data.fk_booking_id:
+                        booking_clientRefNumbers.append(line_data.client_item_reference)
+
+                clientRefNumbers = (
+                    "clientRefNumbers",
+                    ", ".join(booking_clientRefNumbers),
+                )
                 items = list(booking.items())
                 items.append(clientRefNumbers)
                 booking = OrderedDict(items)
