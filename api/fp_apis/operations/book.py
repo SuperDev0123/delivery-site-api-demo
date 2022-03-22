@@ -40,12 +40,8 @@ def book(fp_name, booking, booker):
         error_msg = f"Error while build payload {str(e)}"
         return False, error_msg
 
-    # JasonL & BSD
-    if (
-        booking.b_client_warehouse_code == "BSD_MERRYLANDS"
-        or booking.b_client_warehouse_code == "JASON_L_BOT"
-    ) and _fp_name == "tnt":
-        # JasonL Botany warehouse doesn't need any trucks from TNT
+    # BSD: when doesn't need any trucks from TNT
+    if booking.b_client_warehouse_code == "BSD_MERRYLANDS" and _fp_name == "tnt":
         booking.v_FPBookingNumber = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
         booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
         booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
