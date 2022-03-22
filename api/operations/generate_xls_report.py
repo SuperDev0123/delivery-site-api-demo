@@ -2211,7 +2211,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             booking_clientRefNumbers = []
             for line_data in line_datas_with_clientRefNumbers:
                 if booking.pk_booking_id == line_data.fk_booking_id:
-                    booking_clientRefNumbers.append(line_data.client_item_reference)
+                    booking_clientRefNumbers.append(line_data.clientRefNumber)
 
             worksheet.write(row, col + 3, ", ".join(booking_clientRefNumbers))
             worksheet.write(row, col + 4, booking.get_total_lines_qty())
@@ -2297,7 +2297,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             booking_clientRefNumbers = []
             for line_data in line_datas_with_clientRefNumbers:
                 if booking.pk_booking_id == line_data.fk_booking_id:
-                    booking_clientRefNumbers.append(line_data.client_item_reference)
+                    booking_clientRefNumbers.append(line_data.clientRefNumber)
 
             worksheet.write(row, col + 3, ", ".join(booking_clientRefNumbers))
             worksheet.write(row, col + 4, booking.puCompany)
@@ -2519,7 +2519,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             booking_clientRefNumbers = []
             for line_data in line_datas_with_clientRefNumbers:
                 if booking.pk_booking_id == line_data.fk_booking_id:
-                    booking_clientRefNumbers.append(line_data.client_item_reference)
+                    booking_clientRefNumbers.append(line_data.clientRefNumber)
 
             worksheet.write(row, col + 14, ", ".join(booking_clientRefNumbers))
             worksheet.write(row, col + 15, booking.get_total_lines_qty())

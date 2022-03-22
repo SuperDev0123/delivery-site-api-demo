@@ -1360,7 +1360,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 booking_clientRefNumbers = []
                 for line_data in line_datas:
                     if booking["pk_booking_id"] == line_data.fk_booking_id:
-                        booking_clientRefNumbers.append(line_data.client_item_reference)
+                        booking_clientRefNumbers.append(line_data.clientRefNumber)
 
                 clientRefNumbers = (
                     "clientRefNumbers",

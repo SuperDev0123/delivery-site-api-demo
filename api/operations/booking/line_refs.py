@@ -10,10 +10,10 @@ def _get_pk_booking_ids(bookings):
 
     try:
         for booking in bookings:
-            pk_booking_id.append(booking.pk_booking_id)
+            _pk_booking_ids.append(booking.pk_booking_id)
     except:
         for booking in bookings:
-            pk_booking_id.append(booking["pk_booking_id"])
+            _pk_booking_ids.append(booking["pk_booking_id"])
 
     return _pk_booking_ids
 
@@ -22,14 +22,14 @@ def get_gapRas(bookings):
     pk_booking_ids = _get_pk_booking_ids(bookings)
     return Booking_lines_data.objects.filter(
         fk_booking_id__in=pk_booking_ids, gap_ra__isnull=False
-    ).only("gap_ra", "client_item_reference")
+    ).only("fk_booking_id", "gap_ra")
 
 
 def get_clientRefNumbers(bookings):
     pk_booking_ids = _get_pk_booking_ids(bookings)
     return Booking_lines_data.objects.filter(
-        fk_booking_id__in=pk_booking_ids, client_item_reference__isnull=False
-    ).only("fk_booking_id", "client_item_reference")
+        fk_booking_id__in=pk_booking_ids, clientRefNumber__isnull=False
+    ).only("fk_booking_id", "clientRefNumber")
 
 
 # TODO
