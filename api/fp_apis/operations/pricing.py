@@ -326,6 +326,7 @@ async def pricing_workers(
             if (
                 booking.b_dateBookedDate
                 and booking.vx_freight_provider.lower() != _fp_name
+                and booking.vx_freight_provider not in SPECIAL_FPS
             ):
                 continue
         except:
