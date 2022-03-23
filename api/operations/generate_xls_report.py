@@ -1502,7 +1502,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                 filtered_bookings = []
                 for booking in booked_bookings:
-                    if (utc_now - booking.b_dateBookedDate).days > 1:
+                    if (
+                        booking.b_dateBookedDate
+                        and (utc_now - booking.b_dateBookedDate).days > 1
+                    ):
                         filtered_bookings.append(booking)
             # 2 "In Transit" with these statuses (In Transit, On Board for Delivery, Scanned into depot (Sort by ETA date/time)
             elif index == 1:
