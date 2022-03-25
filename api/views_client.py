@@ -1040,7 +1040,7 @@ def get_delivery_status(request):
                         booking.pk_booking_id, item
                     )
                     timestamps.append(
-                        dme_time_lib.convert_to_AU_SYDNEY_tz(status_time).strftime(
+                        status_time.strftime(
                             "%d/%m/%Y %H:%M"
                         )
                         if status_time
@@ -1093,7 +1093,7 @@ def get_delivery_status(request):
         except Exception as e:
             logger.info(f"Get FP status history error: {str(e)}")
             fp_status_history = []
-
+            
         return Response(
             {
                 "step": step,
