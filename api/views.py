@@ -1963,14 +1963,22 @@ class BookingsViewSet(viewsets.ViewSet):
                 if first_booking.kf_client_id not in client_ids:
                     client_ids.append(first_booking.kf_client_id)
 
-            clients = DME_clients.objects.filter(dme_account_num__in=client_ids).only("company_name", "dme_account_num")
+            clients = DME_clients.objects.filter(dme_account_num__in=client_ids).only(
+                "company_name", "dme_account_num"
+            )
             report_clients = []
             for client in clients:
                 report_client = {}
                 report_client["company_name"] = client.company_name
                 report_client["dme_account_num"] = client.dme_account_num
                 report_clients.append(report_client)
-            return JsonResponse({"results": results, "report_fps": report_fps, "report_clients": report_clients})
+            return JsonResponse(
+                {
+                    "results": results,
+                    "report_fps": report_fps,
+                    "report_clients": report_clients,
+                }
+            )
         else:
             return JsonResponse(
                 {"message": "You have no permission to see this information"},
