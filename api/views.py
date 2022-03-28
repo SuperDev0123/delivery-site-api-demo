@@ -104,7 +104,11 @@ from api.operations.packing.booking import (
     manual_repack as booking_manual_repack,
 )
 from api.operations.booking.parent_child import get_run_out_bookings
-from api.operations.booking.line_refs import get_gapRas, get_clientRefNumbers
+from api.operations.booking.line_refs import (
+    get_gapRas,
+    get_clientRefNumbers,
+    get_lines_in_bulk,
+)
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -1342,7 +1346,6 @@ class BookingsViewSet(viewsets.ViewSet):
         if multi_find_field == "gap_ra":
             line_datas = get_gapRas(bookings)
             for booking in bookings:
-
                 booking_gap_ras = []
                 for line_data in line_datas:
                     if booking["pk_booking_id"] == line_data.fk_booking_id:
@@ -1356,7 +1359,6 @@ class BookingsViewSet(viewsets.ViewSet):
         elif multi_find_field == "clientRefNumber":
             line_datas = get_clientRefNumbers(bookings)
             for booking in bookings:
-
                 booking_clientRefNumbers = []
                 for line_data in line_datas:
                     if booking["pk_booking_id"] == line_data.fk_booking_id:
@@ -1373,9 +1375,48 @@ class BookingsViewSet(viewsets.ViewSet):
         else:
             results = bookings
 
+        # lines info
+        _results = []
+        lines = get_lines_in_bulk(bookings)
+        for result in results:
+            # if has 'scanned' then extract lines info from `scanned`
+            # else extract from `original`
+            original_lines_count = 0
+            original_total_kgs = 0
+            original_total_cbm = 0  # Cubic Meter
+
+            scanned_lines_count = 0
+            scanned_total_kgs = 0
+            scanned_total_cbm = 0  # Cubic Meter
+
+            for line in lines:
+                if result["pk_booking_id"] == line.fk_booking_id:
+                    if line.packed_status == "scanned":
+                        scanned_lines_count += 1
+                        scanned_total_kgs += line.e_Total_KG_weight or 0
+                        scanned_total_cbm += line.e_1_Total_dimCubicMeter or 0
+                    else:
+                        original_lines_count += 1
+                        original_total_kgs += line.e_Total_KG_weight or 0
+                        original_total_cbm += line.e_1_Total_dimCubicMeter or 0
+
+            original_total_kgs = round(original_total_kgs, 3)
+            original_total_cbm = round(original_total_cbm, 3)
+            scanned_total_kgs = round(scanned_total_kgs, 3)
+            scanned_total_cbm = round(scanned_total_cbm, 3)
+            _lines_count = ("lines_count", scanned_lines_count or original_lines_count)
+            _total_kgs = ("total_kgs", scanned_total_kgs or original_total_kgs)
+            _total_cbm = ("total_cbm", scanned_total_cbm or original_total_cbm)
+            items = list(result.items())
+            items.append(_lines_count)
+            items.append(_total_kgs)
+            items.append(_total_cbm)
+            result = OrderedDict(items)
+            _results.append(result)
+
         return JsonResponse(
             {
-                "bookings": results,
+                "bookings": _results,
                 "filtered_booking_ids": filtered_booking_ids,
                 "count": bookings_cnt,
                 "page_cnt": page_cnt,

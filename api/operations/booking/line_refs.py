@@ -32,9 +32,8 @@ def get_clientRefNumbers(bookings):
     ).only("fk_booking_id", "clientRefNumber")
 
 
-# TODO
-# def get_(bookings):
-#     pk_booking_ids = _get_pk_booking_ids(bookings)
-#     return Booking_lines.objects.filter(fk_booking_id__in=pk_booking_ids).only(
-#         "fk_booking_id", "e_Total_KG_weight", "e_1_Total_dimCubicMeter"
-#     )
+def get_lines_in_bulk(bookings):
+    pk_booking_ids = _get_pk_booking_ids(bookings)
+    return Booking_lines.objects.filter(
+        fk_booking_id__in=pk_booking_ids, packed_status__in=["original", "scanned"]
+    ).only("fk_booking_id", "e_Total_KG_weight", "e_1_Total_dimCubicMeter")
