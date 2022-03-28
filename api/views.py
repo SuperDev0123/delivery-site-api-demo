@@ -1392,11 +1392,11 @@ class BookingsViewSet(viewsets.ViewSet):
             for line in lines:
                 if result["pk_booking_id"] == line.fk_booking_id:
                     if line.packed_status == "scanned":
-                        scanned_lines_count += 1
+                        scanned_lines_count += line.e_qty or 0
                         scanned_total_kgs += line.e_Total_KG_weight or 0
                         scanned_total_cbm += line.e_1_Total_dimCubicMeter or 0
                     else:
-                        original_lines_count += 1
+                        original_lines_count += line.e_qty or 0
                         original_total_kgs += line.e_Total_KG_weight or 0
                         original_total_cbm += line.e_1_Total_dimCubicMeter or 0
 
