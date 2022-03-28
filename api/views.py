@@ -4639,6 +4639,10 @@ def get_manifest(request):
                         booking.v_FPBookingNumber = gen_consignment_num(
                             booking.vx_freight_provider, booking.b_bookingID_Visual
                         )
+
+                        # Update status to `In Transit` for DME linehaul
+                        if booking.vx_freight_provider == "Deliver-ME":
+                            status_history.create(booking, "In Transit", username)
                     else:
                         status_history.create(booking, "Ready for Despatch", username)
 
