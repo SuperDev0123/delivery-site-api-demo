@@ -805,7 +805,12 @@ def push_boks(payload, client, username, method):
             f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
         )
 
-        if bok_1.get("shipping_type") == "DMEM" and selected_quote:
+        if selected_quote.freight_provider == "Deliver-ME":
+            quote_set = quote_set.filter(
+                freight_provider=selected_quote.freight_provider,
+                packed_status=Booking_lines.ORIGINAL,
+            )
+        elif bok_1.get("shipping_type") == "DMEM" and selected_quote:
             quote_set = quote_set.filter(
                 freight_provider=selected_quote.freight_provider,
                 service_name=selected_quote.service_name,
@@ -822,9 +827,14 @@ def push_boks(payload, client, username, method):
             auto_select_type=1,
             client=client,
         )
-        best_quotes = select_best_options(
-            pricings=quote_set, client=warehouse.fk_id_dme_client
-        )
+
+        if quote_set.count() > 1:
+            best_quotes = select_best_options(
+                pricings=quote_set, client=warehouse.fk_id_dme_client
+            )
+        else:
+            best_quotes = quote_set
+
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
         context = {"client_customer_mark_up": client.client_customer_mark_up}
