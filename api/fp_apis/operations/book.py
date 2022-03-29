@@ -9,6 +9,7 @@ from api.common import status_history, trace_error
 from api.utils import get_eta_pu_by, get_eta_de_by
 from api.file_operations.directory import create_dir
 from api.operations.email_senders import send_booking_status_email
+from api.operations.api_booking_confirmation_lines import index as api_bcl
 from api.models import Log, Api_booking_confirmation_lines
 
 from api.fp_apis.pre_check import pre_check_book
@@ -202,15 +203,7 @@ def book(fp_name, booking, booker):
                     send_booking_status_email(booking.pk, email_template_name, booker)
             # Save Label for Startrack and AusPost
             elif _fp_name in ["startrack", "auspost"] and is_get_label:
-                Api_booking_confirmation_lines.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                ).delete()
-
-                for item in json_data["items"]:
-                    book_con = Api_booking_confirmation_lines(
-                        fk_booking_id=booking.pk_booking_id,
-                        api_item_id=item["item_id"],
-                    ).save()
+                api_bcl.create(booking, json_data["items"])
             # Increase Conote Number and Manifest Count for DHL, kf_client_id of DHLPFM is hardcoded now
             elif _fp_name == "dhl" and is_get_label:
                 if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":

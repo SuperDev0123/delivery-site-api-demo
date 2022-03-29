@@ -26,6 +26,7 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
+from api.operations.api_booking_confirmation_lines import index as api_bcl
 
 logger = logging.getLogger(__name__)
 
@@ -86,8 +87,9 @@ def myLaterPages(canvas, doc):
 def gen_barcode(booking, item_no=0):
     item_index = str(item_no).zfill(3)
     visual_id = str(booking.b_bookingID_Visual)
-
-    return f"DME{visual_id}{item_index}"
+    label_code = f"DME{visual_id}{item_index}"
+    api_bcl.create(booking, [{"label_code": label_code}])
+    return label_code
 
 
 def build_label(

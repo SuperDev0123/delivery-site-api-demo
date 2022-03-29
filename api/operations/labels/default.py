@@ -26,6 +26,7 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
+from api.operations.api_booking_confirmation_lines import index as api_bcl
 
 logger = logging.getLogger(__name__)
 
@@ -87,11 +88,14 @@ def gen_barcode(booking, item_no=0):
     item_index = str(item_no).zfill(3)
     visual_id = str(booking.b_bookingID_Visual)
 
-    return (
+    label_code = (
         f"DME{visual_id}{item_index}"
         if not booking.v_FPBookingNumber
         else f"{booking.v_FPBookingNumber}{item_index}"
     )
+    api_bcl.create(booking, [{"label_code": label_code}])
+
+    return label_code
 
 
 def build_label(
@@ -650,7 +654,7 @@ def build_label(
                         ),
                         style_left,
                     ),
-                    ''
+                    "",
                 ]
             else:
                 contact_data = [
@@ -663,9 +667,9 @@ def build_label(
                         ),
                         style_left,
                     ),
-                    ''
+                    "",
                 ]
-            
+
             de2address_state = [
                 Paragraph(
                     "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
@@ -675,10 +679,10 @@ def build_label(
                     ),
                     style_left,
                 ),
-                ''
+                "",
             ]
             to_desc_data.append(contact_data)
-            
+
             suhurb_data = [
                 Paragraph(
                     "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
@@ -688,7 +692,7 @@ def build_label(
                     ),
                     style_left,
                 ),
-                ''
+                "",
             ]
             to_desc_data.append(suhurb_data)
 
@@ -703,12 +707,16 @@ def build_label(
                     ),
                     style_left,
                 ),
-                ''
+                "",
             ]
             to_desc_data.append(de2address_state)
 
-            to_desc_col1_w = float(label_settings["label_image_size_length"]) * (4 / 7) * mm
-            to_desc_col2_w = float(label_settings["label_image_size_length"]) * (3 / 7) * mm
+            to_desc_col1_w = (
+                float(label_settings["label_image_size_length"]) * (4 / 7) * mm
+            )
+            to_desc_col2_w = (
+                float(label_settings["label_image_size_length"]) * (3 / 7) * mm
+            )
 
             to_desc_table = Table(
                 to_desc_data,

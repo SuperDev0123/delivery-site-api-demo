@@ -26,6 +26,7 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 from api.models import Booking_lines, FPRouting, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
+from api.operations.api_booking_confirmation_lines import index as api_bcl
 
 logger = logging.getLogger(__name__)
 
@@ -83,8 +84,10 @@ def gen_itm(booking, booking_lines, line_index, sscc_cnt):
     TT = 11
     CCCCCC = "132214"  # DME
     item_index = str(line_index).zfill(3)
+    label_code = f"{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}"
+    api_bcl.create(booking, [{"label_code": label_code}])
 
-    return f"{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}"
+    return label_code
 
 
 def build_label(
