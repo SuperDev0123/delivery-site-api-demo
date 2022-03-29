@@ -805,7 +805,11 @@ def push_boks(payload, client, username, method):
             f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
         )
 
-        if selected_quote.freight_provider == "Deliver-ME":
+        if (
+            selected_quote
+            and bok_1.get("shipping_type") == "DMEM"
+            and selected_quote.freight_provider == "Deliver-ME"
+        ):
             quote_set = quote_set.filter(
                 freight_provider=selected_quote.freight_provider,
                 packed_status=Booking_lines.ORIGINAL,
