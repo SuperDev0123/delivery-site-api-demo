@@ -2095,6 +2095,7 @@ class BookingsViewSet(viewsets.ViewSet):
             fk_booking_id__in=pk_booking_ids,
             packed_status__in=[Booking_lines.ORIGINAL, Booking_lines.SCANNED_PACK],
         ).only(
+            "fk_booking_id",
             "e_qty",
             "e_dimUOM",
             "e_dimLength",
