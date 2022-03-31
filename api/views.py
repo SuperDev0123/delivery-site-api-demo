@@ -2103,6 +2103,7 @@ class BookingsViewSet(viewsets.ViewSet):
             "e_dimWidth",
             "e_Total_KG_weight",
             "e_weightPerEach",
+            "packed_status",
         )
 
         total_qty, total_kgs, total_cbm = 0, 0, 0
