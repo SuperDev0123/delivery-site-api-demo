@@ -2123,13 +2123,11 @@ class BookingsViewSet(viewsets.ViewSet):
             original_lines = []
             scanned_lines = []
             for line in booking_lines:
-                if (
-                    booking.pk_booking_id == line.fk_booking_id
-                    and line.packed_status == Booking_lines.ORIGINAL
-                ):
-                    original_lines.append(line)
-                else:
-                    scanned_lines.append(line)
+                if booking.pk_booking_id == line.fk_booking_id:
+                    if line.packed_status == Booking_lines.ORIGINAL:
+                        original_lines.append(line)
+                    else:
+                        scanned_lines.append(line)
 
             for line in scanned_lines or original_lines or []:
                 total_qty += line.e_qty
