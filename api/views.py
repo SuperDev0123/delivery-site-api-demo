@@ -2081,7 +2081,7 @@ class BookingsViewSet(viewsets.ViewSet):
         return JsonResponse({"message": "success", "results": results}, status=200)
 
     @action(detail=False, methods=["post"])
-    def get_manifest_summary(self, request, format=None):
+    def get_bookings_summary(self, request, format=None):
         bookingIds = request.data["bookingIds"]
         bookings = Bookings.objects.filter(pk__in=bookingIds).only(
             "pk_booking_id", "vx_freight_provider"
@@ -2092,7 +2092,8 @@ class BookingsViewSet(viewsets.ViewSet):
             pk_booking_ids.append(booking.pk_booking_id)
 
         booking_lines = Booking_lines.objects.filter(
-            fk_booking_id__in=pk_booking_ids
+            fk_booking_id__in=pk_booking_ids,
+            packed_status__in=[Booking_lines.ORIGINAL, Booking_lines.SCANNED_PACK],
         ).only(
             "e_qty",
             "e_dimUOM",
@@ -2102,38 +2103,50 @@ class BookingsViewSet(viewsets.ViewSet):
             "e_Total_KG_weight",
             "e_weightPerEach",
         )
-        result = {}
+
+        total_qty, total_kgs, total_cbm = 0, 0, 0
+        fps = {}
 
         for booking in bookings:
-            if not booking.vx_freight_provider in result:
-                result[booking.vx_freight_provider] = {
+            if not booking.vx_freight_provider in fps:
+                fps[booking.vx_freight_provider] = {
                     "orderCnt": 0,
                     "totalQty": 0,
                     "totalKgs": 0,
                     "totalCubicMeter": 0,
                 }
 
-            result[booking.vx_freight_provider]["orderCnt"] += 1
+            fps[booking.vx_freight_provider]["orderCnt"] += 1
 
-            for booking_line in booking_lines:
-                if booking.pk_booking_id == booking_line.fk_booking_id:
-                    result[booking.vx_freight_provider][
-                        "totalQty"
-                    ] += booking_line.e_qty
-                    result[booking.vx_freight_provider]["totalKgs"] += (
-                        booking_line.e_qty * booking_line.e_weightPerEach
-                    )
-                    result[booking.vx_freight_provider][
-                        "totalCubicMeter"
-                    ] += booking_line.e_1_Total_dimCubicMeter
-                    # get_cubic_meter(
-                    #     booking_line.e_dimLength,
-                    #     booking_line.e_dimWidth,
-                    #     booking_line.e_dimHeight,
-                    #     booking_line.e_dimUOM,
-                    #     booking_line.e_qty,
-                    # )
+            original_lines = []
+            scanned_lines = []
+            for line in booking_lines:
+                if (
+                    booking.pk_booking_id == line.fk_booking_id
+                    and line.packed_status == Booking_lines.ORIGINAL
+                ):
+                    original_lines.append(line)
+                else:
+                    scanned_lines.append(line)
 
+            for line in scanned_lines or original_lines or []:
+                total_qty += line.e_qty
+                total_kgs += line.e_Total_KG_weight
+                total_cbm += line.e_1_Total_dimCubicMeter
+
+                fps[booking.vx_freight_provider]["totalQty"] += line.e_qty
+                fps[booking.vx_freight_provider]["totalKgs"] += (
+                    line.e_qty * line.e_weightPerEach
+                )
+                fps[booking.vx_freight_provider][
+                    "totalCubicMeter"
+                ] += line.e_1_Total_dimCubicMeter
+
+        result = {}
+        result["fps"] = fps
+        result["total_qty"] = total_qty
+        result["total_kgs"] = total_kgs
+        result["total_cbm"] = total_cbm
         return JsonResponse(result, status=200)
 
 
