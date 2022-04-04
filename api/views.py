@@ -1951,10 +1951,25 @@ class BookingsViewSet(viewsets.ViewSet):
             sydney_now = get_sydney_now_time("datetime")
             last_date = datetime.now()
             first_date = (sydney_now - timedelta(days=60)).date()
+            manifest_logs = (
+                Dme_manifest_log.objects.filter(z_createdTimeStamp__range=(first_date, last_date))
+                .order_by("-z_createdTimeStamp")
+                .only(
+                    "id",
+                    "manifest_url"
+                )
+            )
+
+            manifest_urls = []
+            manifest_ids = []
+            for manifest_log in manifest_logs:
+                manifest_ids.append(manifest_log.id)
+                manifest_urls.append("startrack_au/" + manifest_log.manifest_url)
+
             bookings_with_manifest = (
                 Bookings.objects.prefetch_related("fk_client_warehouse")
                 .exclude(manifest_timestamp__isnull=True)
-                .filter(manifest_timestamp__range=(first_date, last_date))
+                .filter(z_manifest_url__in=manifest_urls)
                 .order_by("-manifest_timestamp")
                 .only(
                     "b_bookingID_Visual",
@@ -1978,6 +1993,7 @@ class BookingsViewSet(viewsets.ViewSet):
             results = []
             report_fps = []
             client_ids = []
+            index = 0
             for manifest_date in manifest_dates:
                 result = {}
                 daily_count = 0
@@ -1989,7 +2005,8 @@ class BookingsViewSet(viewsets.ViewSet):
                         first_booking = booking
                         daily_count += 1
                         b_bookingID_Visuals.append(booking.b_bookingID_Visual)
-
+                
+                result["manifest_id"] = manifest_ids[index]
                 result["count"] = daily_count
                 result["z_manifest_url"] = first_booking.z_manifest_url
                 result["warehouse_name"] = first_booking.fk_client_warehouse.name
@@ -2003,6 +2020,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     report_fps.append(first_booking.vx_freight_provider)
                 if first_booking.kf_client_id not in client_ids:
                     client_ids.append(first_booking.kf_client_id)
+                index += 1
 
             clients = DME_clients.objects.filter(dme_account_num__in=client_ids).only(
                 "company_name", "dme_account_num"
