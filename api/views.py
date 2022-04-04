@@ -466,7 +466,7 @@ class BookingsViewSet(viewsets.ViewSet):
             column_filter = ""
 
         try:
-            column_filter = column_filters["b_client_name"]
+            column_filter = column_filters["b_client_name_sub"]
 
             if column_filter:
                 queryset = queryset.filter(b_client_name_sub__icontains=column_filter)
@@ -1952,12 +1952,11 @@ class BookingsViewSet(viewsets.ViewSet):
             last_date = datetime.now()
             first_date = (sydney_now - timedelta(days=60)).date()
             manifest_logs = (
-                Dme_manifest_log.objects.filter(z_createdTimeStamp__range=(first_date, last_date))
-                .order_by("-z_createdTimeStamp")
-                .only(
-                    "id",
-                    "manifest_url"
+                Dme_manifest_log.objects.filter(
+                    z_createdTimeStamp__range=(first_date, last_date)
                 )
+                .order_by("-z_createdTimeStamp")
+                .only("id", "manifest_url")
             )
 
             manifest_urls = []
@@ -2005,7 +2004,7 @@ class BookingsViewSet(viewsets.ViewSet):
                         first_booking = booking
                         daily_count += 1
                         b_bookingID_Visuals.append(booking.b_bookingID_Visual)
-                
+
                 result["manifest_id"] = manifest_ids[index]
                 result["count"] = daily_count
                 result["z_manifest_url"] = first_booking.z_manifest_url
