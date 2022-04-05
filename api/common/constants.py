@@ -90,4 +90,6 @@ BOOKING_FIELDS_4_ALLBOOKING_TABLE = [
     "b_booking_Priority",
     "b_booking_Category",
     "b_promo_code",
+    "pu_address_type",
+    "de_To_AddressType",
 ]
