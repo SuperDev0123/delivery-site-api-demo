@@ -1947,7 +1947,7 @@ class BookingsViewSet(viewsets.ViewSet):
     def get_manifest_report(self, request, format=None):
         clientname = get_client_name(self.request)
 
-        if clientname in ["Jason L", "BioPak", "dme"]:
+        if clientname in ["Jason L", "Bathroom Sales Direct", "BioPak", "dme"]:
             sydney_now = get_sydney_now_time("datetime")
             last_date = datetime.now()
             first_date = (sydney_now - timedelta(days=60)).date()
