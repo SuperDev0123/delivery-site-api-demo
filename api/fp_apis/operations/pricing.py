@@ -157,6 +157,7 @@ def pricing(
         * is_pricing_only: only get pricing info
         * packed_statuses: array of options (ORIGINAL, AUTO_PACKED, MANUAL_PACKED, SCANNED_PACKED)
     """
+    LOG_ID = "[PRICING]"
     booking_lines = []
     booking = None
 
@@ -199,44 +200,48 @@ def pricing(
     except:
         client = None
 
-    if not booking_lines:
-        for packed_status in packed_statuses:
-            booking_lines = Booking_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id,
-                is_deleted=False,
-                packed_status=packed_status,
-            )
-
-            if booking_lines:
-                build_special_fp_pricings(booking, packed_status)
-                _loop_process(
-                    booking,
-                    booking_lines,
-                    is_pricing_only,
-                    packed_status,
-                    client,
-                    pu_zones,
-                    de_zones,
-                )
-    else:
-        if booking_lines:
+    try:
+        if not booking_lines:
             for packed_status in packed_statuses:
-                build_special_fp_pricings(booking, packed_status)
-                _loop_process(
-                    booking,
-                    booking_lines,
-                    is_pricing_only,
-                    packed_status,
-                    client,
-                    pu_zones,
-                    de_zones,
+                booking_lines = Booking_lines.objects.filter(
+                    fk_booking_id=booking.pk_booking_id,
+                    is_deleted=False,
+                    packed_status=packed_status,
                 )
 
-    quotes = API_booking_quotes.objects.filter(
-        fk_booking_id=booking.pk_booking_id, is_used=False
-    )
+                if booking_lines:
+                    build_special_fp_pricings(booking, packed_status)
+                    _loop_process(
+                        booking,
+                        booking_lines,
+                        is_pricing_only,
+                        packed_status,
+                        client,
+                        pu_zones,
+                        de_zones,
+                    )
+        else:
+            if booking_lines:
+                for packed_status in packed_statuses:
+                    build_special_fp_pricings(booking, packed_status)
+                    _loop_process(
+                        booking,
+                        booking_lines,
+                        is_pricing_only,
+                        packed_status,
+                        client,
+                        pu_zones,
+                        de_zones,
+                    )
 
-    return booking, True, "Retrieved all Pricing info", quotes
+        quotes = API_booking_quotes.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_used=False
+        )
+
+        return booking, True, "Retrieved all Pricing info", quotes
+    except Exception as e:
+        logger.error(f"{LOG_ID} Booking: {booking}, Error: {e}")
+        return booking, False, str(e), []
 
 
 def _loop_process(

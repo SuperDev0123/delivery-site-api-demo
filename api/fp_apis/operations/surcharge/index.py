@@ -348,6 +348,7 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
     - Create new Surcharge objects
     """
 
+    LOG_ID = "[SURCHARGE GENERATOR]"
     result = []
     total = 0
 
@@ -356,7 +357,11 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
     #     return result
 
     # Calc new surcharge opts
-    surcharges = find_surcharges(booking_obj, line_objs, quote_obj, data_type)
+    try:
+        surcharges = find_surcharges(booking_obj, line_objs, quote_obj, data_type)
+    except Exception as e:
+        logger.error(f"{LOG_ID} Booking: {booking_obj}, Quote: {quote_obj}")
+        raise Exception("Wrong dimentions!")
 
     # Create new Surcharge objects
     for surcharge in surcharges:
