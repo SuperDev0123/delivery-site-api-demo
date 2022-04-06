@@ -1953,7 +1953,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 status=400,
             )
 
-        if not clientname in ["BioPak"]:
+        if clientname in ["BioPak"]:
             sydney_now = get_sydney_now_time("datetime")
             last_date = datetime.now()
             first_date = (sydney_now - timedelta(days=60)).date()
