@@ -285,7 +285,7 @@ def push_boks(payload, client, username, method):
             )
 
             if bok_1_objs.exists():
-                message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
+                message = f"Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
                 logger.info(f"@884 {LOG_ID} {message}")
 
                 json_res = {

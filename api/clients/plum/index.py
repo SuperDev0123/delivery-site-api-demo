@@ -392,7 +392,7 @@ def push_boks(payload, client, username, method):
                     )
 
                     if not old_bok_1s.exists():
-                        message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does not exist."
+                        message = f"Order(b_client_order_num={bok_1['b_client_order_num']}) does not exist."
                         logger.info(f"@870 {LOG_ID} {message}")
                         raise Exception(message)
             else:
@@ -403,7 +403,7 @@ def push_boks(payload, client, username, method):
                 fk_client_id=client.dme_account_num,
             )
             if not old_bok_1s.exists():
-                message = f"BOKS API Error - Order(client_booking_id={bok_1['client_booking_id']}) does not exist."
+                message = f"Order(client_booking_id={bok_1['client_booking_id']}) does not exist."
                 logger.info(f"@884 {LOG_ID} {message}")
                 raise Exception(message)
             else:

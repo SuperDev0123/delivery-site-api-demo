@@ -1947,28 +1947,20 @@ class BookingsViewSet(viewsets.ViewSet):
     def get_manifest_report(self, request, format=None):
         clientname = get_client_name(self.request)
 
-        if clientname in ["Jason L", "Bathroom Sales Direct", "BioPak", "dme"]:
+        if not clientname in ["Jason L", "Bathroom Sales Direct", "BioPak", "dme"]:
+            return JsonResponse(
+                {"message": "You have no permission to see this information"},
+                status=400,
+            )
+
+        if not clientname in ["BioPak"]:
             sydney_now = get_sydney_now_time("datetime")
             last_date = datetime.now()
             first_date = (sydney_now - timedelta(days=60)).date()
-            manifest_logs = (
-                Dme_manifest_log.objects.filter(
-                    z_createdTimeStamp__range=(first_date, last_date)
-                )
-                .order_by("-z_createdTimeStamp")
-                .only("id", "manifest_url")
-            )
-
-            manifest_urls = []
-            manifest_ids = []
-            for manifest_log in manifest_logs:
-                manifest_ids.append(manifest_log.id)
-                manifest_urls.append("startrack_au/" + manifest_log.manifest_url)
-
             bookings_with_manifest = (
                 Bookings.objects.prefetch_related("fk_client_warehouse")
                 .exclude(manifest_timestamp__isnull=True)
-                .filter(z_manifest_url__in=manifest_urls)
+                .filter(manifest_timestamp__range=(first_date, last_date))
                 .order_by("-manifest_timestamp")
                 .only(
                     "b_bookingID_Visual",
@@ -1990,9 +1982,6 @@ class BookingsViewSet(viewsets.ViewSet):
                     manifest_dates.append(booking.manifest_timestamp)
 
             results = []
-            report_fps = []
-            client_ids = []
-            index = 0
             for manifest_date in manifest_dates:
                 result = {}
                 daily_count = 0
@@ -2005,7 +1994,6 @@ class BookingsViewSet(viewsets.ViewSet):
                         daily_count += 1
                         b_bookingID_Visuals.append(booking.b_bookingID_Visual)
 
-                result["manifest_id"] = manifest_ids[index]
                 result["count"] = daily_count
                 result["z_manifest_url"] = first_booking.z_manifest_url
                 result["warehouse_name"] = first_booking.fk_client_warehouse.name
@@ -2015,33 +2003,98 @@ class BookingsViewSet(viewsets.ViewSet):
                 result["kf_client_id"] = first_booking.kf_client_id
                 results.append(result)
 
-                if first_booking.vx_freight_provider not in report_fps:
-                    report_fps.append(first_booking.vx_freight_provider)
-                if first_booking.kf_client_id not in client_ids:
-                    client_ids.append(first_booking.kf_client_id)
-                index += 1
+            return JsonResponse({"results": results})
 
-            clients = DME_clients.objects.filter(dme_account_num__in=client_ids).only(
-                "company_name", "dme_account_num"
+        sydney_now = get_sydney_now_time("datetime")
+        last_date = datetime.now()
+        first_date = (sydney_now - timedelta(days=60)).date()
+        manifest_logs = (
+            Dme_manifest_log.objects.filter(
+                z_createdTimeStamp__range=(first_date, last_date)
             )
-            report_clients = []
-            for client in clients:
-                report_client = {}
-                report_client["company_name"] = client.company_name
-                report_client["dme_account_num"] = client.dme_account_num
-                report_clients.append(report_client)
-            return JsonResponse(
-                {
-                    "results": results,
-                    "report_fps": report_fps,
-                    "report_clients": report_clients,
-                }
+            .order_by("-z_createdTimeStamp")
+            .only("id", "manifest_url")
+        )
+
+        manifest_urls = []
+        manifest_ids = []
+        for manifest_log in manifest_logs:
+            manifest_ids.append(manifest_log.id)
+            manifest_urls.append("startrack_au/" + manifest_log.manifest_url)
+
+        bookings_with_manifest = (
+            Bookings.objects.prefetch_related("fk_client_warehouse")
+            .exclude(manifest_timestamp__isnull=True)
+            .filter(z_manifest_url__in=manifest_urls)
+            .order_by("-manifest_timestamp")
+            .only(
+                "b_bookingID_Visual",
+                "z_manifest_url",
+                "manifest_timestamp",
+                "vx_freight_provider",
+                "kf_client_id",
             )
-        else:
-            return JsonResponse(
-                {"message": "You have no permission to see this information"},
-                status=400,
+        )
+
+        if clientname != "dme":
+            bookings_with_manifest = bookings_with_manifest.filter(
+                b_client_name=clientname
             )
+
+        manifest_dates = []
+        for booking in bookings_with_manifest:
+            if not booking.manifest_timestamp in manifest_dates:
+                manifest_dates.append(booking.manifest_timestamp)
+
+        results = []
+        report_fps = []
+        client_ids = []
+        index = 0
+        for manifest_date in manifest_dates:
+            result = {}
+            daily_count = 0
+            first_booking = None
+            b_bookingID_Visuals = []
+
+            for booking in bookings_with_manifest:
+                if booking.manifest_timestamp == manifest_date:
+                    first_booking = booking
+                    daily_count += 1
+                    b_bookingID_Visuals.append(booking.b_bookingID_Visual)
+
+            result["manifest_id"] = manifest_ids[index]
+            result["count"] = daily_count
+            result["z_manifest_url"] = first_booking.z_manifest_url
+            result["warehouse_name"] = first_booking.fk_client_warehouse.name
+            result["manifest_date"] = manifest_date
+            result["b_bookingID_Visuals"] = b_bookingID_Visuals
+            result["freight_provider"] = first_booking.vx_freight_provider
+            result["kf_client_id"] = first_booking.kf_client_id
+            results.append(result)
+
+            if first_booking.vx_freight_provider not in report_fps:
+                report_fps.append(first_booking.vx_freight_provider)
+            if first_booking.kf_client_id not in client_ids:
+                client_ids.append(first_booking.kf_client_id)
+            index += 1
+
+        clients = DME_clients.objects.filter(dme_account_num__in=client_ids).only(
+            "company_name", "dme_account_num"
+        )
+        report_clients = []
+        for client in clients:
+            report_client = {}
+            report_client["company_name"] = client.company_name
+            report_client["dme_account_num"] = client.dme_account_num
+            report_clients.append(report_client)
+
+        return JsonResponse(
+            {
+                "results": results,
+                "report_fps": report_fps,
+                "report_clients": report_clients,
+            }
+        )
 
     @action(detail=False, methods=["get"])
     def get_project_names(self, request, format=None):
