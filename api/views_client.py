@@ -860,40 +860,29 @@ def get_delivery_status(request):
                 status_histories.first().event_time_stamp
             ).strftime("%d/%m/%Y %H:%M")
 
-        lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id, packed_status=Booking_lines.ORIGINAL
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id
         )
 
-        # BSD
-        if (
-            booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
-            and booking.api_booking_quote
-        ):
-            lines = Booking_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id,
-                packed_status=booking.api_booking_quote.packed_status,
-            )
-        elif (
-            booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
-            and not booking.api_booking_quote
-        ):
-            lines = Booking_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id,
-                packed_status=Booking_lines.SCANNED_PACK,
-            )
-
-        has_deleted_lines = lines.filter(is_deleted=True).exists()
-
-        if has_deleted_lines:
-            lines = lines.filter(is_deleted=True, e_item_type__isnull=False)
-        else:
-            lines = lines.filter(is_deleted=False)
-
-        lines = (
-            lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+        booking_lines = (
+            booking_lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
             .exclude(e_item__icontains="(Ignored)")
-            .only("pk_lines_id", "e_qty", "e_item", "e_item_type")
+            .only(
+                "pk_lines_id",
+                "e_type_of_packaging",
+                "e_qty",
+                "e_item",
+                "e_item_type",
+                "e_dimUOM",
+                "e_dimLength",
+                "e_dimWidth",
+                "e_dimHeight",
+                "e_Total_KG_weight",
+            )
         )
+
+        original_lines = booking_lines.filter(packed_status=Booking_lines.ORIGINAL)
+        packed_lines = booking_lines.filter(packed_status=Booking_lines.SCANNED_PACK)
 
         booking_dict = {
             "uid": booking.pk,
@@ -924,23 +913,39 @@ def get_delivery_status(request):
             "vx_freight_provider": booking.vx_freight_provider,
         }
 
-        def line_to_dict(line):
-            try:
-                product = Client_Products.objects.get(
-                    child_model_number=line.e_item_type
-                ).description
-            except Exception as e:
-                logger.error(f"Client product doesn't exist: {e}")
+        def serialize_lines(lines, need_product=False):
+            _lines = []
+            for line in lines:
                 product = ""
 
-            return {
-                "e_item_type": line.e_item_type,
-                "l_003_item": line.e_item,
-                "l_002_qty": line.e_qty,
-                "product": product,
-            }
+                if need_product:
+                    try:
+                        product = Client_Products.objects.get(
+                            child_model_number=line.e_item_type
+                        ).description
+                    except Exception as e:
+                        logger.error(f"Client product doesn't exist: {e}")
+                        pass
 
-        lines = map(line_to_dict, lines)
+                _lines.append(
+                    {
+                        "e_type_of_packaging": line.e_type_of_packaging,
+                        "e_qty": line.e_qty,
+                        "e_item": line.e_item,
+                        "e_item_type": line.e_item_type,
+                        "e_dimUOM": line.e_dimUOM,
+                        "e_dimLength": line.e_dimLength,
+                        "e_dimWidth": line.e_dimWidth,
+                        "e_dimHeight": line.e_dimHeight,
+                        "e_Total_KG_weight": line.e_Total_KG_weight,
+                        "product": product,
+                    }
+                )
+
+            return _lines
+
+        original_lines = serialize_lines(original_lines, True)
+        packed_lines = serialize_lines(packed_lines, False)
 
         json_quote = None
 
@@ -1040,11 +1045,7 @@ def get_delivery_status(request):
                         booking.pk_booking_id, item
                     )
                     timestamps.append(
-                        status_time.strftime(
-                            "%d/%m/%Y %H:%M"
-                        )
-                        if status_time
-                        else None
+                        status_time.strftime("%d/%m/%Y %H:%M") if status_time else None
                     )
 
         if step == 1:
@@ -1093,7 +1094,7 @@ def get_delivery_status(request):
         except Exception as e:
             logger.info(f"Get FP status history error: {str(e)}")
             fp_status_history = []
-            
+
         return Response(
             {
                 "step": step,
@@ -1101,7 +1102,8 @@ def get_delivery_status(request):
                 "last_updated": last_updated,
                 "quote": json_quote,
                 "booking": booking_dict,
-                "lines": lines,
+                "original_lines": original_lines,
+                "packed_lines": packed_lines,
                 "eta_date": eta,
                 "last_milestone": last_milestone,
                 "timestamps": timestamps,
@@ -1126,7 +1128,7 @@ def get_delivery_status(request):
             status=HTTP_400_BAD_REQUEST,
         )
 
-    lines = (
+    booking_lines = (
         BOK_2_lines.objects.filter(
             fk_header_id=bok_1.pk_header_id, is_deleted=True, e_item_type__isnull=False
         )
@@ -1193,7 +1195,7 @@ def get_delivery_status(request):
             "product": product,
         }
 
-    lines = map(line_to_dict, lines)
+    original_lines = map(line_to_dict, booking_lines)
 
     quote = bok_1.quote
     json_quote, eta = None, None
@@ -1244,6 +1246,8 @@ def get_delivery_status(request):
             ],
             "logo_url": client.logo_url,
             "scans": [],
+            "original_lines": original_lines,
+            "packed_lines": [],
         }
     )
 
