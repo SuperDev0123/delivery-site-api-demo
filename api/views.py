@@ -1986,6 +1986,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     "manifest_timestamp",
                     "vx_freight_provider",
                     "kf_client_id",
+                    "b_booking_project"
                 )
             )
 
@@ -2018,6 +2019,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 result["manifest_date"] = manifest_date
                 result["b_bookingID_Visuals"] = b_bookingID_Visuals
                 result["freight_provider"] = first_booking.vx_freight_provider
+                result["vehicle_info"] = first_booking.b_booking_project if first_booking.vx_freight_provider == 'Deliver-ME' else f"{first_booking.vx_freight_provider} vehicle"
                 result["kf_client_id"] = first_booking.kf_client_id
                 results.append(result)
 
@@ -2051,6 +2053,7 @@ class BookingsViewSet(viewsets.ViewSet):
                 "manifest_timestamp",
                 "vx_freight_provider",
                 "kf_client_id",
+                "b_booking_project",
             )
         )
 
@@ -2087,6 +2090,7 @@ class BookingsViewSet(viewsets.ViewSet):
             result["manifest_date"] = manifest_date
             result["b_bookingID_Visuals"] = b_bookingID_Visuals
             result["freight_provider"] = first_booking.vx_freight_provider
+            result["vehicle_info"] = first_booking.b_booking_project if first_booking.vx_freight_provider == 'Deliver-ME' else f"{first_booking.vx_freight_provider} Vehicle"
             result["kf_client_id"] = first_booking.kf_client_id
             results.append(result)
 
