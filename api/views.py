@@ -1811,48 +1811,66 @@ class BookingsViewSet(viewsets.ViewSet):
 
         try:
             for booking_id in booking_ids:
-                booking = Bookings.objects.get(id=booking_id)
-                setattr(booking, field_name, field_content)
+                if field_name == "fp_scan":
+                    field_content["booking"] = booking_id
+                    fp_status_history = FPStatusHistorySerializer(data=field_content)
 
-                if not booking.delivery_kpi_days:
-                    delivery_kpi_days = 14
+                    if fp_status_history.is_valid():
+                        fp_status_history.save()
+                    else:
+                        return JsonResponse(
+                            {
+                                "message": f"Error: {fp_status_history.errors}, Please contact support center!"
+                            },
+                            status=400,
+                        )
                 else:
-                    delivery_kpi_days = int(booking.delivery_kpi_days)
+                    booking = Bookings.objects.get(id=booking_id)
+                    setattr(booking, field_name, field_content)
 
-                if field_name == "b_project_due_date" and field_content:
-                    if not booking.delivery_booking:
+                    if not booking.delivery_kpi_days:
+                        delivery_kpi_days = 14
+                    else:
+                        delivery_kpi_days = int(booking.delivery_kpi_days)
+
+                    if field_name == "b_project_due_date" and field_content:
+                        if not booking.delivery_booking:
+                            booking.de_Deliver_From_Date = field_content
+                            booking.de_Deliver_By_Date = field_content
+                    elif field_name == "delivery_booking" and field_content:
                         booking.de_Deliver_From_Date = field_content
                         booking.de_Deliver_By_Date = field_content
-                elif field_name == "delivery_booking" and field_content:
-                    booking.de_Deliver_From_Date = field_content
-                    booking.de_Deliver_By_Date = field_content
-                elif (
-                    field_name == "fp_received_date_time"
-                    and field_content
-                    and not booking.b_given_to_transport_date_time
-                ):
-                    booking.z_calculated_ETA = datetime.strptime(
-                        field_content, "%Y-%m-%d"
-                    ) + timedelta(days=delivery_kpi_days)
-                elif field_name == "b_given_to_transport_date_time" and field_content:
-                    booking.z_calculated_ETA = datetime.strptime(
-                        field_content, "%Y-%m-%d %H:%M:%S"
-                    ) + timedelta(days=delivery_kpi_days)
-                elif field_name == "vx_freight_provider" and field_content:
-                    logger.info(f"Rebuild label required")
-                    booking.z_downloaded_shipping_label_timestamp = None
+                    elif (
+                        field_name == "fp_received_date_time"
+                        and field_content
+                        and not booking.b_given_to_transport_date_time
+                    ):
+                        booking.z_calculated_ETA = datetime.strptime(
+                            field_content, "%Y-%m-%d"
+                        ) + timedelta(days=delivery_kpi_days)
+                    elif (
+                        field_name == "b_given_to_transport_date_time" and field_content
+                    ):
+                        booking.z_calculated_ETA = datetime.strptime(
+                            field_content, "%Y-%m-%d %H:%M:%S"
+                        ) + timedelta(days=delivery_kpi_days)
+                    elif field_name == "vx_freight_provider" and field_content:
+                        logger.info(f"Rebuild label required")
+                        booking.z_downloaded_shipping_label_timestamp = None
 
-                    if booking.z_label_url:
-                        booking.z_label_url = "[REBUILD_REQUIRED]" + booking.z_label_url
-                    else:
-                        booking.z_label_url = "[REBUILD_REQUIRED]"
+                        if booking.z_label_url:
+                            booking.z_label_url = (
+                                "[REBUILD_REQUIRED]" + booking.z_label_url
+                            )
+                        else:
+                            booking.z_label_url = "[REBUILD_REQUIRED]"
 
-                    # JasonL and 3 special FP
-                    if booking.b_client_name == "Jason L":
-                        if field_content in SPECIAL_FPS:
-                            booking.booking_type = "DMEM"
+                        # JasonL and 3 special FP
+                        if booking.b_client_name == "Jason L":
+                            if field_content in SPECIAL_FPS:
+                                booking.booking_type = "DMEM"
 
-                booking.save()
+                    booking.save()
             return JsonResponse(
                 {"message": "Bookings are updated successfully"}, status=200
             )
