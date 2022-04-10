@@ -1974,7 +1974,7 @@ class BookingsViewSet(viewsets.ViewSet):
         if clientname in ["BioPak"]:
             sydney_now = get_sydney_now_time("datetime")
             last_date = datetime.now()
-            first_date = (sydney_now - timedelta(days=660)).date()
+            first_date = (sydney_now - timedelta(days=60)).date()
             bookings_with_manifest = (
                 Bookings.objects.prefetch_related("fk_client_warehouse")
                 .exclude(manifest_timestamp__isnull=True)
@@ -2002,6 +2002,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
             results = []
             for manifest_date in manifest_dates:
+                result = {"freight_providers": [], "vehicles": [], "cnt_4_each_fp": {}}
                 result = {}
                 daily_count = 0
                 first_booking = None
@@ -2013,17 +2014,29 @@ class BookingsViewSet(viewsets.ViewSet):
                         daily_count += 1
                         b_bookingID_Visuals.append(booking.b_bookingID_Visual)
 
+                        if not booking.vx_freight_provider in result["cnt_4_each_fp"]:
+                            result["cnt_4_each_fp"][booking.vx_freight_provider] = 1
+                        else:
+                            result["cnt_4_each_fp"][booking.vx_freight_provider] += 1
+
+                        if (
+                            not booking.vx_freight_provider
+                            in result["freight_providers"]
+                        ):
+                            result["freight_providers"].append(
+                                booking.vx_freight_provider
+                            )
+                            result["vehicles"].append(
+                                booking.b_booking_project
+                                if booking.vx_freight_provider == "Deliver-ME"
+                                else f"{booking.vx_freight_provider} Vehicle"
+                            )
+
                 result["count"] = daily_count
                 result["z_manifest_url"] = first_booking.z_manifest_url
                 result["warehouse_name"] = first_booking.fk_client_warehouse.name
                 result["manifest_date"] = manifest_date
                 result["b_bookingID_Visuals"] = b_bookingID_Visuals
-                result["freight_provider"] = first_booking.vx_freight_provider
-                result["vehicle_info"] = (
-                    first_booking.b_booking_project
-                    if first_booking.vx_freight_provider == "Deliver-ME"
-                    else f"{first_booking.vx_freight_provider} vehicle"
-                )
                 result["kf_client_id"] = first_booking.kf_client_id
                 results.append(result)
 
@@ -2031,7 +2044,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
         sydney_now = get_sydney_now_time("datetime")
         last_date = datetime.now()
-        first_date = (sydney_now - timedelta(days=660)).date()
+        first_date = (sydney_now - timedelta(days=60)).date()
         manifest_logs = (
             Dme_manifest_log.objects.filter(
                 z_createdTimeStamp__range=(first_date, last_date)
