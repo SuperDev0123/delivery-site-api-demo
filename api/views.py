@@ -2003,7 +2003,6 @@ class BookingsViewSet(viewsets.ViewSet):
             results = []
             for manifest_date in manifest_dates:
                 result = {"freight_providers": [], "vehicles": [], "cnt_4_each_fp": {}}
-                result = {}
                 daily_count = 0
                 first_booking = None
                 b_bookingID_Visuals = []
