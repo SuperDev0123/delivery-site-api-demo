@@ -5409,6 +5409,15 @@ class Linehaul(models.Model):
     consignment_to_view = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
+    fp_invoice_id_to_set = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    dme_linehaul_extra01 = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    dme_linehaul_extra02 = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
