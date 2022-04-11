@@ -1072,28 +1072,33 @@ def get_delivery_status(request):
             )
 
         try:
-            fp_status_history = (
+            fp_status_histories = (
                 FP_status_history.objects.values(
                     "id", "status", "desc", "event_timestamp"
                 )
                 .filter(booking_id=booking.id)
                 .order_by("-event_timestamp")
             )
-            fp_status_history = [
+            fp_status_histories = [
                 {
                     **item,
                     "desc": get_dme_status_from_fp_status(
                         booking.vx_freight_provider, item["status"]
-                    ),
+                    )
+                    if (
+                        not item["desc"]
+                        or str(booking.b_bookingID_Visual) in item["desc"]
+                    )
+                    else item["desc"],
                     "event_timestamp": dme_time_lib.convert_to_AU_SYDNEY_tz(
                         item["event_timestamp"]
                     ),
                 }
-                for item in fp_status_history
+                for item in fp_status_histories
             ]
         except Exception as e:
             logger.info(f"Get FP status history error: {str(e)}")
-            fp_status_history = []
+            fp_status_histories = []
 
         return Response(
             {
@@ -1108,7 +1113,7 @@ def get_delivery_status(request):
                 "last_milestone": last_milestone,
                 "timestamps": timestamps,
                 "logo_url": client.logo_url,
-                "scans": fp_status_history,
+                "scans": fp_status_histories,
             }
         )
 
