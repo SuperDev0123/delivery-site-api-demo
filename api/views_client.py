@@ -911,6 +911,7 @@ def get_delivery_status(request):
             "b_064_b_del_phone_main": booking.de_to_Phone_Main,
             "b_000_3_consignment_number": booking.v_FPBookingNumber,
             "vx_freight_provider": booking.vx_freight_provider,
+            "vx_serviceName": booking.vx_serviceName,
         }
 
         def serialize_lines(lines, need_product=False):
@@ -962,7 +963,7 @@ def get_delivery_status(request):
             "Futile Pickup",
             "Pickup Rebooked",
         ]:
-            step = 2
+            step = 1
         elif b_status in [
             "In Transit",
             "Partial In Transit",
@@ -970,9 +971,9 @@ def get_delivery_status(request):
             "Delivery Rebooked",
             "Delivery Delayed",
         ]:
-            step = 3
+            step = 1
         elif b_status == "On Board for Delivery":
-            step = 4
+            step = 2
         elif b_status in [
             "Lost In Transit",
             "Damaged",
@@ -984,10 +985,10 @@ def get_delivery_status(request):
             "Collected",
             "Partially Delivered",
         ]:
-            step = 5
+            step = 3
             last_milestone = b_status if b_status != "Collected" else "Delivered"
         else:
-            step = 1
+            step = 0
             b_status = "Processing"
 
         steps = [
