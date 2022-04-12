@@ -971,6 +971,7 @@ def get_delivery_status(request):
             "Delivery Rebooked",
             "Delivery Delayed",
             "Partially Delivered",
+            "Futile Delivery",
         ]:
             step = 1
         elif b_status in [
