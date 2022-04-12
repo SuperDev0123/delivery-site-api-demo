@@ -956,22 +956,13 @@ def get_delivery_status(request):
             json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
 
         if b_status in [
-            "Picking",
-            "Ready for Booking",
-            "Ready for Despatch",
-            "Booked",
-            "Futile Pickup",
-            "Pickup Rebooked",
-        ]:
-            step = 1
-        elif b_status in [
             "In Transit",
-            "Partial In Transit",
+            "Partially In Transit",
             "On-Forwarded",
-            "Delivery Rebooked",
-            "Delivery Delayed",
-            "Partially Delivered",
             "Futile Delivery",
+            "Delivery Delayed",
+            "Delivery Rebooked",
+            "Partially Delivered",
         ]:
             step = 1
         elif b_status in [
@@ -979,14 +970,16 @@ def get_delivery_status(request):
         ]:
             step = 2
         elif b_status in [
+            "Collected by Customer",
+            "Delivered",
             "Lost In Transit",
             "Damaged",
             "Returning",
             "Returned",
-            "Cancelled",
             "Closed",
-            "Delivered",
-            "Collected",
+            "Cancelled",
+            "On Hold",
+            "Cancel Requested",
         ]:
             step = 3
             last_milestone = b_status if b_status != "Collected" else "Delivered"
