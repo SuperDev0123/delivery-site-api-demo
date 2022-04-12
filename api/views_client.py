@@ -970,9 +970,12 @@ def get_delivery_status(request):
             "On-Forwarded",
             "Delivery Rebooked",
             "Delivery Delayed",
+            "Partially Delivered",
         ]:
             step = 1
-        elif b_status == "On Board for Delivery":
+        elif b_status in [
+            "On Board for Delivery",
+        ]:
             step = 2
         elif b_status in [
             "Lost In Transit",
@@ -983,7 +986,6 @@ def get_delivery_status(request):
             "Closed",
             "Delivered",
             "Collected",
-            "Partially Delivered",
         ]:
             step = 3
             last_milestone = b_status if b_status != "Collected" else "Delivered"
