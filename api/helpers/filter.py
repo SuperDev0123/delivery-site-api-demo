@@ -5,11 +5,18 @@ from api.common.common_times import convert_to_UTC_tz, TIME_DIFFERENCE
 
 
 def _build_query(keyword, field_name, search_type):
-    filter = field_name + "__" + search_type
     q = Q()
 
-    for keyword in keyword.split("|"):
-        q |= Q(**{filter: keyword.strip()})
+    if search_type == "isnull":
+        filter1 = field_name + "__" + search_type
+        filter2 = field_name + "__" + "exact"
+        q1 = Q(**{filter1: True})
+        q2 = Q(**{filter2: ""})
+        q = q1 | q2
+    else:
+        filter = field_name + "__" + search_type
+        for keyword in keyword.split("|"):
+            q |= Q(**{filter: keyword.strip()})
 
     return q
 
@@ -57,7 +64,16 @@ def filter_bookings_by_columns(queryset, column_filters, active_tab_index):
         keyword = column_filters.get(field_name)
 
         if keyword:
-            if "<>" in keyword:
+            if "<>''" in keyword or '<>""' in keyword:
+                queryset = queryset.exclude(_build_query(keyword, field_name, "isnull"))
+            elif (
+                "=''" in keyword
+                or '=""' in keyword
+                or "''" in keyword
+                or '""' in keyword
+            ):
+                queryset = queryset.filter(_build_query(keyword, field_name, "isnull"))
+            elif "<>" in keyword:
                 queryset = queryset.exclude(
                     _build_query(keyword[2:], field_name, "icontains")
                 )
