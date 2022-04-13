@@ -54,6 +54,7 @@ from api.common.common_times import next_business_day, convert_to_UTC_tz
 from api.operations.generate_xls_report import build_xls
 from api.outputs.email import send_email
 from api.fp_apis.utils import gen_consignment_num
+from api.helpers import string
 
 if settings.ENV == "local":
     production = False  # Local
@@ -2970,16 +2971,12 @@ def get_eta_de_by(booking, quote):
         return None
 
 
-def ireplace(old, repl, text):
-    return re.sub("(?i)" + re.escape(old), lambda m: repl, text)
-
-
 def sanitize_address(address):
     if address is None:
         return address
 
     dme_augment_address = DME_Augment_Address.objects.all()
     for rule in dme_augment_address:
-        address = ireplace(rule.origin_word, rule.augmented_word, address)
+        address = string.ireplace(rule.origin_word, rule.augmented_word, address)
 
     return address
