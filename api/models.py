@@ -2099,13 +2099,13 @@ class Bookings(models.Model):
 
             if (
                 old.vx_freight_provider != new.vx_freight_provider
-                and new.vx_freight_provider == "Deliver-ME Direct"
+                and new.vx_freight_provider == "Deliver-ME"
                 and not new.b_booking_project
             ):
                 self.b_booking_project = "not assigned yet"
             elif (
                 old.vx_freight_provider != new.vx_freight_provider
-                and old.vx_freight_provider == "Deliver-ME Direct"
+                and old.vx_freight_provider == "Deliver-ME"
                 and new.b_booking_project == "not assigned yet"
             ):
                 self.b_booking_project = None

@@ -1649,7 +1649,7 @@ class BookingsViewSet(viewsets.ViewSet):
                             )
                             result["vehicles"].append(
                                 booking.b_booking_project
-                                if booking.vx_freight_provider == "Deliver-ME Direct"
+                                if booking.vx_freight_provider == "Deliver-ME"
                                 else f"{booking.vx_freight_provider} Vehicle"
                             )
 
@@ -1730,7 +1730,7 @@ class BookingsViewSet(viewsets.ViewSet):
                         result["freight_providers"].append(booking.vx_freight_provider)
                         result["vehicles"].append(
                             booking.b_booking_project
-                            if booking.vx_freight_provider == "Deliver-ME Direct"
+                            if booking.vx_freight_provider == "Deliver-ME"
                             else f"{booking.vx_freight_provider} Vehicle"
                         )
 
@@ -4396,7 +4396,7 @@ def get_manifest(request):
                         )
 
                         # Update status to `In Transit` for DME linehaul
-                        if booking.vx_freight_provider == "Deliver-ME Direct":
+                        if booking.vx_freight_provider == "Deliver-ME":
                             status_history.create(booking, "In Transit", username)
                     else:
                         status_history.create(booking, "Ready for Despatch", username)
