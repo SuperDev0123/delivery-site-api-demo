@@ -94,7 +94,6 @@ def build_special_fp_pricings(booking, packed_status):
     quote_0.fk_booking_id = booking.pk_booking_id
     quote_0.fk_client_id = booking.b_client_name
     quote_0.account_code = None
-    quote_0.service_name = None
     quote_0.etd = 3
     quote_0.fee = 0
     quote_0.service_code = None
@@ -129,11 +128,13 @@ def build_special_fp_pricings(booking, packed_status):
             )
         ):
             quote_0.freight_provider = "Deliver-ME"
+            quote_0.service_name = "Deliver-ME Direct"
             quote_0.save()
 
         quote_1 = quote_0
         quote_1.pk = None
         quote_1.freight_provider = "Customer Collect"
+        quote_0.service_name = None
         quote_1.save()
 
     # JasonL
@@ -141,6 +142,7 @@ def build_special_fp_pricings(booking, packed_status):
         quote_2 = quote_0
         quote_2.pk = None
         quote_2.freight_provider = "In House Fleet"
+        quote_0.service_name = None
         quote_2.save()
 
 
