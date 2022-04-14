@@ -2951,9 +2951,6 @@ def get_eta_de_by(booking, quote):
         if etd_de_by and quote:
             from api.fp_apis.utils import get_etd_in_hour
 
-            freight_provider = Fp_freight_providers.objects.get(
-                fp_company_name=booking.vx_freight_provider
-            )
             etd_in_hour = get_etd_in_hour(quote)
 
             if etd_de_by and etd_in_hour:

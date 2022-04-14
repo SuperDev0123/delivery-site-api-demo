@@ -128,7 +128,7 @@ def build_special_fp_pricings(booking, packed_status):
                 or (postal_code >= 2760 and postal_code <= 2770)
             )
         ):
-            quote_0.freight_provider = "Deliver-ME"
+            quote_0.freight_provider = "Deliver-ME Direct"
             quote_0.save()
 
         quote_1 = quote_0

@@ -154,9 +154,7 @@ def build_manifest(bookings, booking_lines, username):
     for line in booking_lines:
         total_qty += line.e_qty
         total_dead_weight += (
-            line.e_weightPerEach
-            * _get_weight_amount(line.e_weightUOM)
-            * line.e_qty
+            line.e_weightPerEach * _get_weight_amount(line.e_weightUOM) * line.e_qty
         )
         total_cubic += get_cubic_meter(
             line.e_dimLength,
@@ -381,11 +379,7 @@ def build_manifest(bookings, booking_lines, username):
                 style_left,
             ),
             Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    ""
-                ),
+                "<font size=%s>%s</font>" % (label_settings["font_size_medium"], ""),
                 style_left,
             ),
         ],
@@ -492,7 +486,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Number of Consignments: ",
-                    number_of_consignments
+                    number_of_consignments,
                 ),
                 style_left,
             ),
@@ -501,7 +495,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Number of Articles: ",
-                    total_qty
+                    total_qty,
                 ),
                 style_left,
             ),
@@ -510,7 +504,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Actual Weight (kg): ",
-                    round(total_dead_weight, 3)
+                    round(total_dead_weight, 3),
                 ),
                 style_left,
             ),
@@ -518,11 +512,7 @@ def build_manifest(bookings, booking_lines, username):
         [
             Paragraph(
                 "<font size=%s><b>%s (m<super rise=4 size=6>3</super>): </b> %s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "Cube",
-                    round(total_cubic, 3)
-                ),
+                % (label_settings["font_size_medium"], "Cube", round(total_cubic, 3)),
                 style_left,
             ),
             Paragraph(
@@ -593,9 +583,7 @@ def build_manifest(bookings, booking_lines, username):
             "",
             Paragraph(
                 "<font size=%s><b>Total KG/Total M<super rise=4 size=6>3</super></b></font>"
-                % (
-                    label_settings["font_size_medium"],
-                ),
+                % (label_settings["font_size_medium"],),
                 style_center,
             ),
         ],
@@ -1151,7 +1139,6 @@ def build_manifest(bookings, booking_lines, username):
                 style_center,
             ),
         ],
-        
     ]
 
     t1_w = float(label_settings["label_image_size_width"]) * (3 / 19) * mm

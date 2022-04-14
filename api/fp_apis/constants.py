@@ -308,7 +308,7 @@ FP_UOM = {
 }
 
 SPECIAL_FPS = [
-    "Deliver-ME",
+    "Deliver-ME Direct",
     "Customer Pickup",
     "Customer Collect",
     "In House Fleet",

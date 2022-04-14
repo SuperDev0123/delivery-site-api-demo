@@ -808,7 +808,7 @@ def push_boks(payload, client, username, method):
         if (
             selected_quote
             and bok_1.get("shipping_type") == "DMEM"
-            and selected_quote.freight_provider == "Deliver-ME"
+            and selected_quote.freight_provider == "Deliver-ME Direct"
         ):
             quote_set = quote_set.filter(
                 freight_provider=selected_quote.freight_provider,
