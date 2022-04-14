@@ -912,6 +912,8 @@ def get_delivery_status(request):
             "b_000_3_consignment_number": booking.v_FPBookingNumber,
             "vx_freight_provider": booking.vx_freight_provider,
             "vx_serviceName": booking.vx_serviceName,
+            "z_pod_signed_url": booking.z_pod_signed_url,
+            "z_pod_url": booking.z_pod_url,
         }
 
         def serialize_lines(lines, need_product=False):
