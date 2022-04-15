@@ -1,6 +1,7 @@
 import os
 import datetime
 import logging
+from this import d
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
 from reportlab.platypus import (
     SimpleDocTemplate,
@@ -176,7 +177,7 @@ def build_label(
         "font_size_large": "10",
         "font_size_extra_large": "13",
         "label_dimension_length": "150",
-        "label_dimension_width": "115",
+        "label_dimension_width": "150",
         "label_image_size_length": "135",
         "label_image_size_width": "105",
         "barcode_dimension_length": "85",
@@ -921,7 +922,32 @@ def build_label(
                 ],
             )
 
+
             Story.append(footer_table)
+            print("------------ QR ---------------")
+            d = Drawing(80, 80)
+            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            d.add(QrCodeWidget(value="01234567"))
+
+            tbl_data2 = [[d]]
+            t2 = Table(
+                tbl_data2,
+                colWidths=(
+                    float(label_settings["label_image_size_length"])
+                    * (1 / 3)
+                    * mm
+                ),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ],
+            )
+
+            Story.append(t2)
             Story.append(PageBreak())
 
             j += 1
