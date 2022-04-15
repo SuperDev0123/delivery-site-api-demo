@@ -1880,9 +1880,9 @@ class BookingsViewSet(viewsets.ViewSet):
                 fps[booking.vx_freight_provider]["totalKgs"] += (
                     line.e_qty * line.e_weightPerEach
                 )
-                fps[booking.vx_freight_provider][
-                    "totalCubicMeter"
-                ] += line.e_1_Total_dimCubicMeter
+                fps[booking.vx_freight_provider]["totalCubicMeter"] += (
+                    line.e_1_Total_dimCubicMeter or 0
+                )
 
         result = {}
         result["fps"] = fps
