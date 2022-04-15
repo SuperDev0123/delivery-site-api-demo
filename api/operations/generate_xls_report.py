@@ -1690,7 +1690,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                 # "Given to / Received by Transport"
                 c_value = None
-                if booking.fp_received_date_time:
+                if booking.s_05_Latest_Pick_Up_Date_TimeSet:
+                    value = convert_to_AU_SYDNEY_tz(
+                        booking.s_05_Latest_Pick_Up_Date_TimeSet
+                    ).date()
+                    c_value = value
+                    row.append([value, date_format])
+                elif booking.fp_received_date_time:
                     value = convert_to_AU_SYDNEY_tz(
                         booking.fp_received_date_time
                     ).date()
@@ -1716,6 +1722,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                         row.append([etd_in_days, None])
                     else:
                         row.append(["", None])
+                elif booking.vx_freight_provider == "Deliver-ME":
+                    d_value = 3
+                    row.append([d_value, None])
                 else:
                     d_value = booking.delivery_kpi_days or 0
                     row.append([booking.delivery_kpi_days, None])

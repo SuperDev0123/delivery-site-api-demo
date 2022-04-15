@@ -1874,7 +1874,7 @@ class BookingsViewSet(viewsets.ViewSet):
             for line in scanned_lines or original_lines or []:
                 total_qty += line.e_qty
                 total_kgs += line.e_Total_KG_weight
-                total_cbm += line.e_1_Total_dimCubicMeter
+                total_cbm += line.e_1_Total_dimCubicMeter or 0
 
                 fps[booking.vx_freight_provider]["totalQty"] += line.e_qty
                 fps[booking.vx_freight_provider]["totalKgs"] += (
