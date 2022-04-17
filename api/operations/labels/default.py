@@ -925,10 +925,11 @@ def build_label(
 
             Story.append(footer_table)
             print("------------ QR ---------------")
+            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}"
+            print(codeString)
             d = Drawing(80, 80)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            d.add(QrCodeWidget(value="01234567"))
-
+            d.add(QrCodeWidget(value=codeString))
             tbl_data2 = [[d]]
             t2 = Table(
                 tbl_data2,
