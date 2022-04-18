@@ -50,7 +50,11 @@ from reportlab.lib import colors
 from django.conf import settings
 from api.models import *
 from api.common import trace_error
-from api.common.common_times import next_business_day, convert_to_UTC_tz
+from api.common.common_times import (
+    next_business_day,
+    convert_to_UTC_tz,
+    TIME_DIFFERENCE,
+)
 from api.operations.generate_xls_report import build_xls
 from api.outputs.email import send_email
 from api.fp_apis.utils import gen_consignment_num
@@ -2946,17 +2950,29 @@ def get_eta_pu_by(booking):
 
 def get_eta_de_by(booking, quote):
     try:
-        etd_de_by = get_eta_pu_by(booking)
+        eta_pu_by = get_eta_pu_by(booking)
 
-        if etd_de_by and quote:
+        if eta_pu_by and quote:
             from api.fp_apis.utils import get_etd_in_hour
 
             etd_in_hour = get_etd_in_hour(quote)
+            fp = Fp_freight_providers.objects.get(
+                fp_company_name=quote.freight_provider
+            )
+            current_hour = (datetime.now().hour + TIME_DIFFERENCE) % 24
 
-            if etd_de_by and etd_in_hour:
-                etd_de_by = etd_de_by + timedelta(hours=etd_in_hour)
+            if etd_in_hour:
+                # Service cut off time
+                if (
+                    not fp.service_cutoff_time
+                    or fp.service_cutoff_time.hour > current_hour
+                ):
+                    etd_de_by = eta_pu_by + timedelta(hours=etd_in_hour)
+                else:
+                    etd_de_by = eta_pu_by + timedelta(hours=etd_in_hour + 24)
+
+                # Workdays
                 weekno = etd_de_by.weekday()
-
                 if weekno > 4:
                     etd_de_by = etd_de_by + timedelta(days=7 - weekno)
 
