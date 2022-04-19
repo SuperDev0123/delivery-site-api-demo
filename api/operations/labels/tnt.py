@@ -1173,6 +1173,32 @@ def build_label(
             )
             Story.append(shell_table)
 
+            print("------------ QR ---------------")
+            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
+            print(codeString)
+            d = Drawing(80, 80)
+            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            d.add(QrCodeWidget(value=codeString))
+            tbl_data2 = [[d]]
+            t2 = Table(
+                tbl_data2,
+                colWidths=(
+                    float(label_settings["label_image_size_length"])
+                    * (1 / 3)
+                    * mm
+                ),
+                style=[
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ],
+            )
+
+            Story.append(t2)
+
             Story.append(PageBreak())
 
             j += 1
