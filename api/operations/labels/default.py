@@ -1,7 +1,6 @@
 import os
 import datetime
 import logging
-from this import d
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
 from reportlab.platypus import (
     SimpleDocTemplate,
