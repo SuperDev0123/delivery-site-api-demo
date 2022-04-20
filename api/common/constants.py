@@ -49,6 +49,8 @@ BOOKING_FIELDS_4_ALLBOOKING_TABLE = [
     "b_status",
     "b_status_category",
     "b_dateBookedDate",
+    "s_06_Latest_Delivery_Date_TimeSet",
+    "s_06_Latest_Delivery_Date_Time_Override",
     "s_20_Actual_Pickup_TimeStamp",
     "s_21_Actual_Delivery_TimeStamp",
     "b_client_name",

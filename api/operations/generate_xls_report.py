@@ -1737,12 +1737,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 #     row.append([value, date_format])
                 # else:
                 #     row.append(["", None])
-                if not c_value:
-                    e_value = ""
-                    row.append(["", None])
+                if booking.s_06_Latest_Delivery_Date_TimeSet:
+                    value = convert_to_AU_SYDNEY_tz(
+                        booking.s_06_Latest_Delivery_Date_TimeSet
+                    )
+                    row.append([valuevalue, date_format])
                 else:
-                    e_value = c_value + timedelta(days=d_value)
-                    row.append([e_value, date_format])
+                    value = None
+                    row.append(["", None])
 
                 # "Updated Delivery ETA"
                 if booking.s_06_Latest_Delivery_Date_Time_Override:

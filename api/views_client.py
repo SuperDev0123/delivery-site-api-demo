@@ -1048,25 +1048,14 @@ def get_delivery_status(request):
                     )
 
         if step == 1:
-            eta = (
-                dme_time_lib.next_business_day(
-                    dme_time_lib.convert_to_AU_SYDNEY_tz(
-                        booking.puPickUpAvailFrom_Date
-                    ),
-                    int(json_quote["eta"].split()[0]),
-                    booking.vx_freight_provider,
-                ).strftime("%d/%m/%Y")
-                if json_quote and booking.puPickUpAvailFrom_Date
-                else ""
-            )
+            from api.utils import get_eta_de_by
+
+            eta = get_eta_de_by(booking, booking.api_booking_quote)
         else:
+            s_06 = booking.get_s_06()
             eta = (
-                dme_time_lib.next_business_day(
-                    dme_time_lib.convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate),
-                    int(json_quote["eta"].split()[0]),
-                    booking.vx_freight_provider,
-                ).strftime("%d/%m/%Y")
-                if json_quote and booking.b_dateBookedDate
+                dme_time_lib.convert_to_AU_SYDNEY_tz(s_06).strftime("%d/%m/%Y %H:%M")
+                if s_06
                 else ""
             )
 

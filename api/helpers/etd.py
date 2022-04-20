@@ -1,4 +1,9 @@
+import logging
+
 from api.helpers.number import is_float
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_etd(etd_str):
