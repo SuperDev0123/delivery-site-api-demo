@@ -2900,6 +2900,8 @@ def get_pu_by(booking):
                 0,
             ),
         )
+
+        return convert_to_UTC_tz(pu_by)
     elif booking.puPickUpAvailFrom_Date:
         puPickUpAvailFrom_Date = booking.puPickUpAvailFrom_Date
 
@@ -2917,70 +2919,61 @@ def get_pu_by(booking):
             ),
         )
 
-    return pu_by
+        return convert_to_UTC_tz(pu_by)
+    else:
+        return datetime.now()
 
 
 def get_eta_pu_by(booking):
+    LOG_ID = ["ETA_PU_BY"]
+
     try:
-        _eta_pu_by = get_pu_by(booking)
-
-        if _eta_pu_by:
-            _eta_pu_by = convert_to_UTC_tz(_eta_pu_by)
-
-        return _eta_pu_by
-
-        # if get_pu_by(booking) is None:
-        #     sydney_tz = pytz.timezone("Australia/Sydney")
-        #     etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney_tz)
-        #     weekno = etd_pu_by.weekday()
-
-        #     if weekno > 4:
-        #         etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
-
-        #     etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
-
-        #     return etd_pu_by
-        # else:
-        #     return get_pu_by(booking)
+        if booking.b_dateBookedDate:
+            return booking.b_dateBookedDate
+        else:
+            return get_pu_by(booking)
     except Exception as e:
         trace_error.print()
-        logger.info(f"Error #1001: {e}")
+        logger.info(f"{LOG_ID} Error #1001: {e}")
         return None
 
 
 def get_eta_de_by(booking, quote):
+    LOG_ID = ["ETA_DE_BY"]
+    current_hour = (datetime.now().hour + TIME_DIFFERENCE) % 24
+
     try:
         eta_pu_by = get_eta_pu_by(booking)
 
-        if eta_pu_by and quote:
+        if quote:
             from api.fp_apis.utils import get_etd_in_hour
 
             etd_in_hour = get_etd_in_hour(quote)
             fp = Fp_freight_providers.objects.get(
                 fp_company_name=quote.freight_provider
             )
-            current_hour = (datetime.now().hour + TIME_DIFFERENCE) % 24
 
-            if etd_in_hour:
-                # Service cut off time
-                if (
-                    not fp.service_cutoff_time
-                    or fp.service_cutoff_time.hour > current_hour
-                ):
-                    etd_de_by = eta_pu_by + timedelta(hours=etd_in_hour)
-                else:
-                    etd_de_by = eta_pu_by + timedelta(hours=etd_in_hour + 24)
+            # Service cut off time
+            if not fp.service_cutoff_time or fp.service_cutoff_time.hour > current_hour:
+                etd_de_by = eta_pu_by + timedelta(hours=etd_in_hour)
+            else:
+                etd_de_by = eta_pu_by + timedelta(hours=etd_in_hour + 24)
+        else:
+            # Service cut off time
+            if 12 > current_hour:
+                etd_de_by = eta_pu_by + timedelta(hours=3 * 24)
+            else:
+                etd_de_by = eta_pu_by + timedelta(hours=4 * 24)
 
-                # Workdays
-                weekno = etd_de_by.weekday()
-                if weekno > 4:
-                    etd_de_by = etd_de_by + timedelta(days=7 - weekno)
+        # Workdays
+        weekno = etd_de_by.weekday()
+        if weekno > 4:
+            etd_de_by = etd_de_by + timedelta(days=7 - weekno)
 
-                return convert_to_UTC_tz(etd_de_by)
-        return None
+        return etd_de_by
     except Exception as e:
         trace_error.print()
-        logger.info(f"Error #1002: {e}")
+        logger.info(f"{LOG_ID} Error #1001: {e}")
         return None
 
 

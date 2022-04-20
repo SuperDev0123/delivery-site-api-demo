@@ -480,6 +480,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "vx_futile_Booking_Notes",
             "s_05_Latest_Pick_Up_Date_TimeSet",
             "s_06_Latest_Delivery_Date_TimeSet",
+            "s_06_Latest_Delivery_Date_Time_Override",
             "b_handling_Instructions",
             "b_status_API",
             "b_booking_Notes",

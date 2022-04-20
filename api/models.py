@@ -624,18 +624,6 @@ class API_booking_quotes(models.Model):
     z_fp_delivery_hours = models.IntegerField(
         verbose_name=_("Delivery Hours"), blank=True, null=True
     )
-    s_05_LatestPickUpDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest PickUP Date Time Final"),
-        default=timezone.now,
-        blank=True,
-        null=True,
-    )
-    s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest Delivery Date Time Final"),
-        default=timezone.now,
-        blank=True,
-        null=True,
-    )
     z_03_selected_lowest_priced_FC_that_passed = models.FloatField(
         verbose_name=_("Selected Lowest Priced FC That Passed"), blank=True, null=True
     )
@@ -745,12 +733,6 @@ class Bookings(models.Model):
         blank=True,
         null=True,
         default=None,
-    )
-    s_05_LatestPickUpDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Lastest PickUp DateTime"), blank=True, null=True, default=None
-    )
-    s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest Delivery DateTime"), blank=True, null=True, default=None
     )
     v_FPBookingNumber = models.CharField(
         verbose_name=_("FP Booking Number"),

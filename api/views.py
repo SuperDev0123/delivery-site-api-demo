@@ -840,10 +840,10 @@ class BookingsViewSet(viewsets.ViewSet):
                             | Q(b_booking_Category__icontains=simple_search_keyword)
                             | Q(b_status_category__icontains=simple_search_keyword)
                             | Q(
-                                s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword
+                                s_05_Latest_Pick_Up_Date_TimeSet__icontains=simple_search_keyword
                             )
                             | Q(
-                                s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword
+                                s_06_Latest_Delivery_Date_TimeSet__icontains=simple_search_keyword
                             )
                             | Q(
                                 s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword
