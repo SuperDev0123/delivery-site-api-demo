@@ -1560,7 +1560,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["b_dateBookedDate(Date)", bold],
                 ["fp_received_date_time/b_given_to_transport_date_time", bold],
                 ["delivery_kpi_days", bold],
-                ["z_calculated_ETA", bold],
+                ["s_06_Latest_Delivery_Date_TimeSet", bold],
+                ["s_06_Latest_Delivery_Date_Time_Override", bold],
                 ["s_21_Actual_Delivery_TimeStamp", bold],
                 ["delivery_actual_kpi_days", bold],
                 ["Delivery Days Early / Late ", red_bold],
@@ -1598,7 +1599,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["Booked Date", bold],
                 ["Given to / Received by Transport", bold],
                 ["Target Delivery KPI (Days)", bold],
-                ["Calculated ETA", bold],
+                ["Calculated Delivery ETA", bold],
+                ["Updated Delivery ETA", bold],
                 ["Actual Delivery", bold],
                 ["Actual Delivery KPI (Days)", bold],
                 ["Delivery Days Early / Late", red_bold],
@@ -1729,7 +1731,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     d_value = booking.delivery_kpi_days or 0
                     row.append([booking.delivery_kpi_days, None])
 
-                # "Calculated ETA"
+                # "Calculated Delivery ETA"
                 # if booking.z_calculated_ETA:
                 #     value = convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA)
                 #     row.append([value, date_format])
@@ -1741,6 +1743,16 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 else:
                     e_value = c_value + timedelta(days=d_value)
                     row.append([e_value, date_format])
+
+                # "Updated Delivery ETA"
+                if booking.s_06_Latest_Delivery_Date_Time_Override:
+                    value = convert_to_AU_SYDNEY_tz(
+                        booking.s_06_Latest_Delivery_Date_Time_Override
+                    )
+                    row.append([valuevalue, date_format])
+                else:
+                    value = None
+                    row.append(["", None])
 
                 # "Actual Delivery"
                 if booking.s_21_Actual_Delivery_TimeStamp:
