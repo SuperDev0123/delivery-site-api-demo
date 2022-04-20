@@ -95,7 +95,6 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
 
     def get_remaining_time(self, obj):
         if obj.s_06_Latest_Delivery_Date_TimeSet:
-            datetime.utcnow().replace(tzinfo=pytz.UTC)
             time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - datetime.utcnow()
             days = time_delta.days
             hours = int(time_delta.seconds / 60 / 60)
