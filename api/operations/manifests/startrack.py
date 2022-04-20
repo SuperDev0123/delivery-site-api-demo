@@ -1445,18 +1445,18 @@ def build_manifest(bookings, booking_lines, username):
     doc.build(Story)
     file.close()
 
-    # # Add manifest log
-    # Dme_manifest_log.objects.create(
-    #     fk_booking_id=booking.pk_booking_id,
-    #     manifest_url=filename,
-    #     manifest_number=manifest,
-    #     bookings_cnt=len(bookings),
-    #     is_one_booking=1,
-    #     z_createdByAccount=username,
-    # )
+    # Add manifest log
+    Dme_manifest_log.objects.create(
+        fk_booking_id=booking.pk_booking_id,
+        manifest_url=filename,
+        manifest_number=manifest,
+        bookings_cnt=len(bookings),
+        is_one_booking=1,
+        z_createdByAccount=username,
+    )
 
-    # fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
-    # fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
-    # fp_info.save()
+    fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
+    fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
+    fp_info.save()
 
     return filename
