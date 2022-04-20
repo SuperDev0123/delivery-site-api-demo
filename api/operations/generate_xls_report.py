@@ -1738,12 +1738,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 # else:
                 #     row.append(["", None])
                 if booking.s_06_Latest_Delivery_Date_TimeSet:
-                    value = convert_to_AU_SYDNEY_tz(
+                    e_value = convert_to_AU_SYDNEY_tz(
                         booking.s_06_Latest_Delivery_Date_TimeSet
                     )
-                    row.append([value, date_format])
+                    row.append([e_value, date_format])
                 else:
-                    value = None
+                    e_value = None
                     row.append(["", None])
 
                 # "Updated Delivery ETA"
