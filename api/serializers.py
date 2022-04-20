@@ -94,6 +94,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
         return None
 
     def get_remaining_time(self, obj):
+        return None
         if obj.s_06_Latest_Delivery_Date_TimeSet:
             time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - datetime.utcnow()
             days = time_delta.days
@@ -104,6 +105,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
         return None
 
     def get_remaining_time_in_seconds(self, obj):
+        return None
         if obj.s_06_Latest_Delivery_Date_TimeSet:
             time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - datetime.utcnow()
             days = time_delta.days
