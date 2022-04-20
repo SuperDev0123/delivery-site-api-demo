@@ -1,5 +1,6 @@
 import re
 import time
+import pytz
 from datetime import datetime
 
 from rest_framework import serializers
@@ -94,9 +95,9 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
         return None
 
     def get_remaining_time(self, obj):
-        return None
         if obj.s_06_Latest_Delivery_Date_TimeSet:
-            time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - datetime.utcnow()
+            utcnow = datetime.utcnow().replace(tzinfo=pytz.UTC)
+            time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - utcnow
             days = time_delta.days
             hours = int(time_delta.seconds / 60 / 60)
             mins = int(time_delta.seconds / 60 % 60)
@@ -105,9 +106,9 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
         return None
 
     def get_remaining_time_in_seconds(self, obj):
-        return None
         if obj.s_06_Latest_Delivery_Date_TimeSet:
-            time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - datetime.utcnow()
+            utcnow = datetime.utcnow().replace(tzinfo=pytz.UTC)
+            time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - utcnow
             days = time_delta.days
             return days * 24 * 3600 + time_delta.seconds
 
