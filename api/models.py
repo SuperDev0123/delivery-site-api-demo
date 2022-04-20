@@ -2074,7 +2074,7 @@ class Bookings(models.Model):
         LOG_ID = "[GET_s_06]"
 
         if (
-            not self.s_06_Estimated_Delivery_TimeStamp
+            not self.s_06_Latest_Delivery_Date_TimeSet
             and not self.s_06_Latest_Delivery_Date_Time_Override
         ):
             return None
@@ -2082,8 +2082,8 @@ class Bookings(models.Model):
 
         if self.s_06_Latest_Delivery_Date_Time_Override:
             return self.s_06_Latest_Delivery_Date_Time_Override
-        elif self.s_06_Estimated_Delivery_TimeStamp:
-            return self.s_06_Estimated_Delivery_TimeStamp
+        elif self.s_06_Latest_Delivery_Date_TimeSet:
+            return self.s_06_Latest_Delivery_Date_TimeSet
 
     def save(self, *args, **kwargs):
         self.z_ModifiedTimestamp = datetime.now()
