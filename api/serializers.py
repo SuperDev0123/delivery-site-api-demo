@@ -95,7 +95,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
 
     def get_remaining_time(self, obj):
         if obj.s_06_Latest_Delivery_Date_TimeSet:
-            time_delta = s_06_Latest_Delivery_Date_TimeSet - datetime.now()
+            time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - datetime.now()
             days = time_delta.days
             hours = int(time_delta.seconds / 60 / 60)
             mins = int(time_delta.seconds / 60 % 60)
@@ -105,7 +105,7 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
 
     def get_remaining_time_in_seconds(self, obj):
         if obj.s_06_Latest_Delivery_Date_TimeSet:
-            time_delta = s_06_Latest_Delivery_Date_TimeSet - datetime.now()
+            time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - datetime.now()
             days = time_delta.days
             return days * 24 * 3600 + time_delta.seconds
 
