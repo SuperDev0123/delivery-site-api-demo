@@ -2,10 +2,6 @@ from api.models import Api_booking_confirmation_lines
 
 
 def create(booking, items):
-    Api_booking_confirmation_lines.objects.filter(
-        fk_booking_id=booking.pk_booking_id
-    ).delete()
-
     if booking.vx_freight_provider and booking.vx_freight_provider.lower() in [
         "startrack",
         "auspost",
