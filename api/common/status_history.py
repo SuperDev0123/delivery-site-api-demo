@@ -10,6 +10,7 @@ from api.operations.email_senders import send_status_update_email
 from api.helpers.phone import is_mobile, format_mobile
 from api.operations.packing.booking import scanned_repack as booking_scanned_repack
 from api.common import common_times as dme_time_lib
+from api.utils import get_eta_pu_by, get_eta_de_by
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +162,12 @@ def post_new_status(booking, dme_status_history, new_status, event_timestamp, us
         if not booking.s_20_Actual_Pickup_TimeStamp:
             booking.s_20_Actual_Pickup_TimeStamp = datetime.now()
 
-    if new_status.lower() == "delivered":
+    if new_status.lower() == "booked":
+        booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
+        booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
+            booking, booking.api_booking_quote
+        )
+    elif new_status.lower() == "delivered":
         booking.z_api_issue_update_flag_500 = 0
         booking.z_lock_status = 1
 
