@@ -2,7 +2,6 @@ import logging
 from api.models import (
     Bookings,
     Booking_lines,
-    Api_booking_confirmation_lines,
     API_booking_quotes,
 )
 
