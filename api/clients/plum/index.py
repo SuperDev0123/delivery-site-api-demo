@@ -17,6 +17,7 @@ from api.models import (
     BOK_2_lines,
     BOK_3_lines_data,
     FPRouting,
+    Api_booking_confirmation_lines,
 )
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
