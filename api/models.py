@@ -746,12 +746,12 @@ class Bookings(models.Model):
         null=True,
         default=None,
     )
-    s_05_LatestPickUpDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Lastest PickUp DateTime"), blank=True, null=True, default=None
-    )
-    s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest Delivery DateTime"), blank=True, null=True, default=None
-    )
+    # s_05_LatestPickUpDateTimeFinal = models.DateTimeField(
+    #     verbose_name=_("Lastest PickUp DateTime"), blank=True, null=True, default=None
+    # )
+    # s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(
+    #     verbose_name=_("Latest Delivery DateTime"), blank=True, null=True, default=None
+    # )
     v_FPBookingNumber = models.CharField(
         verbose_name=_("FP Booking Number"),
         max_length=40,
