@@ -1078,9 +1078,6 @@ def get_delivery_status(request):
                         or str(booking.b_bookingID_Visual) in item["desc"]
                     )
                     else item["desc"],
-                    "event_timestamp": dme_time_lib.convert_to_AU_SYDNEY_tz(
-                        item["event_timestamp"]
-                    ),
                 }
                 for item in fp_status_histories
             ]
