@@ -93,7 +93,6 @@ def gen_barcode(booking, item_no=0):
         if not booking.v_FPBookingNumber
         else f"{booking.v_FPBookingNumber}{item_index}"
     )
-    print("@! - ", label_code)
     api_bcl.create(booking, [{"label_code": label_code}])
 
     return label_code

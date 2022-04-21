@@ -14,5 +14,5 @@ def create(booking, items):
     else:
         book_con = Api_booking_confirmation_lines(
             fk_booking_id=booking.pk_booking_id,
-            label_code=item["label_code"],
+            label_code=items[0]["label_code"],
         ).save()
