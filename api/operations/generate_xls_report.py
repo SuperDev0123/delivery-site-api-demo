@@ -1593,8 +1593,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["z_pod_signed_url", bold],
                 ["fp_store_event_date", bold],
                 ["fp_store_event_desc", bold],
-                ["latest DMEBookingCSNote.note"],
-                ["latest DMEBookingCSNote.timestamp"],
+                ["latest DMEBookingCSNote.note", bold],
+                ["latest DMEBookingCSNote.timestamp", bold],
             ]
             columns = [
                 ["Booking ID", bold],
@@ -1637,8 +1637,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["POD Signed on Glass Link", bold],
                 ["1st Contact For Delivery Booking Date", bold],
                 ["FP Store Activity Description", bold],
-                ["The latest customer service note"],
-                ["The latest customer service note timestamp"],
+                ["The latest customer service note", bold],
+                ["The latest customer service note timestamp", bold],
             ]
 
             logger.info(f"#361 Total cnt: {len(bookings)}")
