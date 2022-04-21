@@ -1,6 +1,6 @@
 import logging
 
-from api.models import Bookings, Fp_freight_providers, Api_booking_confirmation_lines
+from api.models import Bookings, Fp_freight_providers
 from api.common import trace_error
 from api.fp_apis.utils import gen_consignment_num
 from api.operations.labels import (
@@ -29,10 +29,6 @@ def build_label(
     fp_name = booking.vx_freight_provider.lower()
 
     try:
-        Api_booking_confirmation_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id
-        ).delete()
-
         if fp_name == "dhl":
             file_path, file_name = dhl.build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label

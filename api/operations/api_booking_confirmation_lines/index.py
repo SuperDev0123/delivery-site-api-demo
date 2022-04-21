@@ -1,7 +1,13 @@
+import logging
+
 from api.models import Api_booking_confirmation_lines
+
+logger = logging.getLogger(__name__)
 
 
 def create(booking, items):
+    LOG_ID = "[BCL CREATE]"
+
     if booking.vx_freight_provider and booking.vx_freight_provider.lower() in [
         "startrack",
         "auspost",

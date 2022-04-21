@@ -4455,6 +4455,11 @@ def build_label(request):
     booking = Bookings.objects.get(pk=booking_id)
     lines = booking.lines().filter(is_deleted=False)
 
+    # Reset all Api_booking_confirmation_lines
+    Api_booking_confirmation_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    ).delete()
+
     for line in lines:
         if line.sscc and "NOSSCC_" in line.sscc:
             line.sscc = None

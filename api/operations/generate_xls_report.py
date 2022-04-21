@@ -1720,7 +1720,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                     if etd_in_hour:
                         etd_in_days = math.ceil(etd_in_hour / 24)
-                        d_value = etd_in_days or 0
+                        d_value = etd_in_days or 1
                         row.append([etd_in_days, None])
                     else:
                         row.append(["", None])
@@ -1728,7 +1728,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     d_value = 3
                     row.append([d_value, None])
                 else:
-                    d_value = booking.delivery_kpi_days or 0
+                    d_value = booking.delivery_kpi_days or 3
                     row.append([booking.delivery_kpi_days, None])
 
                 # "Calculated Delivery ETA"

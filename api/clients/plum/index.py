@@ -1111,6 +1111,11 @@ def scanned(payload, client):
         for item in original_items:
             item_cnt += item.e_qty
 
+        # Reset all Api_booking_confirmation_lines
+        Api_booking_confirmation_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id
+        ).delete()
+
         for index, sscc in enumerate(sscc_list):
             file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
 

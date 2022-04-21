@@ -1164,6 +1164,11 @@ def scanned(payload, client):
             if booking.b_client_order_num:
                 send_email_to_admins("No FC result", message)
 
+    # Reset all Api_booking_confirmation_lines
+    Api_booking_confirmation_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    ).delete()
+
     # Build built-in label with SSCC - one sscc should have one page label
     label_urls = []
     for index, sscc in enumerate(sscc_list):
