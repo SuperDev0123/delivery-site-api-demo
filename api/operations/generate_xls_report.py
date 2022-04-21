@@ -1737,19 +1737,21 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 #     row.append([value, date_format])
                 # else:
                 #     row.append(["", None])
-                if not c_value:
-                    e_value = ""
-                    row.append(["", None])
-                else:
-                    e_value = c_value + timedelta(days=d_value)
+                if booking.s_06_Latest_Delivery_Date_TimeSet:
+                    e_value = convert_to_AU_SYDNEY_tz(
+                        booking.s_06_Latest_Delivery_Date_TimeSet
+                    )
                     row.append([e_value, date_format])
+                else:
+                    e_value = None
+                    row.append(["", None])
 
                 # "Updated Delivery ETA"
                 if booking.s_06_Latest_Delivery_Date_Time_Override:
                     value = convert_to_AU_SYDNEY_tz(
                         booking.s_06_Latest_Delivery_Date_Time_Override
                     )
-                    row.append([valuevalue, date_format])
+                    row.append([value, date_format])
                 else:
                     value = None
                     row.append(["", None])
@@ -1781,7 +1783,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking.b_status == "Delivered":
                     # IF(NETWORKDAYS(F2;E2)>0;NETWORKDAYS(F2;E2)-1;NETWORKDAYS(F2;E2)+1);
                     if e_value and f_value:
-                        between_e_and_f = busday_count(f_value.date(), e_value)
+                        between_e_and_f = busday_count(f_value.date(), e_value.date())
                         if between_e_and_f > 0:
                             value = between_e_and_f - 1
                         else:
@@ -1794,7 +1796,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     # IF(NETWORKDAYS(TODAY();E2)>0;NETWORKDAYS(TODAY();E2)-1;NETWORKDAYS(TODAY();E2)+1)
                     sydney_now = convert_to_AU_SYDNEY_tz(datetime.now())
                     if e_value:
-                        between_today_and_e = busday_count(sydney_now.date(), e_value)
+                        between_today_and_e = busday_count(
+                            sydney_now.date(), e_value.date()
+                        )
                         if between_today_and_e > 0:
                             value = between_today_and_e - 1
                         else:

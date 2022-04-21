@@ -10,11 +10,13 @@ from api.operations.email_senders import send_status_update_email
 from api.helpers.phone import is_mobile, format_mobile
 from api.operations.packing.booking import scanned_repack as booking_scanned_repack
 from api.common import common_times as dme_time_lib
+from api.utils import get_eta_pu_by, get_eta_de_by
 
 logger = logging.getLogger(__name__)
 
 
 def notify_user_via_email_sms(booking, category_new, category_old, username):
+    LOG_ID = "[EMAIL_SMS]"
     from api.helpers.etd import get_etd
 
     # JasonL is deactivated(2022-02-10) - "461162D2-90C7-BF4E-A905-000000000004"
@@ -38,32 +40,21 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
     ):
         url = f"{settings.WEB_SITE_URL}/status/{booking.b_client_booking_ref_num}/"
 
-        quote = booking.api_booking_quote
-        if quote:
-            etd, unit = get_etd(quote.etd)
-            if unit == "Hours":
-                etd = math.ceil(etd / 24)
-        else:
-            etd, unit = None, None
-
+        s_06 = booking.get_s_06()
         eta = (
-            dme_time_lib.next_business_day(
-                dme_time_lib.convert_to_AU_SYDNEY_tz(booking.puPickUpAvailFrom_Date),
-                etd,
-                booking.vx_freight_provider,
-            ).strftime("%d/%m/%Y")
-            if etd and booking.puPickUpAvailFrom_Date
+            dme_time_lib.convert_to_AU_SYDNEY_tz(s_06).strftime("%d/%m/%Y %H:%M")
+            if s_06
             else ""
         )
-
-        eta_etd = f"{eta}({etd} days)" if eta else ""
 
         pu_name = booking.pu_Contact_F_L_Name or booking.puCompany
         de_name = booking.de_to_Contact_F_LName or booking.deToCompanyName
         de_company = booking.deToCompanyName
         de_address = f"{booking.de_To_Address_Street_1}{f' {booking.de_To_Address_Street_2}' or ''} {booking.de_To_Address_Suburb} {booking.de_To_Address_State} {booking.de_To_Address_Country} {booking.de_To_Address_PostalCode}"
         delivered_time = (
-            booking.s_21_Actual_Delivery_TimeStamp.strftime("%d/%m/%Y %H:%M")
+            dme_time_lib.convert_to_AU_SYDNEY_tz(
+                booking.s_21_Actual_Delivery_TimeStamp
+            ).strftime("%d/%m/%Y %H:%M")
             if booking.s_21_Actual_Delivery_TimeStamp
             else ""
         )
@@ -82,7 +73,7 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
                     send_status_update_email(
                         booking,
                         category_new,
-                        eta_etd,
+                        eta,
                         username,
                         url,
                         client.status_email,
@@ -121,7 +112,7 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
                 )
 
         if not email_sent:
-            send_status_update_email(booking, category_new, eta_etd, username, url)
+            send_status_update_email(booking, category_new, eta, username, url)
 
         if booking.de_to_Phone_Main and is_mobile(booking.de_to_Phone_Main):
             send_status_update_sms(
@@ -171,7 +162,12 @@ def post_new_status(booking, dme_status_history, new_status, event_timestamp, us
         if not booking.s_20_Actual_Pickup_TimeStamp:
             booking.s_20_Actual_Pickup_TimeStamp = datetime.now()
 
-    if new_status.lower() == "delivered":
+    if new_status.lower() == "booked":
+        booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
+        booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
+            booking, booking.api_booking_quote
+        )
+    elif new_status.lower() == "delivered":
         booking.z_api_issue_update_flag_500 = 0
         booking.z_lock_status = 1
 

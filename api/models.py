@@ -2070,6 +2070,21 @@ class Bookings(models.Model):
 
         return _total
 
+    def get_s_06(self):
+        LOG_ID = "[GET_s_06]"
+
+        if (
+            not self.s_06_Latest_Delivery_Date_TimeSet
+            and not self.s_06_Latest_Delivery_Date_Time_Override
+        ):
+            return None
+            logger.error(f"{LOG_ID} No ETA: {self.b_bookingID_Visual}")
+
+        if self.s_06_Latest_Delivery_Date_Time_Override:
+            return self.s_06_Latest_Delivery_Date_Time_Override
+        elif self.s_06_Latest_Delivery_Date_TimeSet:
+            return self.s_06_Latest_Delivery_Date_TimeSet
+
     def save(self, *args, **kwargs):
         self.z_ModifiedTimestamp = datetime.now()
         creating = self._state.adding
