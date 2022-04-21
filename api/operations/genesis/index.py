@@ -54,7 +54,7 @@ def create_shared_booking(booking):
             fk_booking_id=booking.pk_booking_id
         ).order_by("-id")
 
-    cs_notes = DMEBookingCSNote.objects.filter(booking=booking)
+    cs_notes = DMEBookingCSNote.objects.filter(booking=booking).order_by("id")
 
     s_booking = S_Bookings()
     s_booking.b_bookingID_Visual = booking.b_bookingID_Visual

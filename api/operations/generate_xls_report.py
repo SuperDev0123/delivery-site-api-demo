@@ -1593,6 +1593,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["z_pod_signed_url", bold],
                 ["fp_store_event_date", bold],
                 ["fp_store_event_desc", bold],
+                ["latest DMEBookingCSNote.note"],
+                ["latest DMEBookingCSNote.timestamp"],
             ]
             columns = [
                 ["Booking ID", bold],
@@ -1635,6 +1637,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["POD Signed on Glass Link", bold],
                 ["1st Contact For Delivery Booking Date", bold],
                 ["FP Store Activity Description", bold],
+                ["The latest customer service note"],
+                ["The latest customer service note timestamp"],
             ]
 
             logger.info(f"#361 Total cnt: {len(bookings)}")
@@ -1973,6 +1977,25 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 # "FP Store Activity Description"
                 row.append([booking.fp_store_event_desc, None])
                 rows.append(row)
+
+                # The latest customer service notes field
+                cs_notes = DMEBookingCSNote.objects.filter(booking=booking).order_by(
+                    "id"
+                )
+                if cs_notes.exists():
+                    last_cs_note = cs_notes.last().note
+                    last_cs_note_timestamp = convert_to_AU_SYDNEY_tz(
+                        cs_notes.last().z_createdTimeStamp
+                    )
+                    row.append([last_cs_note, None])
+                    rows.append(row)
+                    row.append([last_cs_note_timestamp, None])
+                    rows.append(row)
+                else:
+                    row.append(["", None])
+                    rows.append(row)
+                    row.append(["", None])
+                    rows.append(row)
 
             # Populate cells
             row_index = 0
