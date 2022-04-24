@@ -113,19 +113,26 @@ def build_special_fp_pricings(booking, packed_status):
     ):
         # restrict delivery postal code
         postal_code = int(booking.de_To_Address_PostalCode or 0)
-        if postal_code and (
-            (  # metro / CBD Melbourne
-                (postal_code >= 3000 and postal_code <= 3207)
-                or (postal_code >= 8000 and postal_code <= 8499)
+        if (
+            postal_code
+            and (
+                (  # metro / CBD Melbourne
+                    (postal_code >= 3000 and postal_code <= 3207)
+                    or (postal_code >= 8000 and postal_code <= 8499)
+                )
+                or (  # metro/ CBD Brisbane
+                    (postal_code >= 4000 and postal_code <= 4207)
+                    or (postal_code >= 9000 and postal_code <= 9499)
+                )
+                or (  # metro/ CBD Sydney
+                    (postal_code >= 1000 and postal_code <= 2249)
+                    or (postal_code >= 2760 and postal_code <= 2770)
+                )
             )
-            or (  # metro/ CBD Brisbane
-                (postal_code >= 4000 and postal_code <= 4207)
-                or (postal_code >= 9000 and postal_code <= 9499)
-            )
-            or (  # metro/ CBD Sydney
-                (postal_code >= 1000 and postal_code <= 2249)
-                or (postal_code >= 2760 and postal_code <= 2770)
-            )
+            # Restrict same state
+            and booking.pu_Address_State
+            and booking.de_To_Address_State
+            and booking.pu_Address_State.lower() != booking.de_To_Address_State.lower()
         ):
             quote_0.freight_provider = "Deliver-ME"
             quote_0.service_name = "Deliver-ME Direct"

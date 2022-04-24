@@ -856,3 +856,8 @@ def send_email_to_admins(subject, message):
 
         cc_emails = ["dev.deliverme@gmail.com", "goldj@deliver-me.com.au"]
         send_email(to_emails, cc_emails, subject, message)
+
+
+def send_email_to_developers(subject, message):
+    cc_emails = ["dev.deliverme@gmail.com", "goldj@deliver-me.com.au"]
+    send_email(to_emails, cc_emails, subject, message)

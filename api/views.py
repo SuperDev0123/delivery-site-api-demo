@@ -65,9 +65,6 @@ from api.utils import (
     calc_collect_after_status_change,
     tables_in_query,
     get_clientname,
-    get_eta_pu_by,
-    get_eta_de_by,
-    sanitize_address,
 )
 from api.operations.manifests.index import build_manifest
 from api.operations.csv.index import build_csv
@@ -843,10 +840,10 @@ class BookingsViewSet(viewsets.ViewSet):
                             | Q(b_booking_Category__icontains=simple_search_keyword)
                             | Q(b_status_category__icontains=simple_search_keyword)
                             | Q(
-                                s_05_LatestPickUpDateTimeFinal__icontains=simple_search_keyword
+                                s_05_Latest_Pick_Up_Date_TimeSet__icontains=simple_search_keyword
                             )
                             | Q(
-                                s_06_LatestDeliveryDateTimeFinal__icontains=simple_search_keyword
+                                s_06_Latest_Delivery_Date_TimeSet__icontains=simple_search_keyword
                             )
                             | Q(
                                 s_20_Actual_Pickup_TimeStamp__icontains=simple_search_keyword
@@ -1873,16 +1870,16 @@ class BookingsViewSet(viewsets.ViewSet):
 
             for line in scanned_lines or original_lines or []:
                 total_qty += line.e_qty
-                total_kgs += line.e_Total_KG_weight
-                total_cbm += line.e_1_Total_dimCubicMeter
+                total_kgs += line.e_Total_KG_weight or 0
+                total_cbm += line.e_1_Total_dimCubicMeter or 0
 
                 fps[booking.vx_freight_provider]["totalQty"] += line.e_qty
-                fps[booking.vx_freight_provider]["totalKgs"] += (
-                    line.e_qty * line.e_weightPerEach
+                fps[booking.vx_freight_provider]["totalKgs"] += line.e_qty * (
+                    line.e_weightPerEach or 0
                 )
-                fps[booking.vx_freight_provider][
-                    "totalCubicMeter"
-                ] += line.e_1_Total_dimCubicMeter
+                fps[booking.vx_freight_provider]["totalCubicMeter"] += (
+                    line.e_1_Total_dimCubicMeter or 0
+                )
 
         result = {}
         result["fps"] = fps
@@ -4457,6 +4454,11 @@ def build_label(request):
     logger.info(f"{LOG_ID} Booking pk: {booking_id}")
     booking = Bookings.objects.get(pk=booking_id)
     lines = booking.lines().filter(is_deleted=False)
+
+    # Reset all Api_booking_confirmation_lines
+    Api_booking_confirmation_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    ).delete()
 
     for line in lines:
         if line.sscc and "NOSSCC_" in line.sscc:

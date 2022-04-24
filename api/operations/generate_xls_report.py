@@ -1560,7 +1560,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["b_dateBookedDate(Date)", bold],
                 ["fp_received_date_time/b_given_to_transport_date_time", bold],
                 ["delivery_kpi_days", bold],
-                ["z_calculated_ETA", bold],
+                ["s_06_Latest_Delivery_Date_TimeSet", bold],
+                ["s_06_Latest_Delivery_Date_Time_Override", bold],
                 ["s_21_Actual_Delivery_TimeStamp", bold],
                 ["delivery_actual_kpi_days", bold],
                 ["Delivery Days Early / Late ", red_bold],
@@ -1592,13 +1593,16 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["z_pod_signed_url", bold],
                 ["fp_store_event_date", bold],
                 ["fp_store_event_desc", bold],
+                ["latest DMEBookingCSNote.note", bold],
+                ["latest DMEBookingCSNote.timestamp", bold],
             ]
             columns = [
                 ["Booking ID", bold],
                 ["Booked Date", bold],
                 ["Given to / Received by Transport", bold],
                 ["Target Delivery KPI (Days)", bold],
-                ["Calculated ETA", bold],
+                ["Calculated Delivery ETA", bold],
+                ["Updated Delivery ETA", bold],
                 ["Actual Delivery", bold],
                 ["Actual Delivery KPI (Days)", bold],
                 ["Delivery Days Early / Late", red_bold],
@@ -1633,6 +1637,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["POD Signed on Glass Link", bold],
                 ["1st Contact For Delivery Booking Date", bold],
                 ["FP Store Activity Description", bold],
+                ["The latest customer service note", bold],
+                ["The latest customer service note timestamp", bold],
             ]
 
             logger.info(f"#361 Total cnt: {len(bookings)}")
@@ -1690,7 +1696,13 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                 # "Given to / Received by Transport"
                 c_value = None
-                if booking.fp_received_date_time:
+                if booking.s_05_Latest_Pick_Up_Date_TimeSet:
+                    value = convert_to_AU_SYDNEY_tz(
+                        booking.s_05_Latest_Pick_Up_Date_TimeSet
+                    ).date()
+                    c_value = value
+                    row.append([value, date_format])
+                elif booking.fp_received_date_time:
                     value = convert_to_AU_SYDNEY_tz(
                         booking.fp_received_date_time
                     ).date()
@@ -1712,26 +1724,41 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                     if etd_in_hour:
                         etd_in_days = math.ceil(etd_in_hour / 24)
-                        d_value = etd_in_days or 0
+                        d_value = etd_in_days or 1
                         row.append([etd_in_days, None])
                     else:
                         row.append(["", None])
+                elif booking.vx_freight_provider == "Deliver-ME":
+                    d_value = 3
+                    row.append([d_value, None])
                 else:
-                    d_value = booking.delivery_kpi_days or 0
+                    d_value = booking.delivery_kpi_days or 3
                     row.append([booking.delivery_kpi_days, None])
 
-                # "Calculated ETA"
+                # "Calculated Delivery ETA"
                 # if booking.z_calculated_ETA:
                 #     value = convert_to_AU_SYDNEY_tz(booking.z_calculated_ETA)
                 #     row.append([value, date_format])
                 # else:
                 #     row.append(["", None])
-                if not c_value:
-                    e_value = ""
-                    row.append(["", None])
-                else:
-                    e_value = c_value + timedelta(days=d_value)
+                if booking.s_06_Latest_Delivery_Date_TimeSet:
+                    e_value = convert_to_AU_SYDNEY_tz(
+                        booking.s_06_Latest_Delivery_Date_TimeSet
+                    )
                     row.append([e_value, date_format])
+                else:
+                    e_value = None
+                    row.append(["", None])
+
+                # "Updated Delivery ETA"
+                if booking.s_06_Latest_Delivery_Date_Time_Override:
+                    value = convert_to_AU_SYDNEY_tz(
+                        booking.s_06_Latest_Delivery_Date_Time_Override
+                    )
+                    row.append([value, date_format])
+                else:
+                    value = None
+                    row.append(["", None])
 
                 # "Actual Delivery"
                 if booking.s_21_Actual_Delivery_TimeStamp:
@@ -1760,7 +1787,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 if booking.b_status == "Delivered":
                     # IF(NETWORKDAYS(F2;E2)>0;NETWORKDAYS(F2;E2)-1;NETWORKDAYS(F2;E2)+1);
                     if e_value and f_value:
-                        between_e_and_f = busday_count(f_value.date(), e_value)
+                        between_e_and_f = busday_count(f_value.date(), e_value.date())
                         if between_e_and_f > 0:
                             value = between_e_and_f - 1
                         else:
@@ -1773,7 +1800,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     # IF(NETWORKDAYS(TODAY();E2)>0;NETWORKDAYS(TODAY();E2)-1;NETWORKDAYS(TODAY();E2)+1)
                     sydney_now = convert_to_AU_SYDNEY_tz(datetime.now())
                     if e_value:
-                        between_today_and_e = busday_count(sydney_now.date(), e_value)
+                        between_today_and_e = busday_count(
+                            sydney_now.date(), e_value.date()
+                        )
                         if between_today_and_e > 0:
                             value = between_today_and_e - 1
                         else:
@@ -1948,6 +1977,25 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 # "FP Store Activity Description"
                 row.append([booking.fp_store_event_desc, None])
                 rows.append(row)
+
+                # The latest customer service notes field
+                cs_notes = DMEBookingCSNote.objects.filter(booking=booking).order_by(
+                    "id"
+                )
+                if cs_notes.exists():
+                    last_cs_note = cs_notes.last().note
+                    last_cs_note_timestamp = convert_to_AU_SYDNEY_tz(
+                        cs_notes.last().z_createdTimeStamp
+                    )
+                    row.append([last_cs_note, None])
+                    rows.append(row)
+                    row.append([last_cs_note_timestamp, None])
+                    rows.append(row)
+                else:
+                    row.append(["", None])
+                    rows.append(row)
+                    row.append(["", None])
+                    rows.append(row)
 
             # Populate cells
             row_index = 0

@@ -54,7 +54,7 @@ def create_shared_booking(booking):
             fk_booking_id=booking.pk_booking_id
         ).order_by("-id")
 
-    cs_notes = DMEBookingCSNote.objects.filter(booking=booking)
+    cs_notes = DMEBookingCSNote.objects.filter(booking=booking).order_by("id")
 
     s_booking = S_Bookings()
     s_booking.b_bookingID_Visual = booking.b_bookingID_Visual
@@ -85,7 +85,8 @@ def create_shared_booking(booking):
     s_booking.zoho_event_datetime = None
     s_booking.booked_for_comm_communicate_via = booking.booked_for_comm_communicate_via
     s_booking.s_06_Estimated_Delivery_TimeStamp = (
-        booking.s_06_Latest_Delivery_Date_TimeSet
+        booking.s_06_Latest_Delivery_Date_Time_Override
+        or booking.s_06_Latest_Delivery_Date_TimeSet
     )
     s_booking.s_21_Actual_Delivery_TimeStamp = booking.s_21_Actual_Delivery_TimeStamp
     s_booking.z_createdAt = datetime.now()
@@ -211,7 +212,8 @@ def update_shared_booking(booking, is_for="all"):
             booking.booked_for_comm_communicate_via
         )
         s_booking.s_06_Estimated_Delivery_TimeStamp = (
-            booking.s_06_Latest_Delivery_Date_TimeSet
+            booking.s_06_Latest_Delivery_Date_Time_Override
+            or booking.s_06_Latest_Delivery_Date_TimeSet
         )
         s_booking.s_21_Actual_Delivery_TimeStamp = (
             booking.s_21_Actual_Delivery_TimeStamp

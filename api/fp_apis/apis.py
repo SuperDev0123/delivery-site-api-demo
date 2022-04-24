@@ -461,7 +461,6 @@ def edit_book(request, fp_name):
                             fk_booking_id=booking.pk_booking_id,
                             api_item_id=item["item_id"],
                         ).save()
-
                 return JsonResponse(
                     {"message": f"Successfully edit book({booking.v_FPBookingNumber})"}
                 )

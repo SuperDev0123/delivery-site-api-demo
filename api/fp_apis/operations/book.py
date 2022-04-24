@@ -6,7 +6,6 @@ import requests
 from datetime import datetime
 
 from api.common import status_history, trace_error
-from api.utils import get_eta_pu_by, get_eta_de_by
 from api.file_operations.directory import create_dir
 from api.operations.email_senders import send_booking_status_email
 from api.operations.api_booking_confirmation_lines import index as api_bcl
@@ -44,10 +43,6 @@ def book(fp_name, booking, booker):
     # BSD: when doesn't need any trucks from TNT
     if booking.b_client_warehouse_code == "BSD_MERRYLANDS" and _fp_name == "tnt":
         booking.v_FPBookingNumber = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
-        booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
-        booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
-            booking, booking.api_booking_quote
-        )
         booking.b_dateBookedDate = datetime.now()
         booking.b_error_Capture = None
         status_history.create(booking, "Booked", booker)
@@ -121,10 +116,6 @@ def book(fp_name, booking, booker):
                 booking.jobNumber = json_data["jobNumber"]
 
             booking.fk_fp_pickup_id = json_data["consignmentNumber"]
-            booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
-            booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
-                booking, booking.api_booking_quote
-            )
             booking.b_dateBookedDate = datetime.now()
             status_history.create(booking, "Booked", booker)
             booking.b_error_Capture = None

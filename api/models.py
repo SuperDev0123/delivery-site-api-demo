@@ -624,18 +624,6 @@ class API_booking_quotes(models.Model):
     z_fp_delivery_hours = models.IntegerField(
         verbose_name=_("Delivery Hours"), blank=True, null=True
     )
-    s_05_LatestPickUpDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest PickUP Date Time Final"),
-        default=timezone.now,
-        blank=True,
-        null=True,
-    )
-    s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest Delivery Date Time Final"),
-        default=timezone.now,
-        blank=True,
-        null=True,
-    )
     z_03_selected_lowest_priced_FC_that_passed = models.FloatField(
         verbose_name=_("Selected Lowest Priced FC That Passed"), blank=True, null=True
     )
@@ -746,12 +734,15 @@ class Bookings(models.Model):
         null=True,
         default=None,
     )
+<<<<<<< HEAD
     # s_05_LatestPickUpDateTimeFinal = models.DateTimeField(
     #     verbose_name=_("Lastest PickUp DateTime"), blank=True, null=True, default=None
     # )
     # s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(
     #     verbose_name=_("Latest Delivery DateTime"), blank=True, null=True, default=None
     # )
+=======
+>>>>>>> develop
     v_FPBookingNumber = models.CharField(
         verbose_name=_("FP Booking Number"),
         max_length=40,
@@ -2087,6 +2078,21 @@ class Bookings(models.Model):
             _total += surcharge.qty * surcharge.amount
 
         return _total
+
+    def get_s_06(self):
+        LOG_ID = "[GET_s_06]"
+
+        if (
+            not self.s_06_Latest_Delivery_Date_TimeSet
+            and not self.s_06_Latest_Delivery_Date_Time_Override
+        ):
+            return None
+            logger.error(f"{LOG_ID} No ETA: {self.b_bookingID_Visual}")
+
+        if self.s_06_Latest_Delivery_Date_Time_Override:
+            return self.s_06_Latest_Delivery_Date_Time_Override
+        elif self.s_06_Latest_Delivery_Date_TimeSet:
+            return self.s_06_Latest_Delivery_Date_TimeSet
 
     def save(self, *args, **kwargs):
         self.z_ModifiedTimestamp = datetime.now()
@@ -5385,7 +5391,7 @@ class DMEBookingCSNote(models.Model):
         db_table = "dme_booking_cs_note"
 
 
-class Linehaul(models.Model):
+class DME_Vehicle(models.Model):
     id = models.AutoField(primary_key=True)
     number = models.CharField(max_length=32, blank=True, null=True, default=None)
     code = models.CharField(max_length=128, blank=True, null=True, default=None)
@@ -5394,7 +5400,7 @@ class Linehaul(models.Model):
     suburb_from = models.CharField(max_length=32, blank=True, null=True, default=None)
     suburb_to = models.CharField(max_length=32, blank=True, null=True, default=None)
     linehaul_booked_date = models.DateTimeField(null=True)
-    departure_date_planned = models.DateTimeField(null=True)
+    departure_date_planned = models.TimeField(null=True)
     arrival_date_planned = models.DateTimeField(null=True)
     arrival_date_actual = models.DateTimeField(null=True)
     inv_linehaul_cost_ex_gst = models.FloatField(blank=True, null=True)
@@ -5438,12 +5444,12 @@ class Linehaul(models.Model):
     )
 
     class Meta:
-        db_table = "dme_linehauls"
+        db_table = "dme_vehicle"
 
 
 class LinehaulOrder(models.Model):
     id = models.AutoField(primary_key=True)
-    linehaul = models.ForeignKey(Linehaul, on_delete=models.CASCADE)
+    linehaul = models.ForeignKey(DME_Vehicle, on_delete=models.CASCADE)
     booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
     quote = models.ForeignKey(API_booking_quotes, on_delete=models.CASCADE)
     z_createdByAccount = models.CharField(

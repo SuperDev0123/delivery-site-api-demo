@@ -21,6 +21,7 @@ from api.models import (
     Pallet,
     API_booking_quotes,
     FP_zones,
+    Api_booking_confirmation_lines,
 )
 from api.serializers import SimpleQuoteSerializer, Simple4ProntoQuoteSerializer
 from api.serializers_client import *
@@ -819,6 +820,13 @@ def push_boks(payload, client, username, method):
                 freight_provider=selected_quote.freight_provider,
                 service_name=selected_quote.service_name,
             )
+        # All JasonL bookings to State SA are to book with TNT if DMEA no matter what the price
+        elif (
+            bok_1.get("shipping_type") == "DMEA"
+            and bok_1.get("b_057_b_del_address_state")
+            and bok_1.get("b_057_b_del_address_state").upper() == "SA"
+        ):
+            quote_set = quote_set.filter(freight_provider="TNT")
         else:
             quote_set = quote_set.exclude(freight_provider__in=["Sendle", "Hunter"])
 
@@ -1163,6 +1171,11 @@ def scanned(payload, client):
 
             if booking.b_client_order_num:
                 send_email_to_admins("No FC result", message)
+
+    # Reset all Api_booking_confirmation_lines
+    Api_booking_confirmation_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    ).delete()
 
     # Build built-in label with SSCC - one sscc should have one page label
     label_urls = []

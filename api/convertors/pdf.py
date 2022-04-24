@@ -7,7 +7,7 @@ try:
 except ImportError:
     from pyPdf import PdfFileReader, PdfFileWriter
 
-from api.operations.email_senders import send_email_to_admins
+from api.operations.email_senders import send_email_to_developers
 from api.common import trace_error
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def base64_to_pdf(base64, pdf_path):
         return True
     except Exception as e:
         error_msg = f"@300 Error on base64_to_pdf(): {str(e)}"
-        send_email_to_admins("PDF covertion error", error_msg)
+        send_email_to_developers("PDF covertion error", error_msg)
         return False
 
 
@@ -36,7 +36,7 @@ def pdf_to_base64(pdf_path):
         return b64encode(f.read())
     except Exception as e:
         error_msg = f"@301 Error on pdf_to_base64(): {str(e)}"
-        send_email_to_admins("PDF covertion error", error_msg)
+        send_email_to_developers("PDF covertion error", error_msg)
         return False
 
 
@@ -54,7 +54,7 @@ def pdf_to_zpl(pdf_path, zpl_path):
     except Exception as e:
         trace_error.print()
         error_msg = f"@301 Error on pdf_to_zpl(): {str(e)}"
-        send_email_to_admins("PDF covertion error", error_msg)
+        send_email_to_developers("PDF covertion error", error_msg)
         return False
 
 
@@ -114,5 +114,5 @@ def rotate_pdf(input_path):
     except Exception as e:
         trace_error.print()
         error_msg = f"@301 Error on rotate_pdf(): {str(e)}"
-        send_email_to_admins("PDF rotation error", error_msg)
+        send_email_to_developers("PDF rotation error", error_msg)
         return False
