@@ -182,6 +182,7 @@ class BookingSerializer(serializers.ModelSerializer):
     inv_cost_quoted = serializers.FloatField(read_only=True)
     qtys_in_stock = serializers.SerializerMethodField(read_only=True)
     children = serializers.SerializerMethodField(read_only=True)
+    cs_notes_cnt = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -329,6 +330,9 @@ class BookingSerializer(serializers.ModelSerializer):
 
         return _qtys_in_stock
 
+    def get_cs_notes_cnt(self, obj):
+        return DMEBookingCSNote.objects.filter(booking_id=obj.pk).count()
+
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -346,6 +350,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "quote_packed_status",
             "qtys_in_stock",  # Child booking related field
             "children",  # Child booking related field
+            "cs_notes_cnt",
         )
         fields = read_only_fields + (
             "id",
