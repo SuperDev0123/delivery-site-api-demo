@@ -489,7 +489,7 @@ def build_label(
             )
             Story.append(shell_table)
 
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             barcode = gen_barcode(booking, j)
 
@@ -497,7 +497,7 @@ def build_label(
                 [
                     code128.Code128(
                         barcode,
-                        barHeight=15 * mm,
+                        barHeight=12 * mm,
                         barWidth=2.5,
                         humanReadable=False,
                     )
@@ -616,7 +616,7 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 10))
+            Story.append(Spacer(1, 2))
 
             # To: row table
             to_del_data = []
@@ -636,7 +636,14 @@ def build_label(
                         ),
                         style_left,
                     ),
-                    d,
+                    Paragraph(
+                        "<font size=%s>Description:&nbsp;%s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            booking_line.e_item or "",
+                        ),
+                        style_left,
+                    ),
                 ]
             )
 
@@ -655,7 +662,7 @@ def build_label(
                             ),
                             style_left,
                         ),
-                        "",
+                        d,
                     ]
                 )
             else:
@@ -670,7 +677,7 @@ def build_label(
                             ),
                             style_left,
                         ),
-                        "",
+                        d,
                     ]
                 )
 
@@ -714,6 +721,20 @@ def build_label(
                     "",
                 ]
             )
+
+            to_del_data.append(
+                [
+                    Paragraph(
+                        "<font size=%s><b>Dangerous Goods Enclosed: %s</b></font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            "YES" if booking_line.e_dangerousGoods == True else "NO",
+                        ),
+                        style_left,
+                    ),
+                    "",
+                ]
+            )
             
             shell_table = Table(
                 to_del_data,
@@ -723,43 +744,17 @@ def build_label(
                 ),
                 style=[
                     ("VALIGN", (0, 0), (0, -1), "CENTER"),
-                    ("SPAN", (-1, -1), (-1, 0)),
+                    ("SPAN", (-1, -1), (-1, 1)),
                     ("VALIGN", (-1, 0), (-1, -1), "BOTTOM"),
                     ("ALIGN", (-1, 0), (-1, -1), "CENTER"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    # ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    # ("TOPPADDING", (-1, 1), (-1, 1), 20),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ],
             )
-            Story.append(shell_table)
-            Story.append(Spacer(1, 3))
-            
-            tbl_data1 = [
-                [
-                    Paragraph(
-                        "<font size=%s><b>Dangerous Goods Enclosed: %s</b></font>"
-                        % (
-                            label_settings["font_size_medium"],
-                            "YES" if booking_line.e_dangerousGoods == True else "NO",
-                        ),
-                        style_left,
-                    )
-                ],
-            ]
-
-            shell_table = Table(
-                tbl_data1,
-                colWidths=(float(label_settings["label_image_size_length"]) * mm),
-                style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ],
-            )
-
             Story.append(shell_table)
             Story.append(Spacer(1, 2))
-
+            
             tbl_data1 = [
                 [
                     Paragraph(

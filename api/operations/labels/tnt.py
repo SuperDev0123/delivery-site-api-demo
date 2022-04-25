@@ -1089,7 +1089,7 @@ def build_label(
 
             barcode = gen_barcode(booking, lines, j, sscc_cnt)
 
-            tbl_data = [[code128.Code128(barcode, barWidth=1.1, barHeight=20 * mm)]]
+            tbl_data = [[code128.Code128(barcode, barWidth=1.1, barHeight=12 * mm)]]
 
             t1 = Table(
                 tbl_data,
