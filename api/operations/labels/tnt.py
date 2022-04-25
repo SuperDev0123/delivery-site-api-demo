@@ -1105,7 +1105,7 @@ def build_label(
             )
 
             Story.append(t1)
-            # Story.append(Spacer(1, 5))
+            Story.append(Spacer(1, 5))
 
             fp_color_code = (
                 Fp_freight_providers.objects.get(fp_company_name="TNT").hex_color_code
@@ -1120,7 +1120,7 @@ def build_label(
                     float(label_settings["label_image_size_length"]) * (3 / 8) * mm,
                 ),
                 rowHeights=(
-                    float(label_settings["line_height_large"]) * mm,
+                    float(label_settings["line_height_large"]) * 1 / 1 * mm,
                     float(label_settings["line_height_large"]) * 1 / 2 * mm,
                 ),
                 style=[
@@ -1134,70 +1134,52 @@ def build_label(
                 ],
             )
 
-            tbl_data1 = [[dme_img, "", t1]]
+            print("------------ QR ---------------")
+            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
+            print(codeString)
+            d = Drawing(20, 20)
+            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            d.add(QrCodeWidget(value=codeString, barWidth=20*mm, barHeight=20*mm))
+
+            tbl_data1 = [[dme_img, d, t1]]
 
             t1 = Table(
                 tbl_data1,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (3 / 8) * mm,
-                    float(label_settings["label_image_size_length"]) * (2 / 8) * mm,
-                    float(label_settings["label_image_size_length"]) * (3 / 8) * mm,
+                    float(label_settings["label_dimension_length"]) * (3 / 10) * mm,
+                    float(label_settings["label_dimension_length"]) * (2 / 10) * mm,
+                    float(label_settings["label_dimension_length"]) * (5 / 10) * mm,
                 ),
-                rowHeights=(float(label_settings["line_height_large"]) * 3 / 2 * mm),
+                rowHeights=(float(label_settings["line_height_large"]) * 4 / 2 * mm),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (0, -1), 30),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                    ("VALIGN", (0, 0), (0, -1), "CENTER"),
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ],
             )
 
             data = [[t1]]
 
-            t2_w = float(label_settings["label_image_size_length"]) * mm
+            t2_w = float(label_settings["label_dimension_length"]) * mm
 
             shell_table = Table(
                 data,
-                colWidths=[t1_w],
+                colWidths=[t2_w],
                 style=[
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("VALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 3),
                     ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 3),
                 ],
             )
             Story.append(shell_table)
             Story.append(Spacer(1, 10))
-            print("------------ QR ---------------")
-            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            print(codeString)
-            d = Drawing(40, 40)
-            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            d.add(QrCodeWidget(value=codeString, barWidth=24*mm, barHeight=24*mm))
-            tbl_data2 = [[d]]
-            t2 = Table(
-                tbl_data2,
-                colWidths=(
-                    float(label_settings["label_image_size_length"])
-                    * mm
-                ),
-                style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ],
-            )
-
-            Story.append(t2)
-
             Story.append(PageBreak())
 
             j += 1

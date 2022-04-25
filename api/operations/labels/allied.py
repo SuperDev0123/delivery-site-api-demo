@@ -682,9 +682,10 @@ def build_label(
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ],
             )
-            print("--------- QR Code -------------")
             Story.append(shell_table)
             Story.append(Spacer(1, 3))
+            
+            print("--------- QR Code -------------")
 
             tbl_data1 = [
                 [

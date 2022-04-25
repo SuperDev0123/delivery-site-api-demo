@@ -176,7 +176,7 @@ def build_label(
         "font_size_large": "10",
         "font_size_extra_large": "13",
         "label_dimension_length": "150",
-        "label_dimension_width": "150",
+        "label_dimension_width": "120",
         "label_image_size_length": "135",
         "label_image_size_width": "105",
         "barcode_dimension_length": "85",
@@ -616,122 +616,125 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 10))
 
-            to_desc_data = []
-            company_data = [
-                Paragraph(
-                    "<font size=%s>To: <b>%s</b></font>"
-                    % (
-                        label_settings["font_size_large"],
-                        booking.deToCompanyName or "",
-                    ),
-                    style_left,
-                ),
-                Paragraph(
-                    "<font size=%s>Description:&nbsp;%s</font>"
-                    % (
-                        label_settings["font_size_medium"],
-                        booking_line.e_item or "",
-                    ),
-                    style_left,
-                ),
-            ]
-            to_desc_data.append(company_data)
+            # To: row table
+            to_del_data = []
+            
+            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
+            print(codeString)
+            d = Drawing(20, 20)
+            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            d.add(QrCodeWidget(value=codeString, barWidth=20*mm, barHeight=20*mm))
 
-            contact_data = []
+            to_del_data.append(
+                [
+                    Paragraph(
+                        "<font size=%s>To: <b>%s</b></font>"
+                        % (
+                            label_settings["font_size_large"],
+                            booking.deToCompanyName or "",
+                        ),
+                        style_left,
+                    ),
+                    d,
+                ]
+            )
+
             if (booking.de_to_Contact_F_LName or "").lower() != (
                 booking.deToCompanyName or ""
             ).lower():
-                contact_data = [
-                    Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
-                        % (
-                            label_settings["font_size_large"],
-                            booking.de_to_Contact_F_LName or "",
-                            booking.de_To_Address_Street_1 or "",
-                            booking.de_To_Address_Street_2 or "",
+                to_del_data.append(
+                    [
+                        Paragraph(
+                            "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
+                            % (
+                                label_settings["font_size_large"],
+                                booking.de_to_Contact_F_LName or "",
+                                booking.de_To_Address_Street_1 or "",
+                                booking.de_To_Address_Street_2 or "",
+                            ),
+                            style_left,
                         ),
-                        style_left,
-                    ),
-                    "",
-                ]
+                        "",
+                    ]
+                )
             else:
-                contact_data = [
+                to_del_data.append(
+                    [
+                        Paragraph(
+                            "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b>, <b>%s</b></font>"
+                            % (
+                                label_settings["font_size_large"],
+                                booking.de_To_Address_Street_1 or "",
+                                booking.de_To_Address_Street_2 or "",
+                            ),
+                            style_left,
+                        ),
+                        "",
+                    ]
+                )
+
+            to_del_data.append(
+                [
                     Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b>, <b>%s</b></font>"
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s%s%s</b></font>"
                         % (
                             label_settings["font_size_large"],
-                            booking.de_To_Address_Street_1 or "",
-                            booking.de_To_Address_Street_2 or "",
+                            booking.de_To_Address_State or "",
+                            carrier or "",
+                            booking.de_To_Address_PostalCode or "",
                         ),
                         style_left,
                     ),
                     "",
                 ]
+            ) 
 
-            de2address_state = [
-                Paragraph(
-                    "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
-                    % (
-                        label_settings["font_size_large"],
-                        booking.de_To_Address_State or "",
+            to_del_data.append(
+                [
+                    Paragraph(
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
+                        % (
+                            label_settings["font_size_large"],
+                            booking.de_To_Address_Suburb,
+                        ),
+                        style_left,
                     ),
-                    style_left,
-                ),
-                "",
-            ]
-            to_desc_data.append(contact_data)
-
-            suhurb_data = [
-                Paragraph(
-                    "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
-                    % (
-                        label_settings["font_size_large"],
-                        booking.de_To_Address_Suburb,
-                    ),
-                    style_left,
-                ),
-                "",
-            ]
-            to_desc_data.append(suhurb_data)
-
-            de2address_state = [
-                Paragraph(
-                    "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s&nbsp;&nbsp;%s&nbsp;&nbsp;%s</b></font>"
-                    % (
-                        label_settings["font_size_large"],
-                        booking.de_To_Address_State or "",
-                        carrier or "",
-                        booking.de_To_Address_PostalCode or "",
-                    ),
-                    style_left,
-                ),
-                "",
-            ]
-            to_desc_data.append(de2address_state)
-
-            to_desc_col1_w = (
-                float(label_settings["label_image_size_length"]) * (4 / 7) * mm
+                    "",
+                ]
             )
-            to_desc_col2_w = (
-                float(label_settings["label_image_size_length"]) * (3 / 7) * mm
+            
+            to_del_data.append(
+                [
+                    Paragraph(
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
+                        % (label_settings["font_size_large"], booking.de_to_Phone_Main),
+                        style_left,
+                    ),
+                    "",
+                ]
             )
-
-            to_desc_table = Table(
-                to_desc_data,
-                colWidths=(to_desc_col1_w, to_desc_col2_w),
+            
+            shell_table = Table(
+                to_del_data,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * mm / 2,
+                    float(label_settings["label_image_size_length"]) * mm / 2,
+                ),
                 style=[
-                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                    ("VALIGN", (0, 0), (0, -1), "CENTER"),
                     ("SPAN", (-1, -1), (-1, 0)),
-                    ("VALIGN", (-1, 0), (-1, -1), "TOP"),
+                    ("VALIGN", (-1, 0), (-1, -1), "BOTTOM"),
+                    ("ALIGN", (-1, 0), (-1, -1), "CENTER"),
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ],
             )
-
-            Story.append(to_desc_table)
+            Story.append(shell_table)
             Story.append(Spacer(1, 3))
+            
+            print("--------- QR Code -------------")
 
             tbl_data1 = [
                 [
@@ -923,31 +926,7 @@ def build_label(
 
 
             Story.append(footer_table)
-            print("------------ QR ---------------")
-            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            print(codeString)
-            d = Drawing(80, 80)
-            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            d.add(QrCodeWidget(value=codeString))
-            tbl_data2 = [[d]]
-            t2 = Table(
-                tbl_data2,
-                colWidths=(
-                    float(label_settings["label_image_size_length"])
-                    * (1 / 3)
-                    * mm
-                ),
-                style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ],
-            )
-
-            Story.append(t2)
+           
             Story.append(PageBreak())
 
             j += 1
