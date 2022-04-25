@@ -176,7 +176,7 @@ def build_label(
         "font_size_large": "10",
         "font_size_extra_large": "13",
         "label_dimension_length": "150",
-        "label_dimension_width": "120",
+        "label_dimension_width": "115",
         "label_image_size_length": "135",
         "label_image_size_width": "105",
         "barcode_dimension_length": "85",
@@ -622,7 +622,6 @@ def build_label(
             to_del_data = []
             
             codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            print(codeString)
             d = Drawing(20, 20)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
             d.add(QrCodeWidget(value=codeString, barWidth=20*mm, barHeight=20*mm))
@@ -734,8 +733,6 @@ def build_label(
             Story.append(shell_table)
             Story.append(Spacer(1, 3))
             
-            print("--------- QR Code -------------")
-
             tbl_data1 = [
                 [
                     Paragraph(
