@@ -405,6 +405,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "consignment_label_link",
             "s_02_Booking_Cutoff_Time",
             "z_CreatedTimestamp",
+            "z_ModifiedTimestamp",
             "b_dateBookedDate",
             "total_lines_qty_override",
             "total_1_KG_weight_override",
