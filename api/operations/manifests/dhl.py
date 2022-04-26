@@ -63,7 +63,7 @@ def filter_booking_lines(booking, booking_lines):
     return _booking_lines
 
 
-def build_manifest(bookings, booking_lines, username):
+def build_manifest(bookings, booking_lines, username, need_truck):
     fp_info = Fp_freight_providers.objects.get(fp_company_name="DHL")
     new_manifest_index = fp_info.fp_manifest_cnt
     new_connot_index = fp_info.new_connot_index
@@ -714,6 +714,7 @@ def build_manifest(bookings, booking_lines, username):
         bookings_cnt=len(bookings),
         is_one_booking=1,
         z_createdByAccount=username,
+        need_truck=need_truck,
     )
 
     fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1

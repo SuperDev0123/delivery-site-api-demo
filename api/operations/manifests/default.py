@@ -286,7 +286,7 @@ def make_pagenumber(number, page_number):
     return page_table
 
 
-def build_manifest(bookings, booking_lines, username):
+def build_manifest(bookings, booking_lines, username, need_truck):
     fp_name = bookings[0].vx_freight_provider
     fp_info = Fp_freight_providers.objects.get(fp_company_name=fp_name)
     if fp_info and fp_info.hex_color_code:
@@ -966,6 +966,7 @@ def build_manifest(bookings, booking_lines, username):
         bookings_cnt=len(bookings),
         is_one_booking=1,
         z_createdByAccount=username,
+        need_truck=need_truck,
     )
 
     fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1

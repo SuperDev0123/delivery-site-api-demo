@@ -4348,6 +4348,7 @@ def get_manifest(request):
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
+    need_truck = body["needTruck"]
 
     bookings = (
         Bookings.objects.filter(pk__in=booking_ids)
@@ -4366,7 +4367,7 @@ def get_manifest(request):
         file_paths = []
 
         for fp in fps:
-            bookings, filename = build_manifest(fps[fp], username)
+            bookings, filename = build_manifest(fps[fp], username, need_truck)
 
             if vx_freight_provider.upper() == "TASFR":
                 file_path = f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}"
