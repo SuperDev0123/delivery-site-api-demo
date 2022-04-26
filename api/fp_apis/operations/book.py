@@ -65,7 +65,7 @@ def book(fp_name, booking, booker):
             manifest_name = booking.z_manifest_url.split("/")[1]
             manifest_logs = Dme_manifest_log.objects.filter(manifest_url=manifest_name)
 
-            if manifest_logs and manifest_logs.first().need_truck:
+            if manifest_logs and not manifest_logs.first().need_truck:
                 built_in_book(booking)
                 message = f"Successfully booked({booking.v_FPBookingNumber})"
                 return True, message
