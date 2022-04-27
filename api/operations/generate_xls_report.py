@@ -2673,10 +2673,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             pk_booking_ids.append(booking.pk_booking_id)
 
         original_lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id, packed_status="original"
+            fk_booking_id__in=pk_booking_ids, packed_status="original"
         ).only("fk_booking_id", "e_item")
         scanned_lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id, packed_status="scanned"
+            fk_booking_id__in=pk_booking_ids, packed_status="scanned"
         ).only(
             "fk_booking_id",
             "e_qty",
