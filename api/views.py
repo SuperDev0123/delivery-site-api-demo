@@ -4348,7 +4348,7 @@ def get_manifest(request):
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
-    need_truck = body.get("needTruck")
+    need_truck = body.get("needTruck") or False
 
     bookings = (
         Bookings.objects.filter(pk__in=booking_ids)
