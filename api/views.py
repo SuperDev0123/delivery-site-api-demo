@@ -1221,6 +1221,14 @@ class BookingsViewSet(viewsets.ViewSet):
                     ),
                     b_status__iexact="delivered",
                 )
+            elif report_type == "goods_sent":
+                queryset = queryset.filter(
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    ),
+                    b_dateBookedDate__isnull=False,
+                )
             else:
                 # Date filter
                 if user_type == "DME":
@@ -1295,6 +1303,10 @@ class BookingsViewSet(viewsets.ViewSet):
             "s_05_LatestPickUpDateTimeFinal",
             "b_booking_Notes",
             "z_CreatedTimestamp",
+            "de_to_Pick_Up_Instructions_Contact",
+            "de_to_PickUp_Instructions_Address",
+            "de_To_AddressType",
+            "b_client_warehouse_code",
         )
 
         build_xls_and_send(
