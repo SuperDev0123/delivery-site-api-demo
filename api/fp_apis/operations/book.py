@@ -9,7 +9,7 @@ from api.common import status_history, trace_error
 from api.file_operations.directory import create_dir
 from api.operations.email_senders import send_booking_status_email
 from api.operations.api_booking_confirmation_lines import index as api_bcl
-from api.models import Log, Api_booking_confirmation_lines
+from api.models import Log, Api_booking_confirmation_lines, Dme_manifest_log
 
 from api.fp_apis.pre_check import pre_check_book
 from api.fp_apis.payload_builder import get_book_payload
