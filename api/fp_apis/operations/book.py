@@ -25,7 +25,7 @@ from api.fp_apis.constants import (
 logger = logging.getLogger(__name__)
 
 
-def built_in_book(booking):
+def built_in_book(booking, booker):
     """
     Used to avoid calling Truck from TNT
     """
@@ -58,7 +58,7 @@ def book(fp_name, booking, booker):
     # BSD: when doesn't need any trucks from TNT
     if _fp_name == "tnt":
         if booking.b_client_warehouse_code == "BSD_MERRYLANDS":
-            built_in_book(booking)
+            built_in_book(booking, booker)
             message = f"Successfully booked({booking.v_FPBookingNumber})"
             return True, message
         elif booking.z_manifest_url:
@@ -66,7 +66,7 @@ def book(fp_name, booking, booker):
             manifest_logs = Dme_manifest_log.objects.filter(manifest_url=manifest_name)
 
             if manifest_logs and not manifest_logs.first().need_truck:
-                built_in_book(booking)
+                built_in_book(booking, booker)
                 message = f"Successfully booked({booking.v_FPBookingNumber})"
                 return True, message
 
