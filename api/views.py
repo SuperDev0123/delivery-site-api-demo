@@ -4363,6 +4363,7 @@ def get_manifest(request):
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
     need_truck = body.get("needTruck") or False
+    is_from_fm = body.get("isFromFM") or False
 
     bookings = (
         Bookings.objects.filter(pk__in=booking_ids)
@@ -4415,21 +4416,32 @@ def get_manifest(request):
 
                 booking.save()
 
-        zip_subdir = "manifest_files"
-        zip_filename = "%s.zip" % zip_subdir
+        if is_from_fm:
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Manifest is built successfully.",
+                    "manifest_url": file_paths[0].replace(
+                        settings.STATIC_PUBLIC, settings.S3_URL
+                    ),
+                }
+            )
+        else:
+            zip_subdir = "manifest_files"
+            zip_filename = "%s.zip" % zip_subdir
 
-        s = io.BytesIO()
-        zf = zipfile.ZipFile(s, "w")
-        for index, file_path in enumerate(file_paths):
-            if os.path.isfile(file_path):
-                file_name = file_path.split("/")[-1]
-                file_name = file_name.split("\\")[-1]
-                zf.write(file_path, f"manifest_files/{file_name}")
-        zf.close()
+            s = io.BytesIO()
+            zf = zipfile.ZipFile(s, "w")
+            for index, file_path in enumerate(file_paths):
+                if os.path.isfile(file_path):
+                    file_name = file_path.split("/")[-1]
+                    file_name = file_name.split("\\")[-1]
+                    zf.write(file_path, f"manifest_files/{file_name}")
+            zf.close()
 
-        response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
-        response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
-        return response
+            response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
+            response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
+            return response
     except Exception as e:
         trace_error.print()
         logger.error(f"get_mainifest error: {str(e)}")
