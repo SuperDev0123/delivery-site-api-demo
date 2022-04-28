@@ -272,6 +272,8 @@ class Dme_manifest_log(models.Model):
     manifest_url = models.CharField(max_length=200, blank=True, null=True)
     is_one_booking = models.BooleanField(blank=True, null=True, default=False)
     bookings_cnt = models.IntegerField(default=0, blank=True, null=True)
+    # Used for manifests bookings to book on TNT
+    need_truck = models.BooleanField(default=False, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )

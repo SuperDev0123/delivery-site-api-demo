@@ -9,7 +9,7 @@ from api.common import status_history, trace_error
 from api.file_operations.directory import create_dir
 from api.operations.email_senders import send_booking_status_email
 from api.operations.api_booking_confirmation_lines import index as api_bcl
-from api.models import Log, Api_booking_confirmation_lines
+from api.models import Log, Api_booking_confirmation_lines, Dme_manifest_log
 
 from api.fp_apis.pre_check import pre_check_book
 from api.fp_apis.payload_builder import get_book_payload
@@ -23,6 +23,21 @@ from api.fp_apis.constants import (
 
 
 logger = logging.getLogger(__name__)
+
+
+def built_in_book(booking, booker):
+    """
+    Used to avoid calling Truck from TNT
+    """
+    from api.fp_apis.utils import gen_consignment_num
+
+    booking.v_FPBookingNumber = gen_consignment_num(
+        booking.vx_freight_provider, booking.b_bookingID_Visual
+    )
+    booking.b_dateBookedDate = datetime.now()
+    booking.b_error_Capture = None
+    status_history.create(booking, "Booked", booker)
+    booking.save()
 
 
 def book(fp_name, booking, booker):
@@ -41,15 +56,19 @@ def book(fp_name, booking, booker):
         return False, error_msg
 
     # BSD: when doesn't need any trucks from TNT
-    if booking.b_client_warehouse_code == "BSD_MERRYLANDS" and _fp_name == "tnt":
-        booking.v_FPBookingNumber = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
-        booking.b_dateBookedDate = datetime.now()
-        booking.b_error_Capture = None
-        status_history.create(booking, "Booked", booker)
-        booking.save()
+    if _fp_name == "tnt":
+        if booking.b_client_warehouse_code == "BSD_MERRYLANDS":
+            built_in_book(booking, booker)
+            message = f"Successfully booked({booking.v_FPBookingNumber})"
+            return True, message
+        elif booking.z_manifest_url:
+            manifest_name = booking.z_manifest_url.split("/")[1]
+            manifest_logs = Dme_manifest_log.objects.filter(manifest_url=manifest_name)
 
-        message = f"Successfully booked({booking.v_FPBookingNumber})"
-        return True, message
+            if manifest_logs and not manifest_logs.first().need_truck:
+                built_in_book(booking, booker)
+                message = f"Successfully booked({booking.v_FPBookingNumber})"
+                return True, message
 
     logger.info(f"### Payload ({fp_name} book): {payload}")
     url = DME_LEVEL_API_URL + "/booking/bookconsignment"

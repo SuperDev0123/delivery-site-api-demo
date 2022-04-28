@@ -1221,6 +1221,14 @@ class BookingsViewSet(viewsets.ViewSet):
                     ),
                     b_status__iexact="delivered",
                 )
+            elif report_type == "goods_sent":
+                queryset = queryset.filter(
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    ),
+                    b_dateBookedDate__isnull=False,
+                )
             else:
                 # Date filter
                 if user_type == "DME":
@@ -1270,8 +1278,10 @@ class BookingsViewSet(viewsets.ViewSet):
             "b_status_category",
             "dme_status_detail",
             "dme_status_action",
-            "s_21_ActualDeliveryTimeStamp",
+            "s_05_LatestPickUpDateTimeFinal",
             "s_06_Latest_Delivery_Date_TimeSet",
+            "s_20_Actual_Pickup_TimeStamp",
+            "s_21_ActualDeliveryTimeStamp",
             "z_pod_url",
             "z_pod_signed_url",
             "delivery_kpi_days",
@@ -1295,6 +1305,10 @@ class BookingsViewSet(viewsets.ViewSet):
             "s_05_LatestPickUpDateTimeFinal",
             "b_booking_Notes",
             "z_CreatedTimestamp",
+            "de_to_Pick_Up_Instructions_Contact",
+            "de_to_PickUp_Instructions_Address",
+            "de_To_AddressType",
+            "b_client_warehouse_code",
         )
 
         build_xls_and_send(
@@ -4348,6 +4362,7 @@ def get_manifest(request):
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
+    need_truck = body.get("needTruck") or False
 
     bookings = (
         Bookings.objects.filter(pk__in=booking_ids)
@@ -4366,7 +4381,7 @@ def get_manifest(request):
         file_paths = []
 
         for fp in fps:
-            bookings, filename = build_manifest(fps[fp], username)
+            bookings, filename = build_manifest(fps[fp], username, need_truck)
 
             if vx_freight_provider.upper() == "TASFR":
                 file_path = f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}"
