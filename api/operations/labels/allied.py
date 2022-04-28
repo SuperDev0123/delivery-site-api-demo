@@ -628,7 +628,7 @@ def build_label(
             to_del_data.append(
                 [
                     Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s%s%s</b></font>"
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s&nbsp;%s&nbsp;%s</b></font>"
                         % (
                             label_settings["font_size_large"],
                             booking.de_To_Address_State or "",
