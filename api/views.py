@@ -1597,6 +1597,7 @@ class BookingsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_manifest_report(self, request, format=None):
         clientname = get_client_name(self.request)
+        page_index = int(request.GET["index"])
 
         if not clientname in ["Jason L", "Bathroom Sales Direct", "BioPak", "dme"]:
             return JsonResponse(
@@ -1606,8 +1607,8 @@ class BookingsViewSet(viewsets.ViewSet):
 
         if clientname in ["BioPak"]:
             sydney_now = get_sydney_now_time("datetime")
-            last_date = datetime.now()
-            first_date = (sydney_now - timedelta(days=60)).date()
+            last_date = datetime.now() - timedelta(days=60*page_index)
+            first_date = (sydney_now - timedelta(days=60*(page_index+1))).date()
             bookings_with_manifest = (
                 Bookings.objects.prefetch_related("fk_client_warehouse")
                 .exclude(manifest_timestamp__isnull=True)
@@ -1675,8 +1676,8 @@ class BookingsViewSet(viewsets.ViewSet):
             return JsonResponse({"results": results})
 
         sydney_now = get_sydney_now_time("datetime")
-        last_date = datetime.now()
-        first_date = (sydney_now - timedelta(days=60)).date()
+        last_date = datetime.now() - timedelta(days=60*page_index)
+        first_date = (sydney_now - timedelta(days=60*(page_index+1))).date()
         manifest_logs = (
             Dme_manifest_log.objects.filter(
                 z_createdTimeStamp__range=(first_date, last_date)
@@ -1770,7 +1771,6 @@ class BookingsViewSet(viewsets.ViewSet):
             report_client["company_name"] = client.company_name
             report_client["dme_account_num"] = client.dme_account_num
             report_clients.append(report_client)
-
         return JsonResponse(
             {
                 "results": results,
