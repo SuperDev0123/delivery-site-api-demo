@@ -1607,8 +1607,8 @@ class BookingsViewSet(viewsets.ViewSet):
 
         if clientname in ["BioPak"]:
             sydney_now = get_sydney_now_time("datetime")
-            last_date = datetime.now() - timedelta(days=60*page_index)
-            first_date = (sydney_now - timedelta(days=60*(page_index+1))).date()
+            last_date = datetime.now() - timedelta(days=20 * page_index)
+            first_date = (sydney_now - timedelta(days=20 * (page_index + 1))).date()
             bookings_with_manifest = (
                 Bookings.objects.prefetch_related("fk_client_warehouse")
                 .exclude(manifest_timestamp__isnull=True)
@@ -1676,8 +1676,8 @@ class BookingsViewSet(viewsets.ViewSet):
             return JsonResponse({"results": results})
 
         sydney_now = get_sydney_now_time("datetime")
-        last_date = datetime.now() - timedelta(days=60*page_index)
-        first_date = (sydney_now - timedelta(days=60*(page_index+1))).date()
+        last_date = datetime.now() - timedelta(days=20 * page_index)
+        first_date = (sydney_now - timedelta(days=20 * (page_index + 1))).date()
         manifest_logs = (
             Dme_manifest_log.objects.filter(
                 z_createdTimeStamp__range=(first_date, last_date)
