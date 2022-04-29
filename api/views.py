@@ -4399,7 +4399,9 @@ def get_manifest(request):
 
                 # Jason L & BSD: Create new statusHistory
                 if (
-                    "bsd" in request.user.username or "jason" in request.user.username
+                    "bsd" in request.user.username
+                    or "jason" in request.user.username
+                    or "dme" in request.user.username
                 ) and not booking.b_dateBookedDate:
                     if booking.vx_freight_provider in SPECIAL_FPS:
                         status_history.create(booking, "Booked", username)
