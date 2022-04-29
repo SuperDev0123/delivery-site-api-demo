@@ -4362,6 +4362,7 @@ def get_manifest(request):
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
+    clientname = get_client_name(self.request)
     need_truck = body.get("needTruck") or False
     is_from_fm = body.get("isFromFM") or False
 
@@ -4401,7 +4402,7 @@ def get_manifest(request):
                 if (
                     "bsd" in request.user.username
                     or "jason" in request.user.username
-                    or "dme" in request.user.username
+                    or clientname == "dme"
                 ) and not booking.b_dateBookedDate:
                     if booking.vx_freight_provider in SPECIAL_FPS:
                         status_history.create(booking, "Booked", username)
