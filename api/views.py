@@ -4362,7 +4362,7 @@ def get_manifest(request):
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
-    clientname = get_client_name(self.request)
+    clientname = get_client_name(request)
     need_truck = body.get("needTruck") or False
     is_from_fm = body.get("isFromFM") or False
 
