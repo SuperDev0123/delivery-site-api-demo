@@ -2160,12 +2160,12 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     date_format,
                 )
 
-            if booking.s_05_LatestPickUpDateTimeFinal:
+            if booking.s_05_Latest_Pick_Up_Date_TimeSet:
                 worksheet.write_datetime(
                     row,
                     col + 2,
                     convert_to_AU_SYDNEY_tz(
-                        booking.s_05_LatestPickUpDateTimeFinal
+                        booking.s_05_Latest_Pick_Up_Date_TimeSet
                     ).date(),
                     date_format,
                 )
