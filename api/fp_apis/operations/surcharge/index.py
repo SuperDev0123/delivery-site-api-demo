@@ -361,7 +361,7 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
         surcharges = find_surcharges(booking_obj, line_objs, quote_obj, data_type)
     except Exception as e:
         logger.error(f"{LOG_ID} Booking: {booking_obj}, Quote: {quote_obj}")
-        raise Exception("Wrong dimentions!")
+        raise Exception("One booking line has an extremely big demension!")
 
     # Create new Surcharge objects
     for surcharge in surcharges:
