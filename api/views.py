@@ -1457,6 +1457,19 @@ class BookingsViewSet(viewsets.ViewSet):
                             },
                             status=400,
                         )
+                elif field_name == "additional_surcharge":
+                    field_content["booking"] = booking_id
+                    surcharge = SurchargeSerializer(data=field_content)
+
+                    if surcharge.is_valid():
+                        surcharge.save()
+                    else:
+                        return JsonResponse(
+                            {
+                                "message": f"Error: {surcharge.errors}, Please contact support center!"
+                            },
+                            status=400,
+                        )
                 else:
                     booking = Bookings.objects.get(id=booking_id)
                     setattr(booking, field_name, field_content)
