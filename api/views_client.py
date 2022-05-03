@@ -1052,12 +1052,19 @@ def get_delivery_status(request):
 
             eta = get_eta_de_by(booking, booking.api_booking_quote)
         else:
+            from api.utils import get_eta_pu_by, get_eta_de_by
+
             s_06 = booking.get_s_06()
-            eta = (
-                dme_time_lib.convert_to_AU_SYDNEY_tz(s_06).strftime("%d/%m/%Y %H:%M")
-                if s_06
-                else ""
-            )
+
+            if not s_06:
+                booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
+                booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
+                    booking, booking.api_booking_quote
+                )
+                booking.save()
+                s_06 = booking.get_s_06()
+
+            eta = dme_time_lib.convert_to_AU_SYDNEY_tz(s_06).strftime("%d/%m/%Y %H:%M")
 
         try:
             fp_status_histories = (
