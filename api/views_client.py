@@ -1047,7 +1047,7 @@ def get_delivery_status(request):
                         status_time.strftime("%d/%m/%Y %H:%M") if status_time else None
                     )
 
-        if step == 1:
+        if step == 0:
             from api.utils import get_eta_de_by
 
             eta = get_eta_de_by(booking, booking.api_booking_quote)
