@@ -3303,6 +3303,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
             booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
             status_last = request.data.get("status_last")
             event_time_stamp = request.data.get("event_time_stamp")
+            dme_notes = request.data.get("dme_notes")
             is_from_script = request.data.get("is_from_script")
 
             if is_from_script:
@@ -3331,6 +3332,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 status_last,
                 request.user.username,
                 event_time_stamp,
+                dme_notes,
             )
 
             # ######################################## #

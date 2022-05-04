@@ -184,7 +184,7 @@ def post_new_status(booking, dme_status_history, new_status, event_timestamp, us
 
 
 # Create new status_history for Booking
-def create(booking, new_status, username, event_timestamp=None):
+def create(booking, new_status, username, event_timestamp=None, dme_notes=None):
     if booking.z_lock_status:
         logger.info(f"@699 Booking({booking.b_bookingID_Visual}) is locked!")
         return
@@ -212,8 +212,9 @@ def create(booking, new_status, username, event_timestamp=None):
         logger.info(f"@700 New Status! {booking.b_bookingID_Visual}({notes})")
 
         dme_status_history.status_old = old_status
-        dme_status_history.notes = notes
         dme_status_history.status_last = new_status
+        dme_status_history.notes = notes
+        dme_status_history.dme_notes = dme_notes
         dme_status_history.event_time_stamp = event_timestamp or datetime.now()
         dme_status_history.recipient_name = ""
         dme_status_history.status_update_via = "Django"
