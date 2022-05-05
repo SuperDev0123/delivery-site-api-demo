@@ -61,7 +61,7 @@ def filter_booking_lines(booking, booking_lines):
     return _booking_lines
 
 
-def build_manifest(bookings, booking_lines, username, need_truck):
+def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
     fp_info = Fp_freight_providers.objects.get(fp_company_name="Tas")
     new_manifest_index = fp_info.fp_manifest_cnt
     new_connot_index = fp_info.new_connot_index
@@ -707,6 +707,7 @@ def build_manifest(bookings, booking_lines, username, need_truck):
                     bookings_cnt=1,
                     is_one_booking=1,
                     z_createdByAccount=username,
+                    z_createdTimeStamp=timestamp,
                 )
 
                 i += 1
@@ -730,6 +731,8 @@ def build_manifest(bookings, booking_lines, username, need_truck):
         z_createdByAccount=username,
         need_truck=need_truck,
     )
+    manfiest_log.z_createdTimeStamp = timestamp
+    manfiest_log.save()
 
     fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
     fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)

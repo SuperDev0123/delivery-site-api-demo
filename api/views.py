@@ -4380,6 +4380,7 @@ def get_manifest(request):
     clientname = get_client_name(request)
     need_truck = body.get("needTruck") or False
     is_from_fm = body.get("isFromFM") or False
+    timestamp = body.get("timestamp") or None
 
     bookings = (
         Bookings.objects.filter(pk__in=booking_ids)
@@ -4398,7 +4399,9 @@ def get_manifest(request):
         file_paths = []
 
         for fp in fps:
-            bookings, filename = build_manifest(fps[fp], username, need_truck)
+            bookings, filename = build_manifest(
+                fps[fp], username, need_truck, timestamp
+            )
 
             if vx_freight_provider.upper() == "TASFR":
                 file_path = f"{settings.STATIC_PUBLIC}/pdfs/tas_au/{filename}"
@@ -4408,10 +4411,9 @@ def get_manifest(request):
                 file_path = f"{settings.STATIC_PUBLIC}/pdfs/startrack_au/{filename}"
 
             file_paths.append(file_path)
-            now = datetime.now()
             for booking in bookings:
                 booking.z_manifest_url = f"startrack_au/{filename}"
-                booking.manifest_timestamp = now
+                booking.manifest_timestamp = timestamp or datetime.now()
 
                 # Jason L & BSD: Create new statusHistory
                 if (
@@ -4421,7 +4423,7 @@ def get_manifest(request):
                 ) and not booking.b_dateBookedDate:
                     if booking.vx_freight_provider in SPECIAL_FPS:
                         status_history.create(booking, "Booked", username)
-                        booking.b_dateBookedDate = datetime.now()
+                        booking.b_dateBookedDate = timestamp or datetime.now()
                         booking.v_FPBookingNumber = gen_consignment_num(
                             booking.vx_freight_provider, booking.b_bookingID_Visual
                         )

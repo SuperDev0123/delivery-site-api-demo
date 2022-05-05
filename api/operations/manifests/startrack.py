@@ -137,7 +137,7 @@ class InteractiveCheckBox(Flowable):
 checkbox = InteractiveCheckBox("")
 
 
-def build_manifest(bookings, booking_lines, username, need_truck):
+def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
     fp_name = bookings[0].vx_freight_provider
     fp_info = Fp_freight_providers.objects.get(fp_company_name=fp_name)
     if fp_info and fp_info.hex_color_code:
@@ -1455,6 +1455,8 @@ def build_manifest(bookings, booking_lines, username, need_truck):
         z_createdByAccount=username,
         need_truck=need_truck,
     )
+    manfiest_log.z_createdTimeStamp = timestamp
+    manfiest_log.save()
 
     # fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
     # fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)
