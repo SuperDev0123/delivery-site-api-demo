@@ -2664,7 +2664,8 @@ class BookingViewSet(viewsets.ViewSet):
                 "api_booking_quote",
                 "b_dateBookedDate",
             )
-            .first()
+            .order_by("id")
+            .last()
         )
 
         if not booking:
