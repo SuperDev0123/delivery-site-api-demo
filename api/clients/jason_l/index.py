@@ -1147,11 +1147,12 @@ def scanned(payload, client):
 
         # Select best quotes(fastest, lowest)
         if quotes.exists() and quotes.count() > 0:
+            quotes = quotes.filter(packed_status=Booking_lines.SCANNED_PACK)
+
             if booking.booking_type == "DMEM":
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,
-                    packed_status=Booking_lines.SCANNED_PACK,
                 )
             else:
                 quotes = quotes.exclude(freight_provider__in=["Sendle", "Hunter"])
