@@ -90,7 +90,7 @@ def tracking(request, fp_name):
             if booking.vx_freight_provider.lower() == "allied":
                 for consignmentTrackDetail in consignmentTrackDetails:
                     if consignmentTrackDetail["pods"]:
-                        podData = consignmentTrackDetail["pod"]["podData"]
+                        podData = consignmentTrackDetail["pods"][0]["podData"]
 
                         _fp_name = fp_name.lower()
                         pod_file_name = f"allied_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
@@ -102,7 +102,23 @@ def tracking(request, fp_name):
 
                         booking.z_pod_url = f"{fp_name.lower()}_au/{pod_file_name}"
                         booking.save()
+                    if consignmentTrackDetail["signatures"]:
+                        posData = consignmentTrackDetail["signatures"][0][
+                            "signatureImage"
+                        ]
 
+                        _fp_name = fp_name.lower()
+                        pos_file_name = f"allied_POS_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
+                        full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{pos_file_name}"
+
+                        f = open(full_path, "wb")
+                        f.write(base64.b64decode(posData))
+                        f.close()
+
+                        booking.z_pod_signed_url = (
+                            f"{fp_name.lower()}_au/{pos_file_name}"
+                        )
+                        booking.save()
             if has_new:
                 update_booking_with_tracking_result(
                     request, booking, fp_name, consignmentStatuses
