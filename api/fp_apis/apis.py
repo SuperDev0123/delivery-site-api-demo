@@ -44,6 +44,7 @@ from api.fp_apis.utils import auto_select_pricing
 from api.fp_apis.constants import FP_CREDENTIALS, S3_URL, DME_LEVEL_API_URL
 from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.constants import SPECIAL_FPS
+from api.helpers.string import *
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,7 @@ def tracking(request, fp_name):
                     podData = consignmentTrackDetails["pods"][0]["podData"]
 
                     _fp_name = fp_name.lower()
-                    pod_file_name = f"allied_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
+                    pod_file_name = f"allied_POD_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
                     full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pod_file_name}"
 
                     f = open(full_path, "wb")
@@ -105,7 +106,7 @@ def tracking(request, fp_name):
                     posData = consignmentTrackDetails["signatures"][0]["signatureImage"]
 
                     _fp_name = fp_name.lower()
-                    pos_file_name = f"allied_POS_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
+                    pos_file_name = f"allied_POS_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
                     full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pos_file_name}"
 
                     f = open(full_path, "wb")
@@ -454,7 +455,7 @@ def edit_book(request, fp_name):
                         booking.z_label_url = f"hunter_au/{file_name}"
                         booking.save()
 
-                    pod_file_name = f"hunter_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
+                    pod_file_name = f"hunter_POD_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
                     full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pod_file_name}"
 
                     f = open(full_path, "wb")
@@ -724,7 +725,7 @@ def get_label(request, fp_name):
                 try:
                     if _fp_name == "tnt":
                         label_data = base64.b64decode(json_data["anyType"]["LabelPDF"])
-                        file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
+                        file_name = f"{fp_name}_label_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now())}.pdf"
                     elif _fp_name == "sendle":
                         file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.v_FPBookingNumber}_{str(datetime.now())}.pdf"
 
@@ -1015,7 +1016,7 @@ def pod(request, fp_name):
                 return JsonResponse({"message": error_msg})
             podData = json_data["pod"]["podData"]
 
-        file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
+        file_name = f"POD_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
 
         file_name += ".jpeg" if _fp_name in ["hunter"] else ".png"
         full_path = f"{S3_URL}/imgs/{_fp_name}_au/{file_name}"
@@ -1069,7 +1070,7 @@ def reprint(request, fp_name):
             podData = json_data["ReprintActionResult"]["LabelPDF"]
 
             try:
-                file_name = f"{fp_name}_reprint_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
+                file_name = f"{fp_name}_reprint_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now())}.pdf"
                 full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
                 with open(full_path, "wb") as f:

@@ -10,3 +10,7 @@ def similarity(a, b):
 
 def ireplace(old, repl, text):
     return re.sub("(?i)" + re.escape(old), lambda m: repl, text)
+
+
+def toAlphaNumeric(text, replacement="_"):
+    return re.sub(r"[^0-9a-zA-Z]+", replacement, text)
