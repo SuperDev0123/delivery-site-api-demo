@@ -93,7 +93,7 @@ def tracking(request, fp_name):
 
                     _fp_name = fp_name.lower()
                     pod_file_name = f"allied_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
-                    full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{pod_file_name}"
+                    full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pod_file_name}"
 
                     f = open(full_path, "wb")
                     f.write(base64.b64decode(podData))
@@ -106,7 +106,7 @@ def tracking(request, fp_name):
 
                     _fp_name = fp_name.lower()
                     pos_file_name = f"allied_POS_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
-                    full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{pos_file_name}"
+                    full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pos_file_name}"
 
                     f = open(full_path, "wb")
                     f.write(base64.b64decode(posData))
@@ -455,7 +455,7 @@ def edit_book(request, fp_name):
                         booking.save()
 
                     pod_file_name = f"hunter_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
-                    full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{pod_file_name}"
+                    full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pod_file_name}"
 
                     f = open(full_path, "wb")
                     f.write(base64.b64decode(json_label_data["podImage"]))
