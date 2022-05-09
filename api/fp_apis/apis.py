@@ -88,6 +88,7 @@ def tracking(request, fp_name):
 
             # Allied POD
             if booking.vx_freight_provider.lower() == "allied":
+                print("@1 - ", consignmentTrackDetails)
                 for consignmentTrackDetail in consignmentTrackDetails:
                     if consignmentTrackDetail["pods"]:
                         podData = consignmentTrackDetail["pods"][0]["podData"]
