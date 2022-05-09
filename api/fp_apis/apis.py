@@ -88,8 +88,6 @@ def tracking(request, fp_name):
 
             # Allied POD
             if booking.vx_freight_provider.lower() == "allied":
-                create_dir_if_not_exist(f"./static/pdfs/{fp_name.lower()}_au")
-
                 for consignmentTrackDetail in consignmentTrackDetails:
                     if "pods" in consignmentTrackDetail:
                         podData = consignmentTrackDetail["pod"]["podData"]
