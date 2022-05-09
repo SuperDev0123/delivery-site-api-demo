@@ -92,7 +92,7 @@ def tracking(request, fp_name):
                     podData = consignmentTrackDetails["pods"][0]["podData"]
 
                     _fp_name = fp_name.lower()
-                    pod_file_name = f"allied_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
+                    pod_file_name = f"allied_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
                     full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pod_file_name}"
 
                     f = open(full_path, "wb")
@@ -105,7 +105,7 @@ def tracking(request, fp_name):
                     posData = consignmentTrackDetails["signatures"][0]["signatureImage"]
 
                     _fp_name = fp_name.lower()
-                    pos_file_name = f"allied_POS_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
+                    pos_file_name = f"allied_POS_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
                     full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pos_file_name}"
 
                     f = open(full_path, "wb")
