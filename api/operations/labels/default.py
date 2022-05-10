@@ -620,11 +620,11 @@ def build_label(
 
             # To: row table
             to_del_data = []
-            
+
             codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
             d = Drawing(20, 20)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            d.add(QrCodeWidget(value=codeString, barWidth=20*mm, barHeight=20*mm))
+            d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
 
             to_del_data.append(
                 [
@@ -695,7 +695,7 @@ def build_label(
                     ),
                     "",
                 ]
-            ) 
+            )
 
             to_del_data.append(
                 [
@@ -710,7 +710,7 @@ def build_label(
                     "",
                 ]
             )
-            
+
             to_del_data.append(
                 [
                     Paragraph(
@@ -735,7 +735,7 @@ def build_label(
                     "",
                 ]
             )
-            
+
             shell_table = Table(
                 to_del_data,
                 colWidths=(
@@ -754,7 +754,7 @@ def build_label(
             )
             Story.append(shell_table)
             Story.append(Spacer(1, 2))
-            
+
             tbl_data1 = [
                 [
                     Paragraph(
@@ -916,9 +916,8 @@ def build_label(
                 ],
             )
 
-
             Story.append(footer_table)
-           
+
             Story.append(PageBreak())
 
             j += 1

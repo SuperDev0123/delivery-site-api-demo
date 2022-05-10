@@ -571,11 +571,11 @@ def build_label(
             Story.append(Spacer(1, 5))
             # To: row table
             to_del_data = []
-            
+
             codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
             d = Drawing(40, 40)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            d.add(QrCodeWidget(value=codeString, barWidth=24*mm, barHeight=24*mm))
+            d.add(QrCodeWidget(value=codeString, barWidth=24 * mm, barHeight=24 * mm))
 
             to_del_data.append(
                 [
@@ -628,33 +628,20 @@ def build_label(
             to_del_data.append(
                 [
                     Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s&nbsp;%s&nbsp;%s</b></font>"
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s&nbsp;%s&nbsp;%s&nbsp;%s</b></font>"
                         % (
                             label_settings["font_size_large"],
                             booking.de_To_Address_State or "",
                             carrier or "",
                             booking.de_To_Address_PostalCode or "",
-                        ),
-                        style_left,
-                    ),
-                    "",
-                ]
-            ) 
-
-            to_del_data.append(
-                [
-                    Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
-                        % (
-                            label_settings["font_size_large"],
-                            booking.de_To_Address_Suburb,
+                            booking.de_To_Address_Suburb or "",
                         ),
                         style_left,
                     ),
                     "",
                 ]
             )
-            
+
             to_del_data.append(
                 [
                     Paragraph(
@@ -665,20 +652,20 @@ def build_label(
                     "",
                 ]
             )
-            
+
             shell_table = Table(
                 to_del_data,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * mm / 2,
-                    float(label_settings["label_image_size_length"]) * mm / 2,
+                    float(label_settings["label_image_size_length"]) * mm * 2 / 3,
+                    float(label_settings["label_image_size_length"]) * mm * 1 / 3,
                 ),
                 style=[
-                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                    # ("VALIGN", (0, 0), (0, -1), "TOP"),
                     ("SPAN", (-1, -1), (-1, 0)),
-                    ("VALIGN", (-1, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (-1, 0), (0, 0), "BOTTOM"),
                     ("ALIGN", (-1, 0), (-1, -1), "CENTER"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    # ("TOPPADDING", (1, 1), (1, 1), 0),
+                    # ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ],
             )
             Story.append(shell_table)
