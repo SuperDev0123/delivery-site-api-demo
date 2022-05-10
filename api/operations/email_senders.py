@@ -25,8 +25,6 @@ from api.helpers.etd import get_etd
 
 logger = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
-
 
 def send_booking_status_email(bookingId, emailName, sender):
     """

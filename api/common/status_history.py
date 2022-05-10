@@ -20,10 +20,9 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
     from api.helpers.etd import get_etd
 
     # Ignore for JasonL, Tempo, Reworx
-    if booking.kf_client_id in [
-        "1af6bcd2-6148-11eb-ae93-0242ac130002",
-        "37C19636-C5F9-424D-AD17-05A056A8FBDB",
-        "feb8c98f-3156-4241-8413-86c7af99bf4e",
+    if not booking.kf_client_id in [
+        "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
+        "461162D2-90C7-BF4E-A905-000000000004",
     ]:
         return
 
