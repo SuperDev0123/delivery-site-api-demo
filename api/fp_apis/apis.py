@@ -123,7 +123,7 @@ def tracking(request, fp_name):
                     event_at = datetime.strptime(
                         scheduledDeliveryDate[:19], "%Y-%m-%dT%H:%M:%S"
                     )
-                    event_at = str(convert_to_UTC_tz(event_time))
+                    event_at = str(convert_to_UTC_tz(event_at))
                     booking.s_06_Latest_Delivery_Date_Time_Override = event_at
 
                 booking.save()
