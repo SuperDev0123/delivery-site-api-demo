@@ -19,7 +19,7 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
     LOG_ID = "[EMAIL_SMS]"
     from api.helpers.etd import get_etd
 
-    # Ignore for JasonL, Tempo, Reworx
+    # Ignore unless Plum and BSD
     if not booking.kf_client_id in [
         "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
         "461162D2-90C7-BF4E-A905-000000000004",

@@ -101,7 +101,7 @@ def tracking(request, fp_name):
                     f.close()
 
                     booking.z_pod_url = f"{fp_name.lower()}_au/{pod_file_name}"
-                    booking.save()
+
                 if consignmentTrackDetails["signatures"]:
                     posData = consignmentTrackDetails["signatures"][0]["signatureImage"]
 
@@ -114,7 +114,19 @@ def tracking(request, fp_name):
                     f.close()
 
                     booking.z_pod_signed_url = f"{fp_name.lower()}_au/{pos_file_name}"
-                    booking.save()
+
+                if consignmentTrackDetails["scheduledDeliveryDate"]:
+                    scheduledDeliveryDate = consignmentTrackDetails[
+                        "scheduledDeliveryDate"
+                    ]
+                    event_at = datetime.strptime(
+                        scheduledDeliveryDate[:19], "%Y-%m-%dT%H:%M:%S"
+                    )
+                    event_at = str(convert_to_UTC_tz(event_time))
+                    booking.s_06_Latest_Delivery_Date_Time_Override = event_at
+
+                booking.save()
+
             if has_new:
                 update_booking_with_tracking_result(
                     request, booking, fp_name, consignmentStatuses
