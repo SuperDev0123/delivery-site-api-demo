@@ -21,6 +21,7 @@ from django.conf import settings
 from api.models import *
 from api.serializers import ApiBookingQuotesSerializer
 from api.common import status_history, download_external, trace_error
+from api.common.common_times import convert_to_UTC_tz
 from api.file_operations.directory import create_dir
 from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
