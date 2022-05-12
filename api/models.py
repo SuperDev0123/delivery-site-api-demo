@@ -5123,7 +5123,11 @@ class Surcharge(models.Model):
     # Is manually entered by DME admin
     is_manually_entered = models.BooleanField(default=False)
     connote_or_reference = models.CharField(max_length=64, default=None, null=True)
-    applied_at = models.DateTimeField(null=True, default=timezone.now)
+    booked_date = models.DateTimeField(null=True, default=timezone.now)
+    eta_pu_date = models.DateTimeField(null=True, default=None)
+    eta_de_date = models.DateTimeField(null=True, default=None)
+    actual_pu_date = models.DateTimeField(null=True, default=None)
+    actual_de_date = models.DateTimeField(null=True, default=None)
 
     def save(self, *args, **kwargs):
         creating = self._state.adding
