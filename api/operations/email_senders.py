@@ -19,6 +19,7 @@ from api.models import (
     Dme_status_history,
     API_booking_quotes,
     Client_Products,
+    DME_Options,
 )
 from api.outputs.email import send_email
 from api.helpers.etd import get_etd
@@ -32,8 +33,15 @@ def send_booking_status_email(bookingId, emailName, sender):
     """
     from api.common.common_times import convert_to_AU_SYDNEY_tz
 
+    LOG_ID = "[Tempo Status Email]"
+
     if settings.ENV in ["local", "dev"]:
         logger.info("Email trigger is ignored on LOCAL & DEV.")
+        return
+
+    option = DME_Options.objects.get("send_email_to_customer")
+    if option.option_value == 0:
+        logger.info(f"{LOG_ID} Disabled!")
         return
 
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
@@ -492,6 +500,12 @@ def send_status_update_email(
     logger.info(
         f"{LOG_ID} BookingID: {booking.b_bookingID_Visual}, OrderNum: {booking.b_client_order_num}, New Status: {booking.b_status}"
     )
+
+    option = DME_Options.objects.get("send_email_to_customer")
+    if option.option_value == 0:
+        logger.info(f"{LOG_ID} Disabled!")
+        return
+
     b_status = booking.b_status
     quote = booking.api_booking_quote
 
