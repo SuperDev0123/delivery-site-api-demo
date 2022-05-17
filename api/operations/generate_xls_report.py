@@ -1597,6 +1597,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["fp_store_event_desc", bold],
                 ["latest DMEBookingCSNote.note", bold],
                 ["latest DMEBookingCSNote.timestamp", bold],
+                ["Surcharge/Providers", bold],
+                ["Surcharge/Services", bold],
+                ["Surcharge/Delivery ETAs", bold],
             ]
             columns = [
                 ["Booking ID", bold],
@@ -1641,6 +1644,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                 ["FP Store Activity Description", bold],
                 ["The latest customer service note", bold],
                 ["The latest customer service note timestamp", bold],
+                ["Surcharge/Providers", bold],
+                ["Surcharge/Services", bold],
+                ["Surcharge/Delivery ETAs", bold],
             ]
 
             logger.info(f"#361 Total cnt: {len(bookings)}")
@@ -1650,6 +1656,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
                 if booking_ind % 500 == 0:
                     logger.info(f"#362 Current index: {booking_ind}")
+
+                surcharges = Surcharge.objects.filter(booking=booking).order_by("-id")
 
                 booking_lines = Booking_lines.objects.only(
                     "e_qty", "e_qty_scanned_fp", "pk_lines_id"
@@ -1998,6 +2006,26 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     rows.append(row)
                     row.append(["", None])
                     rows.append(row)
+
+                # Surcharge cols (Providers, Services, Delivery ETAs)
+                providers = [surcharge.fp.fp_company_name for surcharge in surcharges]
+                row.append([", ".join(providers), None])
+                rows.append(row)
+
+                services = [surcharge.name for surcharge in surcharges]
+                row.append([", ".join(services), None])
+                rows.append(row)
+
+                eta_de_dates = []
+                for surcharge in surcharges:
+                    if surcharge.eta_de_date:
+                        eta_de_dates.append(
+                            convert_to_AU_SYDNEY_tz(surcharge.eta_de_date).strftime(
+                                "%d/%m/%Y %H:%M"
+                            )
+                        )
+                row.append([", ".join(eta_de_dates), None])
+                rows.append(row)
 
             # Populate cells
             row_index = 0
