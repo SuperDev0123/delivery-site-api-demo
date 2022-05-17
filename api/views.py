@@ -5194,7 +5194,7 @@ class SurchargeViewSet(viewsets.ModelViewSet):
     serializer_class = SurchargeSerializer
 
     def get_queryset(self):
-        booking_id = self.request.GET["bookingId"]
+        booking_id = self.request.GET.get("bookingId")
         queryset = Surcharge.objects.all()
 
         if booking_id:
