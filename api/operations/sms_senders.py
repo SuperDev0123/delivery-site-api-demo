@@ -24,7 +24,7 @@ def send_status_update_sms(
     if not category in ["Transit", "On Board for Delivery", "Complete"]:
         return
 
-    option = DME_Options.objects.get("send_sms_to_customer")
+    option = DME_Options.objects.get(option_name="send_sms_to_customer")
     if option.option_value == 0:
         logger.info(f"{LOG_ID} Disabled!")
         return

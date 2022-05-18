@@ -39,7 +39,7 @@ def send_booking_status_email(bookingId, emailName, sender):
         logger.info("Email trigger is ignored on LOCAL & DEV.")
         return
 
-    option = DME_Options.objects.get("send_email_to_customer")
+    option = DME_Options.objects.get(option_name="send_email_to_customer")
     if option.option_value == 0:
         logger.info(f"{LOG_ID} Disabled!")
         return
@@ -501,7 +501,7 @@ def send_status_update_email(
         f"{LOG_ID} BookingID: {booking.b_bookingID_Visual}, OrderNum: {booking.b_client_order_num}, New Status: {booking.b_status}"
     )
 
-    option = DME_Options.objects.get("send_email_to_customer")
+    option = DME_Options.objects.get(option_name="send_email_to_customer")
     if option.option_value == 0:
         logger.info(f"{LOG_ID} Disabled!")
         return
