@@ -102,10 +102,11 @@ from api.operations.packing.booking import (
     manual_repack as booking_manual_repack,
 )
 from api.operations.booking.parent_child import get_run_out_bookings
-from api.operations.booking.line_refs import (
+from api.operations.booking.refs import (
     get_gapRas,
     get_clientRefNumbers,
     get_lines_in_bulk,
+    get_surcharges_in_bulk,
 )
 
 if settings.ENV == "local":
@@ -1032,10 +1033,26 @@ class BookingsViewSet(viewsets.ViewSet):
             items.append(_total_cbm)
             result = OrderedDict(items)
             _results.append(result)
+        result = _results
+
+        # surcharge count
+        _results = []
+        surcharges = get_surcharges_in_bulk(bookings)
+        for result in results:
+            booking_surcharges = []
+            for surcharge in surcharges:
+                if result["id"] == surcharge.booking_id:
+                    booking_surcharges.append(surcharge)
+            surcharge_cnt = ("surcharge_cnt", len(booking_surcharges))
+            items = list(result.items())
+            items.append(surcharge_cnt)
+            result = OrderedDict(items)
+            _results.append(result)
+        result = _results
 
         return JsonResponse(
             {
-                "bookings": _results,
+                "bookings": result,
                 "filtered_booking_ids": filtered_booking_ids,
                 "count": bookings_cnt,
                 "page_cnt": page_cnt,

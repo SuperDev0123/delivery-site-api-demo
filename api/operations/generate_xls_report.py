@@ -13,7 +13,7 @@ from api.models import *
 from api.common.common_times import convert_to_AU_SYDNEY_tz
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.common.constants import PALLETS
-from api.operations.booking.line_refs import get_gapRas, get_clientRefNumbers
+from api.operations.booking.refs import get_gapRas, get_clientRefNumbers
 
 logger = logging.getLogger(__name__)
 
