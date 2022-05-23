@@ -1479,7 +1479,25 @@ class BookingsViewSet(viewsets.ViewSet):
                     surcharge = SurchargeSerializer(data=field_content)
 
                     if surcharge.is_valid():
-                        surcharge.save()
+                        result = surcharge.save()
+
+                        if (
+                            "Will be automatically generated"
+                            in field_content["connote_or_reference"]
+                        ):
+                            booking = Bookings.objects.get(id=booking_id)
+                            result.connote_or_reference = (
+                                f"{str(result.fp_id).zfill(4)}-"
+                            )
+
+                            if booking.v_FPBookingNumber:
+                                result.connote_or_reference += booking.v_FPBookingNumber
+                            else:
+                                result.connote_or_reference += (
+                                    f"DME{booking.b_bookingID_Visual}"
+                                )
+
+                            result.save()
                     else:
                         return JsonResponse(
                             {
