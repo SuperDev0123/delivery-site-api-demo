@@ -2465,25 +2465,22 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         logger.info(f"#341 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
-            has_status = False
+            _status_history = None
             for status_history in status_histories:
                 if booking.pk_booking_id == status_history.fk_booking_id:
-                    has_status = True
+                    _status_history = status_history
                     break
 
-            if not has_status:
+            if not _status_history:
                 continue
 
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
 
-            status_histories = booking.get_status_histories("futile")
-            if status_histories and status_histories[0].event_time_stamp:
+            if _status_history and _status_history.event_time_stamp:
                 worksheet.write_datetime(
                     row,
                     col + 1,
-                    convert_to_AU_SYDNEY_tz(
-                        status_histories[0].event_time_stamp
-                    ).date(),
+                    convert_to_AU_SYDNEY_tz(_status_history.event_time_stamp).date(),
                     date_format,
                 )
 
