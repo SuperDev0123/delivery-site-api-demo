@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
+    print("@1 = ", booking_lines)
     LOG_ID = "[BIP CAMERONS]"  # BUILT-IN PRICING
     pricies = []
 
