@@ -2453,9 +2453,24 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             row = 1
 
         line_datas_with_gapRas = get_gapRas(bookings)
+
+        booking_pks = []
+        for booking in bookings:
+            booking_pks.append(booking.pk_booking_id)
+
+        status_histories = Dme_status_history.objects.filter(
+            fk_booking_id__in=booking_pks, status_last__icontains="futile"
+        )
+
         logger.info(f"#341 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
-            if not booking.had_status("futile"):
+            has_status = False
+            for status_history in status_histories:
+                if booking.pk_booking_id == status_history.fk_booking_id:
+                    has_status = True
+                    break
+
+            if not has_status:
                 continue
 
             worksheet.write(row, col + 0, booking.b_bookingID_Visual)
