@@ -144,6 +144,7 @@ def partial_pricing(payload, client, warehouse):
                 "e_dimHeight": _bok_2["l_007_dim_height"],
                 "e_weightUOM": _bok_2["l_008_weight_UOM"],
                 "e_weightPerEach": _bok_2["l_009_weight_per_each"],
+                "packed_status": BOK_2_lines.ORIGINAL,
             }
             booking_lines.append(booking_line)
 
@@ -700,6 +701,7 @@ def push_boks(payload, client, username, method):
             "e_dimHeight": _bok_2["l_007_dim_height"],
             "e_weightUOM": _bok_2["l_008_weight_UOM"],
             "e_weightPerEach": _bok_2["l_009_weight_per_each"],
+            "packed_status": _bok_2["b_093_packed_status"],
         }
         booking_lines.append(bok_2_line)
 

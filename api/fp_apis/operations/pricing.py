@@ -210,38 +210,33 @@ def pricing(
         client = None
 
     try:
-        if not booking_lines:
-            for packed_status in packed_statuses:
-                booking_lines = Booking_lines.objects.filter(
+        for packed_status in packed_statuses:
+            _booking_lines = []
+            if not booking_lines:
+                _booking_lines = Booking_lines.objects.filter(
                     fk_booking_id=booking.pk_booking_id,
                     is_deleted=False,
                     packed_status=packed_status,
                 )
+            else:
+                for booking_line in booking_lines:
+                    if booking_line.packed_status != packed_status:
+                        continue
+                    _booking_lines.append(booking_line)
 
-                if booking_lines:
-                    build_special_fp_pricings(booking, packed_status)
-                    _loop_process(
-                        booking,
-                        booking_lines,
-                        is_pricing_only,
-                        packed_status,
-                        client,
-                        pu_zones,
-                        de_zones,
-                    )
-        else:
-            if booking_lines:
-                for packed_status in packed_statuses:
-                    build_special_fp_pricings(booking, packed_status)
-                    _loop_process(
-                        booking,
-                        booking_lines,
-                        is_pricing_only,
-                        packed_status,
-                        client,
-                        pu_zones,
-                        de_zones,
-                    )
+            if not _booking_lines:
+                continue
+
+            build_special_fp_pricings(booking, packed_status)
+            _loop_process(
+                booking,
+                _booking_lines,
+                is_pricing_only,
+                packed_status,
+                client,
+                pu_zones,
+                de_zones,
+            )
 
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id, is_used=False

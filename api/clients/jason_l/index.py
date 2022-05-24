@@ -140,6 +140,7 @@ def partial_pricing(payload, client, warehouse):
             "e_dimHeight": item["e_dimHeight"],
             "e_weightUOM": item["e_weightUOM"],
             "e_weightPerEach": item["e_weightPerEach"],
+            "packed_status": BOK_2_lines.ORIGINAL,
         }
         booking_lines.append(booking_line)
 
@@ -607,7 +608,6 @@ def push_boks(payload, client, username, method):
     if carton_cnt > 2 or need_palletize:
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
-        bok_2s = []
 
         # Select suitable pallet and get required pallets count
         pallets = Pallet.objects.all()
@@ -783,6 +783,7 @@ def push_boks(payload, client, username, method):
             "e_dimHeight": _bok_2["l_007_dim_height"],
             "e_weightUOM": _bok_2["l_008_weight_UOM"],
             "e_weightPerEach": _bok_2["l_009_weight_per_each"],
+            "packed_status": _bok_2["b_093_packed_status"],
         }
         booking_lines.append(bok_2_line)
 

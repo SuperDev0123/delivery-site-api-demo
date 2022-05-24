@@ -202,6 +202,7 @@ def bok_quote(bok_1, packed_status):
             "e_dimHeight": _bok_2.l_007_dim_height,
             "e_weightUOM": _bok_2.l_008_weight_UOM,
             "e_weightPerEach": _bok_2.l_009_weight_per_each,
+            "packed_status": _bok_2.b_093_packed_status,
         }
         booking_lines.append(bok_2_line)
 
