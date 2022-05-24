@@ -1914,7 +1914,7 @@ class Bookings(models.Model):
 
     def had_status(self, status):
         results = Dme_status_history.objects.filter(
-            fk_booking_id=self.pk_booking_id, status_last__iexact=status
+            fk_booking_id=self.pk_booking_id, status_last__icontains=status
         )
 
         return True if results else False
