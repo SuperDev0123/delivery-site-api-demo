@@ -2458,10 +2458,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         for booking in bookings:
             pk_booking_ids.append(booking.pk_booking_id)
 
-        print("@1 - ", "e6db1c02-d34d-11ec-988c-0675f8c2aff6" in pk_booking_ids)
         status_histories = Dme_status_history.objects.filter(
             fk_booking_id__in=pk_booking_ids, status_last__icontains="futile"
         )
+        print("@1 - ", status_histories)
 
         logger.info(f"#341 Total cnt: {len(bookings)}")
         for booking_ind, booking in enumerate(bookings):
