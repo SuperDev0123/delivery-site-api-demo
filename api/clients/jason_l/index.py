@@ -624,7 +624,7 @@ def push_boks(payload, client, username, method):
             line["v_client_pk_consigment_num"] = line_obj.v_client_pk_consigment_num
             line["pk_booking_lines_id"] = line_obj.pk_booking_lines_id
             line["success"] = line_obj.success
-            line["l_001_type_of_packaging"] = line_obj.l_001_type_of_packaging
+            line["l_001_type_of_packaging"] = "PAL"
             line["l_002_qty"] = item["quantity"]
             line["l_003_item"] = line_obj.l_003_item
             line["l_004_dim_UOM"] = line_obj.l_004_dim_UOM
