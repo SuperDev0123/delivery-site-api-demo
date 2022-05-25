@@ -5252,6 +5252,7 @@ class SurchargeViewSet(viewsets.ModelViewSet):
 
             try:
                 for surcharge in surcharges:
+                    request.data.id = surcharge.pk
                     serializer = SurchargeSerializer(surcharge, data=request.data)
 
                     if serializer.is_valid():
