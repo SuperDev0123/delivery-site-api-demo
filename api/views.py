@@ -5237,6 +5237,42 @@ class SurchargeViewSet(viewsets.ModelViewSet):
 
         return queryset.order_by("id")
 
+    def update(self, request, pk=None):
+        surcharge = Surcharge.objects.get(pk=pk)
+        bulk_update = request.data.get("bulk_update")
+
+        if bulk_update:
+            surcharges = Surcharge.objects.filter(
+                name=surcharge.name,
+                amount=surcharge.amount,
+                fp_id=surcharge.fp_id,
+                booked_date__gte=(surcharge.booked_date - timedelta(seconds=1)),
+                booked_date__lte=(surcharge.booked_date + timedelta(seconds=1)),
+            )
+
+            try:
+                for surcharge in surcharges:
+                    serializer = SurchargeSerializer(surcharge, data=request.data)
+
+                    if serializer.is_valid():
+                        serializer.save()
+                    else:
+                        error = f"Update Surcharges Error: {serializer.errors}"
+                        logger.info(error)
+                        raise Exception(error)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except:
+                return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = SurchargeSerializer(surcharge, data=request.data)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                logger.info(f"Update Surcharge Error: {str(serializer.errors)}")
+                return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
 
 @permission_classes((IsAuthenticated,))
 class ChartsViewSet(viewsets.ViewSet):
