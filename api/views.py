@@ -5306,6 +5306,30 @@ class SurchargeViewSet(viewsets.ModelViewSet):
                 logger.info(f"Update Surcharge Error: {str(serializer.errors)}")
                 return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
+    def destroy(self, request, pk=None):
+        surcharge = Surcharge.objects.get(pk=pk)
+        type = request.data.get("type")
+
+        if type == "single-delete":
+            try:
+                surcharge.delete()
+                return Response(status=status.HTTP_200_OK)
+            except Exception as e:
+                logger.info(f"Delete Fp Status Error: {str(e)}")
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            surcharges = Surcharge.objects.filter(
+                name=surcharge.name,
+                fp_id=surcharge.fp_id,
+                booked_date__gte=(surcharge.booked_date - timedelta(seconds=3)),
+                booked_date__lte=(surcharge.booked_date + timedelta(seconds=3)),
+            )
+
+            for _iter in surcharges:
+                _iter.delete()
+
+            return Response(status=status.HTTP_200_OK)
+
 
 @permission_classes((IsAuthenticated,))
 class ChartsViewSet(viewsets.ViewSet):
