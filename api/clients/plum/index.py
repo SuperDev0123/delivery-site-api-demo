@@ -127,6 +127,7 @@ def partial_pricing(payload, client, warehouse):
                 "e_dimHeight": item["e_dimHeight"],
                 "e_weightUOM": item["e_weightUOM"],
                 "e_weightPerEach": item["e_weightPerEach"],
+                "packed_status": BOK_2_lines.ORIGINAL,
             }
             booking_lines.append(booking_line)
     else:  # If lines have dimentions
