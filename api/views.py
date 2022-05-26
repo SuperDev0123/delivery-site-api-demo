@@ -5244,26 +5244,58 @@ class SurchargeViewSet(viewsets.ModelViewSet):
         if bulk_update:
             surcharges = Surcharge.objects.filter(
                 name=surcharge.name,
-                amount=surcharge.amount,
                 fp_id=surcharge.fp_id,
-                booked_date__gte=(surcharge.booked_date - timedelta(seconds=1)),
-                booked_date__lte=(surcharge.booked_date + timedelta(seconds=1)),
+                booked_date__gte=(surcharge.booked_date - timedelta(seconds=3)),
+                booked_date__lte=(surcharge.booked_date + timedelta(seconds=3)),
             )
 
             try:
                 for surcharge in surcharges:
-                    request.data.id = surcharge.pk
-                    serializer = SurchargeSerializer(surcharge, data=request.data)
 
+                    data = {}
+                    if request.data.get("update_visible_field"):
+                        data["visible"] = request.data.get("visible")
+                    if request.data.get("update_fp_field"):
+                        data["fp_id"] = request.data.get("fp")
+                    if request.data.get("update_service_name_field"):
+                        data["name"] = request.data.get("name")
+                    if request.data.get("update_connote_or_reference_field"):
+                        data["connote_or_reference"] = request.data.get(
+                            "connote_or_reference"
+                        )
+                    if request.data.get("update_booked_date_field"):
+                        data["booked_date"] = request.data.get("booked_date")
+                    if request.data.get("update_estimated_pickup_date_field"):
+                        data["estimated_pu_date"] = request.data.get(
+                            "estimated_pu_date"
+                        )
+                    if request.data.get("update_estimated_delivery_date_field"):
+                        data["estimated_de_date"] = request.data.get(
+                            "estimated_de_date"
+                        )
+                    if request.data.get("update_actual_pickup_date_field"):
+                        data["actual_pu_date"] = request.data.get("actual_pu_date")
+                    if request.data.get("update_actual_delivery_date_field"):
+                        data["actual_de_date"] = request.data.get("actual_de_date")
+                    if request.data.get("update_amount_field"):
+                        data["amount"] = request.data.get("amount")
+                    if request.data.get("update_quantity_field"):
+                        data["qty"] = request.data.get("qty")
+
+                    serializer = SurchargeSerializer(surcharge, data=data)
                     if serializer.is_valid():
                         serializer.save()
                     else:
                         error = f"Update Surcharges Error: {serializer.errors}"
                         logger.info(error)
                         raise Exception(error)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            except:
-                return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"success": True, "is_bulk_update": True}, status=status.HTTP_200_OK
+                )
+            except Exception as e:
+                return Response(
+                    {f"message": str(e)}, status=status.HTTP_400_BAD_REQUEST
+                )
         else:
             serializer = SurchargeSerializer(surcharge, data=request.data)
 
