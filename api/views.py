@@ -5256,7 +5256,7 @@ class SurchargeViewSet(viewsets.ModelViewSet):
                     if request.data.get("update_visible_field"):
                         data["visible"] = request.data.get("visible")
                     if request.data.get("update_fp_field"):
-                        data["fp_id"] = request.data.get("fp")
+                        data["fp"] = request.data.get("fp")
                     if request.data.get("update_service_name_field"):
                         data["name"] = request.data.get("name")
                     if request.data.get("update_connote_or_reference_field"):
