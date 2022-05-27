@@ -163,7 +163,7 @@ class Client_warehouses(models.Model):
         default=None,
     )
     contact_name = models.CharField(
-        max_length=64,
+        max_length=128,
         null=True,
         default=None,
     )
@@ -172,15 +172,27 @@ class Client_warehouses(models.Model):
         null=True,
         default=None,
     )
-    hours = models.IntegerField(verbose_name=_("warehouse hours"))
-    type = models.CharField(
-        verbose_name=_("warehouse type"), max_length=30, blank=True, null=True
+    hours = models.CharField(
+        max_length=64,
+        blank=False,
+        null=True,
+        default=None,
+    )
+    business_type = models.CharField(
+        verbose_name=_("warehouse type"), max_length=64, blank=True, null=True
     )
     client_warehouse_code = models.CharField(
         verbose_name=_("warehouse code"), max_length=100, blank=True, null=True
     )
     success_type = models.IntegerField(default=0)
     use_dme_label = models.BooleanField(default=False)
+    instructions_linehual = models.CharField(
+        max_length=255,
+        blank=False,
+        null=True,
+        default=None,
+    )
+    main_warehouse = models.BooleanField(default=False)
 
     class Meta:
         db_table = "dme_client_warehouses"
@@ -5421,6 +5433,9 @@ class DME_Vehicle(models.Model):
     )
     dme_linehaul_extra02 = models.CharField(
         max_length=64, blank=True, null=True, default=None
+    )
+    planned_arrival = models.CharField(
+        max_length=32, blank=True, null=True, default=None
     )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
