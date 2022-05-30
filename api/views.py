@@ -1487,7 +1487,7 @@ class BookingsViewSet(viewsets.ViewSet):
                         ):
                             booking = Bookings.objects.get(id=booking_id)
                             result.connote_or_reference = (
-                                f"{str(result.fp_id).zfill(4)}-"
+                                f"auto-{str(result.fp_id).zfill(4)}-"
                             )
 
                             if booking.v_FPBookingNumber:
