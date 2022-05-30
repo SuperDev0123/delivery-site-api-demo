@@ -5052,6 +5052,7 @@ class Client_FP(models.Model):
     id = models.AutoField(primary_key=True)
     client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
     fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    fuel_levy = models.FloatField(default=None, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     z_createdTimeStamp = models.DateTimeField(null=True, auto_now_add=True)
 
