@@ -206,9 +206,7 @@ def pricing(
 
     try:
         client = DME_clients.objects.get(company_name__iexact=booking.b_client_name)
-        client_fps = Client_FP.objects.prefetch_related("fp").filter(
-            client__company_name__iexact=booking.b_client_name, is_active=True
-        )
+        client_fps = Client_FP.objects.filter(client=client, is_active=True)
     except:
         client = None
         client_fps = []
