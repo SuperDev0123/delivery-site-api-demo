@@ -3,7 +3,7 @@ import logging
 from django.db.models import Q
 
 from api.common.convert_price import interpolate_gaps, apply_markups
-from api.models import Surcharge, API_booking_quotes, Fp_freight_providers
+from api.models import Surcharge, API_booking_quotes, Fp_freight_providers, Client_FP
 from api.common.booking_quote import set_booking_quote
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,11 @@ def handle_manual_surcharge_change(booking, surcharge):
             fp_names.append(quote.freight_provider)
     fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
 
+    # Get Client_FPs
+    client_fps = Client_FP.objects.prefetch_related("fp").filter(
+        client=client, is_active=True
+    )
+
     # Get manually entered surcharges total
     try:
         manual_surcharges_total = booking.get_manual_surcharges_total()
@@ -47,7 +52,7 @@ def handle_manual_surcharge_change(booking, surcharge):
         quote.save()
 
     # Apply Markups (FP Markup and Client Markup)
-    quotes = apply_markups(quotes, client, fps)
+    quotes = apply_markups(quotes, client, fps, client_fps)
 
     # Update Booking's quote info
     for quote in quotes:

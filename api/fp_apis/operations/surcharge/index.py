@@ -5,7 +5,7 @@ from django.db.models import Q
 
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.helpers.cubic import get_cubic_meter
-from api.models import Booking_lines, Surcharge, Fp_freight_providers
+from api.models import Booking_lines, Surcharge, Fp_freight_providers, Client_FP
 from api.common.convert_price import apply_markups
 from api.fp_apis.utils import get_m3_to_kg_factor
 from api.common.constants import PALLETS
@@ -401,6 +401,7 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
     quote_obj.save()
 
     if data_type == "bok_1":
-        apply_markups([quote_obj], client, [fp])
+        client_fps = Client_FP.objects.filter(client=client, is_active=True)
+        apply_markups([quote_obj], client, [fp], client_fps)
 
     return result

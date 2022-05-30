@@ -206,8 +206,12 @@ def pricing(
 
     try:
         client = DME_clients.objects.get(company_name__iexact=booking.b_client_name)
+        client_fps = Client_FP.objects.prefetch_related("fp").filter(
+            client__company_name__iexact=booking.b_client_name, is_active=True
+        )
     except:
         client = None
+        client_fps = []
 
     try:
         for packed_status in packed_statuses:
@@ -236,6 +240,7 @@ def pricing(
                 client,
                 pu_zones,
                 de_zones,
+                client_fps,
             )
 
         quotes = API_booking_quotes.objects.filter(
@@ -249,7 +254,14 @@ def pricing(
 
 
 def _loop_process(
-    booking, booking_lines, is_pricing_only, packed_status, client, pu_zones, de_zones
+    booking,
+    booking_lines,
+    is_pricing_only,
+    packed_status,
+    client,
+    pu_zones,
+    de_zones,
+    client_fps,
 ):
     try:
         loop = asyncio.new_event_loop()
@@ -262,6 +274,7 @@ def _loop_process(
                 packed_status,
                 pu_zones,
                 de_zones,
+                client_fps,
             )
         )
     finally:
@@ -287,14 +300,20 @@ def _loop_process(
             gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
 
         # Apply Markups (FP Markup and Client Markup)
-        quotes = apply_markups(quotes, client, fps)
+        quotes = apply_markups(quotes, client, fps, client_fps)
 
         # Confirm visible
         quotes = _confirm_visible(booking, booking_lines, quotes)
 
 
 async def _pricing_process(
-    booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
+    booking,
+    booking_lines,
+    is_pricing_only,
+    packed_status,
+    pu_zones,
+    de_zones,
+    client_fps,
 ):
     try:
         await asyncio.wait_for(
@@ -305,6 +324,7 @@ async def _pricing_process(
                 packed_status,
                 pu_zones,
                 de_zones,
+                client_fps,
             ),
             timeout=PRICING_TIME,
         )
@@ -313,15 +333,17 @@ async def _pricing_process(
 
 
 async def pricing_workers(
-    booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
+    booking,
+    booking_lines,
+    is_pricing_only,
+    packed_status,
+    pu_zones,
+    de_zones,
+    client_fps,
 ):
     # Schedule n pricing works *concurrently*:
     _workers = set()
     logger.info("#910 [PRICING] - Building Pricing workers...")
-
-    client_fps = Client_FP.objects.prefetch_related("fp").filter(
-        client__company_name__iexact=booking.b_client_name, is_active=True
-    )
 
     if client_fps:
         client_fps = list(client_fps.values_list("fp__fp_company_name", flat=True))
