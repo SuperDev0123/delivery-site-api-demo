@@ -116,17 +116,21 @@ def build_special_fp_pricings(booking, packed_status):
         if (
             postal_code
             and (
-                (  # metro / CBD Melbourne
+                (  # Metro / CBD Melbourne
                     (postal_code >= 3000 and postal_code <= 3207)
                     or (postal_code >= 8000 and postal_code <= 8499)
                 )
-                or (  # metro/ CBD Brisbane
+                or (  # Metro / CBD Brisbane
                     (postal_code >= 4000 and postal_code <= 4207)
                     or (postal_code >= 9000 and postal_code <= 9499)
                 )
-                or (  # metro/ CBD Sydney
+                or (  # Metro / CBD Sydney
                     (postal_code >= 1000 and postal_code <= 2249)
                     or (postal_code >= 2760 and postal_code <= 2770)
+                )
+                or (  # Metro Adelaide
+                    (postal_code >= 5000 and postal_code <= 5199)
+                    or (postal_code >= 5900 and postal_code <= 5999)
                 )
             )
             # Restrict same state
