@@ -103,13 +103,14 @@ def build_special_fp_pricings(booking, packed_status):
     quote_0.packed_status = packed_status
     quote_0.x_price_surcharge = manual_surcharges_total
 
-    # Plum & JasonL & BSD & Cadrys & Ariston Wire
+    # Plum & JasonL & BSD & Cadrys & Ariston Wire & Anchor Packagin
     if (
         booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
         or booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
         or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
         or booking.kf_client_id == "f821586a-d476-434d-a30b-839a04e10115"
         or booking.kf_client_id == "15732b05-d597-419b-8dc5-90e633d9a7e9"
+        or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
     ):
         # restrict delivery postal code
         postal_code = int(booking.de_To_Address_PostalCode or 0)
