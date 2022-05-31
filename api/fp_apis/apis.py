@@ -951,7 +951,7 @@ def get_order_summary(request, fp_name):
                 Dme_manifest_log.objects.create(
                     fk_booking_id=booking.pk_booking_id,
                     manifest_url=file_name,
-                    manifest_number=None,
+                    manifest_number=str(booking.vx_fp_order_id),
                     bookings_cnt=bookings.count(),
                     is_one_booking=False,
                     z_createdByAccount=request.user.username,
