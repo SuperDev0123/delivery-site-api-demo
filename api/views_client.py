@@ -51,6 +51,7 @@ from api.clients.plum import index as plum
 from api.clients.tempo import index as tempo
 from api.clients.bsd import index as bsd
 from api.clients.jason_l import index as jason_l
+from api.clients.anchor_packaging import index as anchor_packaging
 from api.clients.jason_l.operations import (
     create_or_update_product as jasonL_create_or_update_product,
 )
@@ -673,6 +674,15 @@ def push_boks(request):
             dme_account_num == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
         ):  # BSD - Bathroom Sales Direct
             result = bsd.push_boks(
+                payload=request.data,
+                client=client,
+                username=user.username,
+                method=request.method,
+            )
+        elif (
+            dme_account_num == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
+        ):  # Anchor Packaging
+            result = anchor_packaging.push_boks(
                 payload=request.data,
                 client=client,
                 username=user.username,
