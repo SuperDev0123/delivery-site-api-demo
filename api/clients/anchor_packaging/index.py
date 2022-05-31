@@ -225,6 +225,10 @@ def push_boks(payload, client, username, method):
         bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
 
     bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
+    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+    bok_1["b_021_b_pu_avail_from_date"] = (
+        bok_1.get("b_021_b_pu_avail_from_date") or next_biz_day
+    )
 
     bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
@@ -388,7 +392,6 @@ def push_boks(payload, client, username, method):
         bok_1_obj.save()
 
     # Get Pricings
-    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
     booking = {
         "pk_booking_id": bok_1["pk_header_id"],
         "puPickUpAvailFrom_Date": next_biz_day,
