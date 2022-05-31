@@ -948,6 +948,15 @@ def get_order_summary(request, fp_name):
                     booking.manifest_timestamp = manifest_timestamp
                     booking.save()
 
+                Dme_manifest_log.objects.create(
+                    fk_booking_id=booking.pk_booking_id,
+                    manifest_url=file_name,
+                    manifest_number=None,
+                    bookings_cnt=bookings.count(),
+                    is_one_booking=False,
+                    z_createdByAccount=request.user.username,
+                )
+
                 Log(
                     request_payload=payload,
                     request_status="SUCCESS",
