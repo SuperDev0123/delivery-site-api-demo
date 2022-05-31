@@ -177,6 +177,7 @@ def lines_to_pallet(lines_data, pallets_data):
 
     url = f"{os.environ['3D_PACKING_API_URL']}/packer/packIntoMany"
     response = requests.post(url, data=json.dumps(data))
+    print("@111 - ", response)
 
     try:
         res_data = response.json()["response"]
