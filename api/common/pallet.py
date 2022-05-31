@@ -276,7 +276,7 @@ def get_palletized_by_ai(bok_2s, pallets):
 
     packed_results = lines_to_pallet(lines_data, pallets_data)
 
-    # check duplicated Pallets and non palletizable ones with only small items
+    # check duplicated Pallets and non palletizable ones with only small itemsf
     palletized, non_palletized = refine_pallets(
         packed_results, pallets, bok_2s, pallet_self_height
     )
@@ -316,7 +316,7 @@ def get_pallets():
         },
     }
     header = {"Content-type": "application/json", "Accept": "text/plain"}
-    url = "http://eu.api.3dbinpacking.com:80/packer/packIntoMany"
+    url = f"{os.environ['3D_PACKING_API_URL']}/packer/packIntoMany"
     response = requests.post(url, data=json.dumps(payload))
 
     content = response.content.decode("utf8")
