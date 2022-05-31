@@ -185,7 +185,9 @@ def lines_to_pallet(lines_data, pallets_data):
                 msg += f"{error['message']} \n"
             logger.info(f"Packing API Error: {msg}")
     except Exception as e:
-        logger.error(f"3D_PACKING_API issue - url: {url}\ndata: {data}\n")
+        logger.error(
+            f"3D_PACKING_API issue - url: {url}\ndata: {data}\n, error: {str(e)}"
+        )
         raise Exception("3D_PACKING_API issue")
 
     return res_data
