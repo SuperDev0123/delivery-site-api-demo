@@ -4,6 +4,7 @@ import os
 import json
 import requests
 
+from api.common import trace_error
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 
 logger = logging.getLogger(__name__)
@@ -185,6 +186,7 @@ def lines_to_pallet(lines_data, pallets_data):
                 msg += f"{error['message']} \n"
             logger.info(f"Packing API Error: {msg}")
     except Exception as e:
+        trace_error.print()
         logger.error(
             f"3D_PACKING_API issue - url: {url}\ndata: {data}\n, error: {str(e)}"
         )
