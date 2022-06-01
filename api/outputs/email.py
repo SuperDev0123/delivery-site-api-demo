@@ -49,5 +49,7 @@ def send_email(
         smtp.starttls()
 
     smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-    smtp.sendmail(EMAIL_HOST_USER, send_to + send_cc + send_bcc, msg.as_string())
+    smtp.sendmail(
+        settings.EMAIL_HOST_USER, send_to + send_cc + send_bcc, msg.as_string()
+    )
     smtp.close()
