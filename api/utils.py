@@ -2658,6 +2658,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],  # Recipient email address(list)
             [],  # CC
+            [],  # BCC
             "Bookings XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Bookings) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2669,6 +2670,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],  # Recipient email address(list)
             [],
+            [],  # BCC
             "BookingLines XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Booking Lines) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2685,6 +2687,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Bookings with Gaps XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Booking With Gaps) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2701,6 +2704,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Bookings with Gaps XLS Report from Deliver-Me(DME only can generate this report)",  # Subject of email
             "Here is the excel report(DME Booking With Gaps) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2712,6 +2716,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Whse XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Whse) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2728,6 +2733,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Pending Bookings XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2739,6 +2745,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Booked Bookings XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2755,6 +2762,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "PickedUp Bookings XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2766,6 +2774,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Box XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2777,6 +2786,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Futile XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2788,6 +2798,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Goods Delivered Bookings XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2799,6 +2810,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Goods Sent XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2842,6 +2854,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "All XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Bookings & Booking Lines & Booking With Gaps & Whse) you generated from Deliver-Me.",  # Message of email
             attachments,  # Attachment file path(list)
