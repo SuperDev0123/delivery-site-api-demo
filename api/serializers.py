@@ -153,8 +153,12 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
         }
 
     def get_cost_dollar(self, obj):
-        if obj.inv_sell_quoted_override or obj.inv_sell_quoted:
-            return round((obj.inv_sell_quoted_override or obj.inv_sell_quoted), 2)
+        if obj.inv_sell_quoted_override:
+            return round(obj.inv_sell_quoted_override, 2)
+        elif obj.inv_booked_quoted:
+            return round(obj.inv_booked_quoted, 2)
+        elif obj.inv_sell_quoted:
+            return round(obj.inv_sell_quoted, 2)
         elif obj.api_booking_quote:
             return round(obj.api_booking_quote.client_mu_1_minimum_values, 2)
 
