@@ -1,3 +1,4 @@
+from dataclasses import replace
 from django.db.models import Q
 from datetime import datetime, date, timedelta
 
@@ -13,6 +14,10 @@ def _build_query(keyword, field_name, search_type):
         q1 = Q(**{filter1: True})
         q2 = Q(**{filter2: ""})
         q = q1 | q2
+    elif search_type == "regex":
+        filter = field_name + "__" + search_type
+        keyword = keyword.replace("*", "[a-zA-Z0-9]+")
+        q = Q(**{filter: keyword})
     else:
         filter = field_name + "__" + search_type
         for keyword in keyword.split("|"):
@@ -76,6 +81,14 @@ def filter_bookings_by_columns(queryset, column_filters, active_tab_index):
             elif "<>" in keyword:
                 queryset = queryset.exclude(
                     _build_query(keyword[2:], field_name, "icontains")
+                )
+            elif "<>" in keyword and "*" in keyword:
+                queryset = queryset.exclude(
+                    _build_query(keyword[2:], field_name, "regex")
+                )
+            elif "=" in keyword and "*" in keyword:
+                queryset =  queryset.filter(
+                    _build_query(keyword[1:], field_name, "regex")
                 )
             else:
                 queryset = queryset.filter(
