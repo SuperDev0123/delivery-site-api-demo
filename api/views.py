@@ -108,6 +108,7 @@ from api.operations.booking.refs import (
     get_lines_in_bulk,
     get_surcharges_in_bulk,
 )
+from api.operations.genesis.index import update_shared_booking
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -5706,7 +5707,8 @@ class DMEBookingCSNoteViewSet(viewsets.ModelViewSet):
         ] = f"{dme_employee.name_first} {dme_employee.name_last}"
         serializer = DMEBookingCSNoteSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            cs_note = serializer.save()
+            update_shared_booking(cs_note.booking, "cs-note")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             logger.info(f"Create CS Note Error: {str(serializer.errors)}")

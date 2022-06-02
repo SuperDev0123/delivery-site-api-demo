@@ -5327,6 +5327,12 @@ class S_Bookings(models.Model):
     s_21_Actual_Delivery_TimeStamp = models.DateTimeField(
         blank=True, null=True, default=None
     )
+    b_booking_Priority = models.CharField(
+        max_length=32,
+        blank=True,
+        null=True,
+        default=None,
+    )
     z_createdAt = models.DateTimeField(null=True, default=timezone.now)
     z_updatedAt = models.DateTimeField(null=True, default=timezone.now)
 
