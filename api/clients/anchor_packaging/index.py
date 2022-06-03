@@ -505,7 +505,7 @@ def push_boks(payload, client, username, method):
 
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
-        if best_quotes.length > 0:
+        if len(best_quotes) > 0:
             context = {"client_customer_mark_up": client.client_customer_mark_up}
             json_results = Simple4ProntoQuoteSerializer(
                 best_quotes, many=True, context=context
