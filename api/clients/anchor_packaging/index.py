@@ -505,25 +505,26 @@ def push_boks(payload, client, username, method):
 
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
-        context = {"client_customer_mark_up": client.client_customer_mark_up}
-        json_results = Simple4ProntoQuoteSerializer(
-            best_quotes, many=True, context=context
-        ).data
-        json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
+        if best_quotes.length > 0:
+            context = {"client_customer_mark_up": client.client_customer_mark_up}
+            json_results = Simple4ProntoQuoteSerializer(
+                best_quotes, many=True, context=context
+            ).data
+            json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
 
-        # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-        best_quote = best_quotes[0]
-        bok_1_obj.b_003_b_service_name = best_quote.service_name
-        bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
-        bok_1_obj.b_002_b_vehicle_type = (
-            best_quote.vehicle.description if best_quote.vehicle else None
-        )
-        bok_1_obj.save()
-        fc_log.new_quote = best_quotes[0]
-        fc_log.save()
+            # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+            best_quote = best_quotes[0]
+            bok_1_obj.b_003_b_service_name = best_quote.service_name
+            bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+            bok_1_obj.b_002_b_vehicle_type = (
+                best_quote.vehicle.description if best_quote.vehicle else None
+            )
+            bok_1_obj.save()
+            fc_log.new_quote = best_quotes[0]
+            fc_log.save()
 
-        # Send quote info back to Pronto
-        # result = send_info_back(bok_1_obj, best_quote)
+            # Send quote info back to Pronto
+            # result = send_info_back(bok_1_obj, best_quote)
     else:
         b_client_order_num = bok_1.get("b_client_order_num")
 
