@@ -110,6 +110,7 @@ from api.operations.booking.refs import (
     get_surcharges_in_bulk,
 )
 from api.operations.genesis.index import update_shared_booking
+from api.operations.email_senders import send_email_to_admins
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -3271,7 +3272,21 @@ class StatusHistoryViewSet(viewsets.ViewSet):
         LOG_ID = "STATUS_HISTORY_CREATE"
         try:
             logger.info(f"{LOG_ID} Payload: {request.data}")
-            booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
+
+            bookings = Bookings.objects.filter(
+                pk_booking_id=request.data["fk_booking_id"]
+            ).order_by("id")
+
+            if bookings.count > 1:
+                error_msg = f'{LOG_ID} Duplicated {request.data["fk_booking_id"]}'
+                logger.error(error_msg)
+                send_email_to_admins(
+                    "Duplicated pk_booking_id", request.data["fk_booking_id"]
+                )
+                booking = Bookings.last()
+            else:
+                booking = Bookings.first()
+
             status_last = request.data.get("status_last")
             event_time_stamp = request.data.get("event_time_stamp")
             dme_notes = request.data.get("dme_notes")
