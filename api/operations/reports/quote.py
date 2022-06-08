@@ -112,9 +112,9 @@ def build_quote_report(kf_client_ids, start_date, end_date):
                     "%d/%m/%Y %H:%M:%S"
                 )
                 + comma
-                + booking.vx_freight_provider
+                + (booking.vx_freight_provider or "")
                 + comma
-                + booking.b_client_order_num
+                + (booking.b_client_order_num or "")
                 + comma
                 + str(sscc_lines_qty or qty)
                 + comma
@@ -136,9 +136,9 @@ def build_quote_report(kf_client_ids, start_date, end_date):
                     "%d/%m/%Y %H:%M:%S"
                 )
                 + comma
-                + booking.vx_freight_provider
+                + (booking.vx_freight_provider or "")
                 + comma
-                + booking.b_client_order_num
+                + (booking.b_client_order_num or "")
                 + comma
                 + str(sscc_lines_qty or qty)
                 + comma
