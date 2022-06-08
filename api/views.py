@@ -101,6 +101,7 @@ from api.operations.packing.booking import (
     auto_repack as booking_auto_repack,
     manual_repack as booking_manual_repack,
 )
+from api.operations.reports.quote import build_quote_report
 from api.operations.booking.parent_child import get_run_out_bookings
 from api.operations.booking.refs import (
     get_gapRas,
@@ -4027,7 +4028,7 @@ def download(request):
     file_paths = []
     logger.info(f"{LOG_ID} Option: {download_option}")
 
-    if download_option != "logs":
+    if download_option not in ["logs", "quote-report"]:
         if download_option in ["pricing-only", "pricing-rule", "xls import"]:
             file_name = body["fileName"]
         elif download_option == "manifest":
@@ -4164,6 +4165,11 @@ def download(request):
 
                 if os.path.exists(path):
                     file_paths.append(path)
+    elif download_option == "quote-report":
+        kf_client_ids = body.get("kfClientIds")
+        start_date = body.get("startDate")
+        end_date = body.get("endDate")
+        file_paths = [build_quote_report(kf_client_ids, start_date, end_date)]
 
     response = download_libs.download_from_disk(download_option, file_paths)
     return response

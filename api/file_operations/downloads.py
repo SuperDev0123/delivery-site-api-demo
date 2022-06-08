@@ -23,11 +23,13 @@ def download_from_disk(zip_subdir_name, file_paths):
     response["Content-Disposition"] = "attachment; filename=%s" % zip_filename
     return response
 
+
 def download_from_url(url, file_path):
     r = requests.get(url)
 
-    with open(file_path,'wb') as f:
-        f.write(r.content) 
+    with open(file_path, "wb") as f:
+        f.write(r.content)
+
 
 """
 # TODO: implement properly 
