@@ -24,12 +24,38 @@ def _build_query(keyword, field_name, search_type):
     elif search_type == "regex":
         filter = field_name + "__" + search_type
         keyword = keyword.replace("*", "[a-zA-Z0-9]+")
-        
-        q = Q(**{filter: keyword})
-    else:
-        filter = field_name + "__" + search_type
-        for keyword in keyword.split("|"):
-            q |= Q(**{filter: keyword.strip()})
+        if "|" in keyword:
+            for key in keyword.split("|"):
+                q1 = Q()
+                if "&" in key:
+                    for k in key.split("&"):
+                        q1 &= Q(**{filter: k.strip()})
+                    q |= q1
+                else:
+                    q1 = Q(**{filter: key.strip()})
+                    q |= q1
+        elif "&" in keyword:
+            for key in keyword.split("&"):
+                q &= Q(**{filter: key.strip()})
+        else:
+            q &= Q(**{filter: keyword.strip()})
+    elif search_type == "icontains":
+        filter = field_name
+        if "|" in keyword:
+            for key in keyword.split("|"):
+                q1 = Q()
+                if "&" in key:
+                    for k in key.split("&"):
+                        q1 &= Q(**{filter: k.strip()})
+                    q |= q1
+                else:
+                    q1 = Q(**{filter: key.strip()})
+                    q |= q1
+        elif "&" in keyword:
+            for key in keyword.split("&"):
+                q &= Q(**{filter: key.strip()})
+        else:
+            q &= Q(**{filter: keyword.strip()})
 
     return q
 
