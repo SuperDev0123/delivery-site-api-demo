@@ -104,7 +104,7 @@ def build_quote_report(kf_client_ids, start_date, end_date):
 
         if booking.vx_freight_provider in SPECIAL_FPS:
             eachLineText = (
-                booking.b_bookingID_Visual
+                str(booking.b_bookingID_Visual)
                 + comma
                 + booking.pk_booking_id
                 + comma
