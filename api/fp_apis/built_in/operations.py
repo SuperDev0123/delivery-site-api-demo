@@ -325,7 +325,7 @@ def find_vehicle_ids(booking_lines, fp):
                 if (
                     line.e_type_of_packaging
                     and line.e_type_of_packaging.upper() in PALLETS
-                    and (max_length > 1.2 or max_width > 1.2)
+                    and (line.e_dimLength > 1.2 or line.e_dimLength > 1.2)
                 ):
                     has_pallet = True
                     break
@@ -479,9 +479,9 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
 
         if cost.UOM_charge.upper() in PALLETS:
-            if cost.end_qty and cost.end_qty < qty:
+            if cost.end_qty and cost.end_qty <= qty:
                 continue
-            if cost.start_qty and cost.start_qty >= qty:
+            if cost.start_qty and cost.start_qty > qty:
                 continue
         else:
             if cost.end_qty and cost.end_qty < total_weight:

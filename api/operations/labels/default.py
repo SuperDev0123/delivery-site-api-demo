@@ -26,6 +26,7 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
+from api.operations.api_booking_confirmation_lines import index as api_bcl
 
 logger = logging.getLogger(__name__)
 
@@ -87,11 +88,14 @@ def gen_barcode(booking, item_no=0):
     item_index = str(item_no).zfill(3)
     visual_id = str(booking.b_bookingID_Visual)
 
-    return (
+    label_code = (
         f"DME{visual_id}{item_index}"
         if not booking.v_FPBookingNumber
         else f"{booking.v_FPBookingNumber}{item_index}"
     )
+    api_bcl.create(booking, [{"label_code": label_code}])
+
+    return label_code
 
 
 def build_label(
@@ -228,13 +232,14 @@ def build_label(
     Story = []
     j = 1
 
-    totalQty = 0
-    if one_page_label:
-        lines = [lines[0]]
-        totalQty = 1
-    else:
-        for booking_line in lines:
-            totalQty = totalQty + booking_line.e_qty
+    totalQty = sscc_cnt
+    # totalQty = 0
+    # if one_page_label:
+    #     lines = [lines[0]]
+    #     totalQty = 1
+    # else:
+    #     for booking_line in lines:
+    #         totalQty = totalQty + booking_line.e_qty
 
     totalWeight = 0
     totalCubic = 0
@@ -262,7 +267,7 @@ def build_label(
                             "",
                             style_center,
                         ),
-                        fp_img
+                        fp_img,
                     ]
                 ]
 
@@ -484,7 +489,7 @@ def build_label(
             )
             Story.append(shell_table)
 
-            Story.append(Spacer(1, 3))
+            Story.append(Spacer(1, 2))
 
             barcode = gen_barcode(booking, j)
 
@@ -492,7 +497,7 @@ def build_label(
                 [
                     code128.Code128(
                         barcode,
-                        barHeight=15 * mm,
+                        barHeight=12 * mm,
                         barWidth=2.5,
                         humanReadable=False,
                     )
@@ -606,176 +611,118 @@ def build_label(
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
                 ],
             )
 
             Story.append(shell_table)
+            Story.append(Spacer(1, 2))
 
-            Story.append(Spacer(1, 5))
+            # To: row table
+            to_del_data = []
 
-            tbl_data1 = [
+            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
+            d = Drawing(20, 20)
+            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
+
+            to_del_data.append(
                 [
                     Paragraph(
                         "<font size=%s>To: <b>%s</b></font>"
                         % (
-                            label_settings["line_height_extra_large"],
+                            label_settings["font_size_large"],
                             booking.deToCompanyName or "",
                         ),
                         style_left,
                     ),
-                ],
-            ]
-
-            shell_table = Table(
-                tbl_data1,
-                colWidths=(float(label_settings["label_image_size_length"]) * mm),
-                style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ],
+                    Paragraph(
+                        "<font size=%s>Description:&nbsp;%s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            booking_line.e_item or "",
+                        ),
+                        style_left,
+                    ),
+                ]
             )
-
-            Story.append(shell_table)
-            Story.append(Spacer(1, 3))
 
             if (booking.de_to_Contact_F_LName or "").lower() != (
                 booking.deToCompanyName or ""
             ).lower():
-                tbl_data1 = [
+                to_del_data.append(
                     [
                         Paragraph(
                             "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
                             % (
-                                label_settings["line_height_extra_large"],
+                                label_settings["font_size_large"],
                                 booking.de_to_Contact_F_LName or "",
                                 booking.de_To_Address_Street_1 or "",
                                 booking.de_To_Address_Street_2 or "",
                             ),
                             style_left,
                         ),
+                        d,
                     ]
-                ]
+                )
             else:
-                tbl_data1 = [
+                to_del_data.append(
                     [
                         Paragraph(
                             "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b>, <b>%s</b></font>"
                             % (
-                                label_settings["line_height_extra_large"],
+                                label_settings["font_size_large"],
                                 booking.de_To_Address_Street_1 or "",
                                 booking.de_To_Address_Street_2 or "",
                             ),
                             style_left,
                         ),
+                        d,
                     ]
-                ]
+                )
 
-            shell_table = Table(
-                tbl_data1,
-                colWidths=(float(label_settings["label_image_size_length"]) * mm),
-                style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ],
-            )
-
-            Story.append(shell_table)
-            Story.append(Spacer(1, 3))
-
-            tbl_data1 = [
+            to_del_data.append(
                 [
                     Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s&nbsp;%s&nbsp;%s</b></font>"
                         % (
-                            label_settings["line_height_extra_large"],
+                            label_settings["font_size_large"],
                             booking.de_To_Address_State or "",
-                        ),
-                        style_left,
-                    ),
-                ]
-            ]
-
-            tbl_data2 = [
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["line_height_extra_large"],
                             carrier or "",
-                        ),
-                        style_left,
-                    ),
-                ]
-            ]
-
-            tbl_data3 = [
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["line_height_extra_large"],
                             booking.de_To_Address_PostalCode or "",
                         ),
                         style_left,
                     ),
+                    "",
                 ]
-            ]
-
-            data = [[tbl_data1, tbl_data3, tbl_data2]]
-
-            t1_w = float(label_settings["label_image_size_length"]) * (1 / 6) * mm
-            t2_w = float(label_settings["label_image_size_length"]) * (1 / 12) * mm
-            t3_w = float(label_settings["label_image_size_length"]) * (1 / 4) * mm
-
-            shell_table = Table(
-                data,
-                colWidths=[t1_w, t2_w, t3_w],
-                style=[
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                ],
             )
 
-            tbl_data2 = [
+            to_del_data.append(
                 [
                     Paragraph(
                         "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
                         % (
-                            label_settings["line_height_extra_large"],
+                            label_settings["font_size_large"],
                             booking.de_To_Address_Suburb,
                         ),
                         style_left,
                     ),
-                ],
-                [shell_table],
-            ]
-
-            data = [[tbl_data2]]
-
-            t1_w = float(label_settings["label_image_size_length"]) * mm
-
-            shell_table = Table(
-                data,
-                colWidths=(t1_w),
-                style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (0, -1), "TOP"),
-                ],
+                    "",
+                ]
             )
 
-            Story.append(shell_table)
-            Story.append(Spacer(1, 3))
+            to_del_data.append(
+                [
+                    Paragraph(
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
+                        % (label_settings["font_size_large"], booking.de_to_Phone_Main),
+                        style_left,
+                    ),
+                    "",
+                ]
+            )
 
-            tbl_data1 = [
+            to_del_data.append(
                 [
                     Paragraph(
                         "<font size=%s><b>Dangerous Goods Enclosed: %s</b></font>"
@@ -784,21 +731,27 @@ def build_label(
                             "YES" if booking_line.e_dangerousGoods == True else "NO",
                         ),
                         style_left,
-                    )
-                ],
-            ]
-
-            shell_table = Table(
-                tbl_data1,
-                colWidths=(float(label_settings["label_image_size_length"]) * mm),
-                style=[
-                    ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ],
+                    ),
+                    "",
+                ]
             )
 
+            shell_table = Table(
+                to_del_data,
+                colWidths=(
+                    float(label_settings["label_image_size_length"]) * mm / 2,
+                    float(label_settings["label_image_size_length"]) * mm / 2,
+                ),
+                style=[
+                    ("VALIGN", (0, 0), (0, -1), "CENTER"),
+                    ("SPAN", (-1, -1), (-1, 1)),
+                    ("VALIGN", (-1, 0), (-1, -1), "BOTTOM"),
+                    ("ALIGN", (-1, 0), (-1, -1), "CENTER"),
+                    # ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    # ("TOPPADDING", (-1, 1), (-1, 1), 20),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ],
+            )
             Story.append(shell_table)
             Story.append(Spacer(1, 2))
 
@@ -964,6 +917,7 @@ def build_label(
             )
 
             Story.append(footer_table)
+
             Story.append(PageBreak())
 
             j += 1

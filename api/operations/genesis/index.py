@@ -23,6 +23,11 @@ logger = logging.getLogger(__name__)
 
 def create_shared_booking(booking):
     LOG_ID = "[GENESIS CREATE]"
+
+    # Work for only JasonL
+    if booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        return
+
     logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
 
     if settings.ENV != "prod":
@@ -49,10 +54,13 @@ def create_shared_booking(booking):
             fk_booking_id=booking.pk_booking_id
         ).order_by("-id")
 
-    cs_notes = DMEBookingCSNote.objects.filter(booking=booking)
+    cs_notes = DMEBookingCSNote.objects.filter(booking=booking).order_by("-id")
 
     s_booking = S_Bookings()
     s_booking.b_bookingID_Visual = booking.b_bookingID_Visual
+    s_booking.b_client_booking_ref_num = (
+        booking.b_client_booking_ref_num or booking.pk_booking_id
+    )
     s_booking.b_dateBookedDate = booking.b_dateBookedDate
     s_booking.v_FPBookingNumber = booking.v_FPBookingNumber
     s_booking.b_client_name = booking.b_client_name
@@ -76,6 +84,12 @@ def create_shared_booking(booking):
     s_booking.zoho_summary = None
     s_booking.zoho_event_datetime = None
     s_booking.booked_for_comm_communicate_via = booking.booked_for_comm_communicate_via
+    s_booking.b_booking_Priority = booking.b_booking_Priority
+    s_booking.s_06_Estimated_Delivery_TimeStamp = (
+        booking.s_06_Latest_Delivery_Date_Time_Override
+        or booking.s_06_Latest_Delivery_Date_TimeSet
+    )
+    s_booking.s_21_Actual_Delivery_TimeStamp = booking.s_21_Actual_Delivery_TimeStamp
     s_booking.z_createdAt = datetime.now()
     s_booking.z_updatedAt = datetime.now()
 
@@ -141,12 +155,17 @@ def create_shared_booking(booking):
 
 def update_shared_booking(booking, is_for="all"):
     """
-    is_for: 3 enums - 'all', 'fp_info', 'zoho_info'
+    is_for: enums - 'all', 'fp_info', 'zoho_info', 'cs-note'
     """
     LOG_ID = "[GENESIS UPDATE]"
+
+    # Work for only JasonL
+    if booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        return
+
     logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
 
-    if settings.ENV != "prod":
+    if settings.ENV == "dev":
         logger.info(f"{LOG_ID} Skipped on this env")
         return
 
@@ -166,9 +185,14 @@ def update_shared_booking(booking, is_for="all"):
 
     if is_for == "all":
         s_booking.b_bookingID_Visual = booking.b_bookingID_Visual
+        s_booking.b_client_booking_ref_num = (
+            booking.b_client_booking_ref_num or booking.pk_booking_id
+        )
         s_booking.b_dateBookedDate = booking.b_dateBookedDate
         s_booking.v_FPBookingNumber = booking.v_FPBookingNumber
-        s_booking.b_client_name = booking.b_client_order_num
+        s_booking.b_client_name = booking.b_client_name
+        s_booking.b_client_id = booking.kf_client_id
+        s_booking.b_client_order_num = booking.b_client_order_num
         s_booking.de_Deliver_By_Date = booking.de_Deliver_By_Date
         s_booking.vx_freight_provider = booking.vx_freight_provider
         s_booking.vx_serviceName = booking.vx_serviceName
@@ -183,22 +207,36 @@ def update_shared_booking(booking, is_for="all"):
         s_booking.de_Email = booking.de_Email
         s_booking.de_to_Phone_Mobile = booking.de_to_Phone_Mobile
         s_booking.de_to_Phone_Main = booking.de_to_Phone_Main
-
-        if status_histories:
-            s_booking.fp_event_datetime = status_histories[0].event_timestamp
-            s_booking.fp_message = status_histories[0].desc
-
         s_booking.zoho_summary = None
         s_booking.zoho_event_datetime = None
         s_booking.booked_for_comm_communicate_via = (
             booking.booked_for_comm_communicate_via
         )
+        s_booking.b_booking_Priority = booking.b_booking_Priority
+        s_booking.s_06_Estimated_Delivery_TimeStamp = (
+            booking.s_06_Latest_Delivery_Date_Time_Override
+            or booking.s_06_Latest_Delivery_Date_TimeSet
+        )
+        s_booking.s_21_Actual_Delivery_TimeStamp = (
+            booking.s_21_Actual_Delivery_TimeStamp
+        )
+
+        if status_histories:
+            s_booking.fp_event_datetime = status_histories[0].event_timestamp
+            s_booking.fp_message = status_histories[0].desc
+
     elif is_for == "fp-info":
         if status_histories:
             s_booking.fp_event_datetime = status_histories[0].event_timestamp
             s_booking.fp_message = status_histories[0].desc
     elif is_for == "zoho_info":
         pass
+    elif is_for == "cs-note":
+        cs_notes = DMEBookingCSNote.objects.filter(booking=booking).order_by("-id")
+
+        if cs_notes.count() > 0:
+            s_booking.last_cs_note = cs_notes[0].note
+            s_booking.last_cs_note_timestamp = cs_notes[0].z_createdTimeStamp
 
     s_booking.z_updatedAt = datetime.now()
     s_booking.save(using="shared_mail")
@@ -207,6 +245,10 @@ def update_shared_booking(booking, is_for="all"):
 def create_shared_lines(booking):
     LOG_ID = "[GENESIS LINES UPDATE]"
     logger.info(f"{LOG_ID} Booking: {booking.b_bookingID_Visual}")
+
+    # Work for only JasonL
+    if booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        return
 
     if settings.ENV != "prod":
         logger.info(f"{LOG_ID} Skipped on this env")

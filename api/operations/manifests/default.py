@@ -286,7 +286,7 @@ def make_pagenumber(number, page_number):
     return page_table
 
 
-def build_manifest(bookings, booking_lines, username):
+def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
     fp_name = bookings[0].vx_freight_provider
     fp_info = Fp_freight_providers.objects.get(fp_company_name=fp_name)
     if fp_info and fp_info.hex_color_code:
@@ -343,18 +343,8 @@ def build_manifest(bookings, booking_lines, username):
     # start check if pdfs folder exists
     if production:
         local_filepath = "/opt/s3_public/pdfs/startrack_au/"
-        local_filepath_dup = (
-            "/opt/s3_public/pdfs/startrack_au/archive/"
-            + str(datetime.now().strftime("%Y_%m_%d"))
-            + "/"
-        )
     else:
         local_filepath = "./static/pdfs/startrack_au/"
-        local_filepath_dup = (
-            "./static/pdfs/startrack_au/archive/"
-            + str(datetime.now().strftime("%Y_%m_%d"))
-            + "/"
-        )
 
     if not os.path.exists(local_filepath):
         os.makedirs(local_filepath)
@@ -969,14 +959,17 @@ def build_manifest(bookings, booking_lines, username):
     file.close()
 
     # Add manifest log
-    Dme_manifest_log.objects.create(
+    manfiest_log = Dme_manifest_log.objects.create(
         fk_booking_id=bookings[0].pk_booking_id,
         manifest_url=filename,
         manifest_number=fp_info.fp_manifest_cnt,
         bookings_cnt=len(bookings),
         is_one_booking=1,
         z_createdByAccount=username,
+        need_truck=need_truck,
     )
+    manfiest_log.z_createdTimeStamp = timestamp
+    manfiest_log.save()
 
     fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
     fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)

@@ -44,6 +44,7 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 
 from api.models import *
 from api.fp_apis.utils import gen_consignment_num
+from api.operations.api_booking_confirmation_lines import index as api_bcl
 
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(name="right", parent=styles["Normal"], alignment=TA_RIGHT)
@@ -396,6 +397,10 @@ def build_label(booking):
                     + api_bcls[j - 1].label_code
                     + booking.de_To_Address_PostalCode
                 )
+
+                label_code = f"{booking.v_FPBookingNumber}{api_bcls[j - 1].label_code}"
+                api_bcl.create(booking, [{"label_code": label_code}])
+
                 barcode128 = get_barcode_rotated(
                     barcode,
                     (float(label_settings["barcode_dimension_length"])) * mm,

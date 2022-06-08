@@ -17,6 +17,7 @@ from api.models import (
     BOK_2_lines,
     BOK_3_lines_data,
     FPRouting,
+    Api_booking_confirmation_lines,
 )
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
@@ -126,6 +127,7 @@ def partial_pricing(payload, client, warehouse):
                 "e_dimHeight": item["e_dimHeight"],
                 "e_weightUOM": item["e_weightUOM"],
                 "e_weightPerEach": item["e_weightPerEach"],
+                "packed_status": BOK_2_lines.ORIGINAL,
             }
             booking_lines.append(booking_line)
     else:  # If lines have dimentions
@@ -143,6 +145,7 @@ def partial_pricing(payload, client, warehouse):
                 "e_dimHeight": _bok_2["l_007_dim_height"],
                 "e_weightUOM": _bok_2["l_008_weight_UOM"],
                 "e_weightPerEach": _bok_2["l_009_weight_per_each"],
+                "packed_status": BOK_2_lines.ORIGINAL,
             }
             booking_lines.append(booking_line)
 
@@ -183,7 +186,7 @@ def partial_pricing(payload, client, warehouse):
                 eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 3} days"
                 json_results[1]["eta"] = eta
 
-            json_results = [json_results[1]]
+            json_results = [json_results[0], json_results[1]]
         else:
             json_results[1]["service_name"] = "Express"
             json_results[0]["service_name"] = "Standard"
@@ -192,7 +195,7 @@ def partial_pricing(payload, client, warehouse):
                 eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 3} days"
                 json_results[0]["eta"] = eta
 
-            json_results = [json_results[0]]
+            json_results = [json_results[1], json_results[0]]
 
     if json_results:
         logger.info(f"@818 {LOG_ID} Success!")
@@ -392,7 +395,7 @@ def push_boks(payload, client, username, method):
                     )
 
                     if not old_bok_1s.exists():
-                        message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does not exist."
+                        message = f"Order(b_client_order_num={bok_1['b_client_order_num']}) does not exist."
                         logger.info(f"@870 {LOG_ID} {message}")
                         raise Exception(message)
             else:
@@ -403,7 +406,7 @@ def push_boks(payload, client, username, method):
                 fk_client_id=client.dme_account_num,
             )
             if not old_bok_1s.exists():
-                message = f"BOKS API Error - Order(client_booking_id={bok_1['client_booking_id']}) does not exist."
+                message = f"Order(client_booking_id={bok_1['client_booking_id']}) does not exist."
                 logger.info(f"@884 {LOG_ID} {message}")
                 raise Exception(message)
             else:
@@ -644,7 +647,9 @@ def push_boks(payload, client, username, method):
         bok_1_obj = bok_1_serializer.save()
 
     # create status history
-    status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
+    status_history.create_4_bok(
+        bok_1["pk_header_id"], "Imported / Integrated", username
+    )
 
     # PU avail
     pu_avil = datetime.strptime(bok_1["b_021_b_pu_avail_from_date"], "%Y-%m-%d")
@@ -697,6 +702,7 @@ def push_boks(payload, client, username, method):
             "e_dimHeight": _bok_2["l_007_dim_height"],
             "e_weightUOM": _bok_2["l_008_weight_UOM"],
             "e_weightPerEach": _bok_2["l_009_weight_per_each"],
+            "packed_status": _bok_2["b_093_packed_status"],
         }
         booking_lines.append(bok_2_line)
 
@@ -754,7 +760,7 @@ def push_boks(payload, client, username, method):
                 eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 3} days"
                 json_results[1]["eta"] = eta
 
-            json_results = [json_results[1]]
+            json_results = [json_results[0], json_results[1]]
         else:
             json_results[1]["service_name"] = "Express"
             json_results[0]["service_name"] = "Standard"
@@ -763,7 +769,7 @@ def push_boks(payload, client, username, method):
                 eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 3} days"
                 json_results[0]["eta"] = eta
 
-            json_results = [json_results[0]]
+            json_results = [json_results[1], json_results[0]]
 
     if json_results:
         if is_biz:
@@ -1043,24 +1049,24 @@ def scanned(payload, client):
                     new_line.e_Total_KG_weight = (
                         picked_item["weight"]["weight"] * new_line.e_qty
                     )
-                    new_line.e_1_Total_dimCubicMeter = get_cubic_meter(
-                        new_line.e_dimLength,
-                        new_line.e_dimWidth,
-                        new_line.e_dimHeight,
-                        new_line.e_dimUOM,
-                    )
+                    # new_line.e_1_Total_dimCubicMeter = get_cubic_meter(
+                    #     new_line.e_dimLength,
+                    #     new_line.e_dimWidth,
+                    #     new_line.e_dimHeight,
+                    #     new_line.e_dimUOM,
+                    # )
                 else:
                     new_line.e_weightUOM = old_line.e_weightUOM
                     new_line.e_weightPerEach = old_line.e_weightPerEach
                     new_line.e_Total_KG_weight = (
                         old_line.e_weightPerEach * new_line.e_qty
                     )
-                    new_line.e_1_Total_dimCubicMeter = get_cubic_meter(
-                        new_line.e_dimLength,
-                        new_line.e_dimWidth,
-                        new_line.e_dimHeight,
-                        new_line.e_dimUOM,
-                    )
+                    # new_line.e_1_Total_dimCubicMeter = get_cubic_meter(
+                    #     new_line.e_dimLength,
+                    #     new_line.e_dimWidth,
+                    #     new_line.e_dimHeight,
+                    #     new_line.e_dimUOM,
+                    # )
 
                 new_line.sscc = picked_item["sscc"]
                 new_line.picked_up_timestamp = (
@@ -1108,6 +1114,11 @@ def scanned(payload, client):
         item_cnt = 0
         for item in original_items:
             item_cnt += item.e_qty
+
+        # Reset all Api_booking_confirmation_lines
+        Api_booking_confirmation_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id
+        ).delete()
 
         for index, sscc in enumerate(sscc_list):
             file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"

@@ -10,15 +10,24 @@ import traceback
 import xlsxwriter as xlsxwriter
 from openpyxl import load_workbook
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from api.models import DME_Files
 from api.views_external_apis import do_bulk_pricing
 
-RESULT_DIR = "/var/www/html/dme_api/static/uploaded/pricing_only/result/"
-SRC_DIR = "/var/www/html/dme_api/static/uploaded/pricing_only/indata/"
-SRC_INPROGRESS_DIR = "/var/www/html/dme_api/static/uploaded/pricing_only/inprogress/"
-SRC_ACHIEVE_DIR = "/var/www/html/dme_api/static/uploaded/pricing_only/achieve/"
+if settings.ENV == "local":
+    RESULT_DIR = "./static/uploaded/pricing_only/result/"
+    SRC_DIR = "./static/uploaded/pricing_only/indata/"
+    SRC_INPROGRESS_DIR = "./static/uploaded/pricing_only/inprogress/"
+    SRC_ACHIEVE_DIR = "./static/uploaded/pricing_only/achieve/"
+else:
+    RESULT_DIR = "/var/www/html/dme_api/static/uploaded/pricing_only/result/"
+    SRC_DIR = "/var/www/html/dme_api/static/uploaded/pricing_only/indata/"
+    SRC_INPROGRESS_DIR = (
+        "/var/www/html/dme_api/static/uploaded/pricing_only/inprogress/"
+    )
+    SRC_ACHIEVE_DIR = "/var/www/html/dme_api/static/uploaded/pricing_only/achieve/"
 
 
 def replace_null(array):
@@ -133,7 +142,7 @@ def read_xls(file):
                 "b_booking_tail_lift_deliver": worksheet0["EJ%i" % row].value or 0,
                 "vx_serviceName": "R",  # hardcoded
                 "b_client_name": "Pricing-Only",  # hardcoded
-                "kf_client_id": "461162D2-90C7-BF4E-A905-0242ac130003",  # hardcoded
+                "kf_client_id": "461162D2-90C7-BF4E-A905-0242ac130003",  # hardcoded - pricing_only
                 "pu_PickUp_By_Date": str(
                     (datetime.datetime.now() + datetime.timedelta(days=1)).date()
                 ),

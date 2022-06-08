@@ -46,8 +46,18 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
 
             Booking Qty of the Matching 'Charge UOM' x 'Per UOM Charge
         """
-        logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
+        logger.info(
+            f"{LOG_ID} {fp_name.upper()} - applying weight filter... rules cnt: {rules.count()}"
+        )
         rules = weight_filter(booking_lines, rules, fp)
+
+        if not rules:
+            logger.info(
+                f"{LOG_ID} {fp_name.upper()} - after weight filter, rules cnt: {rules.count()}"
+            )
+            continue
+
+        logger.info(f"{LOG_ID} {fp_name.upper()} - filtered rules - {rules}")
         cost = find_cost(booking_lines, rules, fp)
         net_price = cost.per_UOM_charge * get_booking_lines_count(booking_lines)
 

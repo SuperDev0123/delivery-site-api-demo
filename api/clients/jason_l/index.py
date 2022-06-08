@@ -21,6 +21,7 @@ from api.models import (
     Pallet,
     API_booking_quotes,
     FP_zones,
+    Api_booking_confirmation_lines,
 )
 from api.serializers import SimpleQuoteSerializer, Simple4ProntoQuoteSerializer
 from api.serializers_client import *
@@ -139,6 +140,7 @@ def partial_pricing(payload, client, warehouse):
             "e_dimHeight": item["e_dimHeight"],
             "e_weightUOM": item["e_weightUOM"],
             "e_weightPerEach": item["e_weightPerEach"],
+            "packed_status": BOK_2_lines.ORIGINAL,
         }
         booking_lines.append(booking_line)
 
@@ -157,7 +159,9 @@ def partial_pricing(payload, client, warehouse):
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
-        best_quotes = select_best_options(pricings=quote_set)
+        best_quotes = select_best_options(
+            pricings=quote_set, client=warehouse.fk_id_dme_client
+        )
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
         context = {"client_customer_mark_up": client.client_customer_mark_up}
@@ -208,12 +212,14 @@ def push_boks(payload, client, username, method):
                 "b_client_order_num": "    20176",
                 "shipping_type": "DMEM",
                 "b_client_sales_inv_num": "    TEST ORDER 20176"
-            }
+            },
+            "is_from_script": True
         }
     """
     LOG_ID = "[PUSH FROM JasonL]"  # PB - PUSH BOKS
     bok_1 = payload["booking"]
     bok_2s = []
+    is_from_script = payload.get("is_from_script")
     client_name = None
     old_quote = None
     best_quotes = None
@@ -281,7 +287,7 @@ def push_boks(payload, client, username, method):
             )
 
             if bok_1_objs.exists():
-                message = f"BOKS API Error - Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
+                message = f"Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
                 logger.info(f"@884 {LOG_ID} {message}")
 
                 json_res = {
@@ -582,7 +588,9 @@ def push_boks(payload, client, username, method):
         )
 
     # create status history
-    status_history.create_4_bok(bok_1["pk_header_id"], "Pushed", username)
+    status_history.create_4_bok(
+        bok_1["pk_header_id"], "Imported / Integrated", username
+    )
 
     # `auto_repack` logic
     carton_cnt = 0
@@ -600,7 +608,6 @@ def push_boks(payload, client, username, method):
     if carton_cnt > 2 or need_palletize:
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
-        bok_2s = []
 
         # Select suitable pallet and get required pallets count
         pallets = Pallet.objects.all()
@@ -617,7 +624,7 @@ def push_boks(payload, client, username, method):
             line["v_client_pk_consigment_num"] = line_obj.v_client_pk_consigment_num
             line["pk_booking_lines_id"] = line_obj.pk_booking_lines_id
             line["success"] = line_obj.success
-            line["l_001_type_of_packaging"] = line_obj.l_001_type_of_packaging
+            line["l_001_type_of_packaging"] = "PAL"
             line["l_002_qty"] = item["quantity"]
             line["l_003_item"] = line_obj.l_003_item
             line["l_004_dim_UOM"] = line_obj.l_004_dim_UOM
@@ -627,6 +634,7 @@ def push_boks(payload, client, username, method):
             line["l_009_weight_per_each"] = line_obj.l_009_weight_per_each
             line["l_008_weight_UOM"] = line_obj.l_008_weight_UOM
             line["is_deleted"] = line_obj.is_deleted
+            line["b_093_packed_status"] = BOK_2_lines.AUTO_PACK
             bok_2s.append({"booking_line": line})
 
         for palletized_item in palletized:  # Palletized
@@ -776,6 +784,7 @@ def push_boks(payload, client, username, method):
             "e_dimHeight": _bok_2["l_007_dim_height"],
             "e_weightUOM": _bok_2["l_008_weight_UOM"],
             "e_weightPerEach": _bok_2["l_009_weight_per_each"],
+            "packed_status": _bok_2["b_093_packed_status"],
         }
         booking_lines.append(bok_2_line)
 
@@ -799,18 +808,47 @@ def push_boks(payload, client, username, method):
             f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
         )
 
-        if bok_1.get("shipping_type") and selected_quote:
+        if (
+            selected_quote
+            and bok_1.get("shipping_type") == "DMEM"
+            and selected_quote.freight_provider == "Deliver-ME"
+        ):
+            quote_set = quote_set.filter(
+                freight_provider=selected_quote.freight_provider,
+                packed_status=Booking_lines.ORIGINAL,
+            )
+        elif bok_1.get("shipping_type") == "DMEM" and selected_quote:
             quote_set = quote_set.filter(
                 freight_provider=selected_quote.freight_provider,
                 service_name=selected_quote.service_name,
             )
+        # All JasonL bookings to State SA are to book with TNT if DMEA no matter what the price
+        elif (
+            bok_1.get("shipping_type") == "DMEA"
+            and bok_1.get("b_057_b_del_address_state")
+            and bok_1.get("b_057_b_del_address_state").upper() == "SA"
+        ):
+            quote_set = quote_set.filter(freight_provider="TNT")
         else:
             quote_set = quote_set.exclude(freight_provider__in=["Sendle", "Hunter"])
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
-        auto_select_pricing_4_bok(bok_1_obj, quote_set)
-        best_quotes = select_best_options(pricings=quote_set)
+        auto_select_pricing_4_bok(
+            bok_1=bok_1_obj,
+            pricings=quote_set,
+            is_from_script=is_from_script,
+            auto_select_type=1,
+            client=client,
+        )
+
+        if quote_set.count() > 1:
+            best_quotes = select_best_options(
+                pricings=quote_set, client=warehouse.fk_id_dme_client
+            )
+        else:
+            best_quotes = quote_set
+
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
         context = {"client_customer_mark_up": client.client_customer_mark_up}
@@ -1035,16 +1073,16 @@ def scanned(payload, client):
             new_line.e_Total_KG_weight = round(
                 new_line.e_weightPerEach * new_line.e_qty, 5
             )
-            new_line.e_1_Total_dimCubicMeter = round(
-                get_cubic_meter(
-                    new_line.e_dimLength,
-                    new_line.e_dimWidth,
-                    new_line.e_dimHeight,
-                    new_line.e_dimUOM,
-                    new_line.e_qty,
-                ),
-                5,
-            )
+            # new_line.e_1_Total_dimCubicMeter = round(
+            #     get_cubic_meter(
+            #         new_line.e_dimLength,
+            #         new_line.e_dimWidth,
+            #         new_line.e_dimHeight,
+            #         new_line.e_dimUOM,
+            #         new_line.e_qty,
+            #     ),
+            #     5,
+            # )
             new_line.is_deleted = False
             new_line.zbl_102_text_2 = None
             new_line.sscc = first_item["sscc"]
@@ -1097,7 +1135,7 @@ def scanned(payload, client):
         )
         new_fc_log.save()
         logger.info(
-            f"#371 {LOG_ID} {booking.b_bookingID_Visual} - getting Quotes again..."
+            f"#371 {LOG_ID} {booking.b_bookingID_Visual} - Getting Quotes again..."
         )
         _, success, message, quotes = pricing_oper(
             body=None,
@@ -1111,16 +1149,17 @@ def scanned(payload, client):
 
         # Select best quotes(fastest, lowest)
         if quotes.exists() and quotes.count() > 0:
+            quotes = quotes.filter(packed_status=Booking_lines.SCANNED_PACK)
+
             if booking.booking_type == "DMEM":
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,
-                    packed_status=Booking_lines.SCANNED_PACK,
                 )
             else:
                 quotes = quotes.exclude(freight_provider__in=["Sendle", "Hunter"])
 
-            best_quotes = select_best_options(pricings=quotes)
+            best_quotes = select_best_options(pricings=quotes, client=client)
             logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
 
             if best_quotes:
@@ -1135,6 +1174,11 @@ def scanned(payload, client):
 
             if booking.b_client_order_num:
                 send_email_to_admins("No FC result", message)
+
+    # Reset all Api_booking_confirmation_lines
+    Api_booking_confirmation_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    ).delete()
 
     # Build built-in label with SSCC - one sscc should have one page label
     label_urls = []

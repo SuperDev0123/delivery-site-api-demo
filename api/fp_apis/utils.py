@@ -6,7 +6,7 @@ from django.conf import settings
 from api.models import *
 from api.common import ratio
 from api.common.booking_quote import set_booking_quote
-from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM
+from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM, SPECIAL_FPS
 from api.operations.email_senders import send_email_to_admins
 from api.helpers.etd import get_etd
 
@@ -121,7 +121,8 @@ def get_status_category_from_status(status):
     except Exception as e:
         message = f"#819 Category not found with this status: {status}"
         logger.error(message)
-        send_email_to_admins("Category for Status not Found", message)
+        if "rebooked" not in status.lower():
+            send_email_to_admins("Category for Status not Found", message)
         return None
 
 
@@ -211,8 +212,10 @@ def _is_deliverable_price(pricing, booking):
 def _get_fastest_price(pricings):
     fastest_pricing = {}
     for pricing in pricings:
-        etd = get_etd_in_hour(pricing)
+        if pricing.freight_provider in SPECIAL_FPS:
+            continue
 
+        etd = get_etd_in_hour(pricing)
         if not fastest_pricing:
             fastest_pricing["pricing"] = pricing
             fastest_pricing["etd_in_hour"] = etd
@@ -229,16 +232,29 @@ def _get_fastest_price(pricings):
             ):
                 fastest_pricing["pricing"] = pricing
 
-    return fastest_pricing["pricing"]
+    return fastest_pricing.get("pricing")
 
 
 # ######################## #
 #        Lowest ($$$)      #
 # ######################## #
-def _get_lowest_price(pricings):
+def _get_lowest_price(pricings, client=None):
     lowest_pricing = {}
+
+    # JasonL && BSD
+    if client and client.dme_account_num in [
+        "1af6bcd2-6148-11eb-ae93-0242ac130002",
+        "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
+    ]:
+        for pricing in pricings:
+            if pricing.freight_provider == "Deliver-ME":
+                return pricing
+
     for pricing in pricings:
-        if not lowest_pricing:
+        if pricing.freight_provider in SPECIAL_FPS:
+            continue
+
+        if not lowest_pricing and pricing.client_mu_1_minimum_values:
             lowest_pricing["pricing"] = pricing
             lowest_pricing["etd"] = get_etd_in_hour(pricing)
         elif lowest_pricing and pricing.client_mu_1_minimum_values:
@@ -256,25 +272,28 @@ def _get_lowest_price(pricings):
                     lowest_pricing["pricing"] = pricing
                     lowest_pricing["etd"] = pricing
 
-    return lowest_pricing["pricing"]
+    return lowest_pricing.get("pricing")
 
 
-def select_best_options(pricings):
+def select_best_options(pricings, client=None):
     logger.info(f"#860 Select best options from {len(pricings)} pricings")
 
     if not pricings:
         return []
 
-    lowest_pricing = _get_lowest_price(pricings)
+    lowest_pricing = _get_lowest_price(pricings, client)
     fastest_pricing = _get_fastest_price(pricings)
 
-    if lowest_pricing.pk == fastest_pricing.pk:
-        return [lowest_pricing]
+    if lowest_pricing and fastest_pricing:
+        if lowest_pricing.pk == fastest_pricing.pk:
+            return [lowest_pricing]
+        else:
+            return [lowest_pricing, fastest_pricing]
     else:
-        return [lowest_pricing, fastest_pricing]
+        return []
 
 
-def auto_select_pricing(booking, pricings, auto_select_type):
+def auto_select_pricing(booking, pricings, auto_select_type, client=None):
     if len(pricings) == 0:
         booking.b_errorCapture = "No Freight Provider is available"
         booking.save()
@@ -296,9 +315,9 @@ def auto_select_pricing(booking, pricings, auto_select_type):
     filtered_pricing = {}
     if int(auto_select_type) == 1:  # Lowest
         if deliverable_pricings:
-            filtered_pricing = _get_lowest_price(deliverable_pricings)
+            filtered_pricing = _get_lowest_price(deliverable_pricings, client)
         elif non_air_freight_pricings:
-            filtered_pricing = _get_lowest_price(non_air_freight_pricings)
+            filtered_pricing = _get_lowest_price(non_air_freight_pricings, client)
     else:  # Fastest
         if deliverable_pricings:
             filtered_pricing = _get_fastest_price(deliverable_pricings)
@@ -314,7 +333,9 @@ def auto_select_pricing(booking, pricings, auto_select_type):
         return False
 
 
-def auto_select_pricing_4_bok(bok_1, pricings, auto_select_type=1):
+def auto_select_pricing_4_bok(
+    bok_1, pricings, is_from_script=False, auto_select_type=1, client=None
+):
     if len(pricings) == 0:
         logger.info("#855 - Could not find proper pricing")
         return None
@@ -333,17 +354,24 @@ def auto_select_pricing_4_bok(bok_1, pricings, auto_select_type=1):
     #         deliverable_pricings.append(pricing)
 
     deliverable_pricings = non_air_freight_pricings
-    filtered_pricing = {}
-    if int(auto_select_type) == 1:  # Lowest
-        if deliverable_pricings:
-            filtered_pricing = _get_lowest_price(deliverable_pricings)
-        elif non_air_freight_pricings:
-            filtered_pricing = _get_lowest_price(non_air_freight_pricings)
-    else:  # Fastest
-        if deliverable_pricings:
-            filtered_pricing = _get_fastest_price(deliverable_pricings)
-        elif non_air_freight_pricings:
-            filtered_pricing = _get_fastest_price(non_air_freight_pricings)
+    filtered_pricing = None
+
+    if is_from_script and bok_1.quote and bok_1.quote.freight_provider in SPECIAL_FPS:
+        for pricing in non_air_freight_pricings:
+            if pricing.freight_provider == bok_1.quote.freight_provider:
+                filtered_pricing = pricing
+                break
+    else:
+        if int(auto_select_type) == 1:  # Lowest
+            if deliverable_pricings:
+                filtered_pricing = _get_lowest_price(deliverable_pricings, client)
+            elif non_air_freight_pricings:
+                filtered_pricing = _get_lowest_price(non_air_freight_pricings, client)
+        else:  # Fastest
+            if deliverable_pricings:
+                filtered_pricing = _get_fastest_price(deliverable_pricings)
+            elif non_air_freight_pricings:
+                filtered_pricing = _get_fastest_price(non_air_freight_pricings)
 
     if filtered_pricing:
         logger.info(f"#854 Filtered Pricing - {filtered_pricing}")

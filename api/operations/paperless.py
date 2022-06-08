@@ -352,7 +352,13 @@ def send_order_info(bok_1):
                 # to_emails.append("randerson@plumproducts.com")  # Plum agent
                 # to_emails.append("aussales@plumproducts.com")  # Plum agent
 
-            send_email(send_to=to_emails, send_cc=[], subject=subject, text=str(e))
+            send_email(
+                send_to=to_emails,
+                send_cc=[],
+                send_bcc=["goldj@deliver-me.com.au"],
+                subject=subject,
+                text=str(e),
+            )
             logger.error(f"@905 {LOG_ID} Sent email notification!")
 
         return None

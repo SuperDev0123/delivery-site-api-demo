@@ -137,7 +137,7 @@ class InteractiveCheckBox(Flowable):
 checkbox = InteractiveCheckBox("")
 
 
-def build_manifest(bookings, booking_lines, username):
+def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
     fp_name = bookings[0].vx_freight_provider
     fp_info = Fp_freight_providers.objects.get(fp_company_name=fp_name)
     if fp_info and fp_info.hex_color_code:
@@ -154,9 +154,7 @@ def build_manifest(bookings, booking_lines, username):
     for line in booking_lines:
         total_qty += line.e_qty
         total_dead_weight += (
-            line.e_weightPerEach
-            * _get_weight_amount(line.e_weightUOM)
-            * line.e_qty
+            line.e_weightPerEach * _get_weight_amount(line.e_weightUOM) * line.e_qty
         )
         total_cubic += get_cubic_meter(
             line.e_dimLength,
@@ -381,11 +379,7 @@ def build_manifest(bookings, booking_lines, username):
                 style_left,
             ),
             Paragraph(
-                "<font size=%s>%s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    ""
-                ),
+                "<font size=%s>%s</font>" % (label_settings["font_size_medium"], ""),
                 style_left,
             ),
         ],
@@ -492,7 +486,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Number of Consignments: ",
-                    number_of_consignments
+                    number_of_consignments,
                 ),
                 style_left,
             ),
@@ -501,7 +495,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Number of Articles: ",
-                    total_qty
+                    total_qty,
                 ),
                 style_left,
             ),
@@ -510,7 +504,7 @@ def build_manifest(bookings, booking_lines, username):
                 % (
                     label_settings["font_size_medium"],
                     "Actual Weight (kg): ",
-                    round(total_dead_weight, 3)
+                    round(total_dead_weight, 3),
                 ),
                 style_left,
             ),
@@ -518,11 +512,7 @@ def build_manifest(bookings, booking_lines, username):
         [
             Paragraph(
                 "<font size=%s><b>%s (m<super rise=4 size=6>3</super>): </b> %s</font>"
-                % (
-                    label_settings["font_size_medium"],
-                    "Cube",
-                    round(total_cubic, 3)
-                ),
+                % (label_settings["font_size_medium"], "Cube", round(total_cubic, 3)),
                 style_left,
             ),
             Paragraph(
@@ -593,9 +583,7 @@ def build_manifest(bookings, booking_lines, username):
             "",
             Paragraph(
                 "<font size=%s><b>Total KG/Total M<super rise=4 size=6>3</super></b></font>"
-                % (
-                    label_settings["font_size_medium"],
-                ),
+                % (label_settings["font_size_medium"],),
                 style_center,
             ),
         ],
@@ -1151,7 +1139,6 @@ def build_manifest(bookings, booking_lines, username):
                 style_center,
             ),
         ],
-        
     ]
 
     t1_w = float(label_settings["label_image_size_width"]) * (3 / 19) * mm
@@ -1458,15 +1445,18 @@ def build_manifest(bookings, booking_lines, username):
     doc.build(Story)
     file.close()
 
-    # # Add manifest log
-    # Dme_manifest_log.objects.create(
-    #     fk_booking_id=booking.pk_booking_id,
-    #     manifest_url=filename,
-    #     manifest_number=manifest,
-    #     bookings_cnt=len(bookings),
-    #     is_one_booking=1,
-    #     z_createdByAccount=username,
-    # )
+    # Add manifest log
+    Dme_manifest_log.objects.create(
+        fk_booking_id=booking.pk_booking_id,
+        manifest_url=filename,
+        manifest_number=manifest,
+        bookings_cnt=len(bookings),
+        is_one_booking=1,
+        z_createdByAccount=username,
+        need_truck=need_truck,
+    )
+    manfiest_log.z_createdTimeStamp = timestamp
+    manfiest_log.save()
 
     # fp_info.fp_manifest_cnt = fp_info.fp_manifest_cnt + 1
     # fp_info.new_connot_index = fp_info.new_connot_index + len(bookings)

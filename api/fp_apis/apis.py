@@ -21,6 +21,7 @@ from django.conf import settings
 from api.models import *
 from api.serializers import ApiBookingQuotesSerializer
 from api.common import status_history, download_external, trace_error
+from api.common.common_times import convert_to_UTC_tz
 from api.file_operations.directory import create_dir
 from api.file_operations.downloads import download_from_url
 from api.utils import get_eta_pu_by, get_eta_de_by
@@ -43,6 +44,8 @@ from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.fp_apis.utils import auto_select_pricing
 from api.fp_apis.constants import FP_CREDENTIALS, S3_URL, DME_LEVEL_API_URL
 from api.fp_apis.utils import gen_consignment_num
+from api.fp_apis.constants import SPECIAL_FPS
+from api.helpers.string import *
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +87,46 @@ def tracking(request, fp_name):
             consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
             consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
             has_new = populate_fp_status_history(booking, consignmentStatuses)
+
+            # Allied POD
+            if booking.vx_freight_provider.lower() == "allied":
+                if consignmentTrackDetails["pods"]:
+                    podData = consignmentTrackDetails["pods"][0]["podData"]
+
+                    _fp_name = fp_name.lower()
+                    pod_file_name = f"allied_POD_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
+                    full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pod_file_name}"
+
+                    f = open(full_path, "wb")
+                    f.write(base64.b64decode(podData))
+                    f.close()
+
+                    booking.z_pod_url = f"{fp_name.lower()}_au/{pod_file_name}"
+
+                if consignmentTrackDetails["signatures"]:
+                    posData = consignmentTrackDetails["signatures"][0]["signatureImage"]
+
+                    _fp_name = fp_name.lower()
+                    pos_file_name = f"allied_POS_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
+                    full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pos_file_name}"
+
+                    f = open(full_path, "wb")
+                    f.write(base64.b64decode(posData))
+                    f.close()
+
+                    booking.z_pod_signed_url = f"{fp_name.lower()}_au/{pos_file_name}"
+
+                if consignmentTrackDetails["scheduledDeliveryDate"]:
+                    scheduledDeliveryDate = consignmentTrackDetails[
+                        "scheduledDeliveryDate"
+                    ]
+                    event_at = datetime.strptime(
+                        scheduledDeliveryDate[:19], "%Y-%m-%dT%H:%M:%S"
+                    )
+                    event_at = str(convert_to_UTC_tz(event_at))
+                    booking.s_06_Latest_Delivery_Date_Time_Override = event_at
+
+                booking.save()
 
             if has_new:
                 update_booking_with_tracking_result(
@@ -153,7 +196,10 @@ def book(request, fp_name):
                 fp_name, booking.b_bookingID_Visual
             )
             booking.save()
-            send_email_manual_book(booking)
+
+            if booking.vx_freight_provider not in SPECIAL_FPS:
+                send_email_manual_book(booking)
+
             res_json = {"success": True, "message": "Booked Successfully"}
             return JsonResponse(res_json)
         else:
@@ -241,12 +287,12 @@ def rebook(request, fp_name):
                     booking.b_dateBookedDate = datetime.now()
                     status_history.create(
                         booking,
-                        "PU Rebooked(Last pickup Id was "
+                        "Pickup Rebooked(Last pickup Id was "
                         + str(old_fk_fp_pickup_id)
                         + ")",
                         request.user.username,
                     )
-                    status_history.create(booking, "PU Rebooked", "jason_l")
+                    status_history.create(booking, "Pickup Rebooked", "jason_l")
                     booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
                     booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
                         booking, booking.api_booking_quote
@@ -422,8 +468,8 @@ def edit_book(request, fp_name):
                         booking.z_label_url = f"hunter_au/{file_name}"
                         booking.save()
 
-                    pod_file_name = f"hunter_POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
-                    full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{pod_file_name}"
+                    pod_file_name = f"hunter_POD_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.pdf"
+                    full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pod_file_name}"
 
                     f = open(full_path, "wb")
                     f.write(base64.b64decode(json_label_data["podImage"]))
@@ -457,7 +503,6 @@ def edit_book(request, fp_name):
                             fk_booking_id=booking.pk_booking_id,
                             api_item_id=item["item_id"],
                         ).save()
-
                 return JsonResponse(
                     {"message": f"Successfully edit book({booking.v_FPBookingNumber})"}
                 )
@@ -693,7 +738,7 @@ def get_label(request, fp_name):
                 try:
                     if _fp_name == "tnt":
                         label_data = base64.b64decode(json_data["anyType"]["LabelPDF"])
-                        file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
+                        file_name = f"{fp_name}_label_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now())}.pdf"
                     elif _fp_name == "sendle":
                         file_name = f"{fp_name}_label_{booking.pu_Address_State}_{booking.v_FPBookingNumber}_{str(datetime.now())}.pdf"
 
@@ -903,6 +948,15 @@ def get_order_summary(request, fp_name):
                     booking.manifest_timestamp = manifest_timestamp
                     booking.save()
 
+                Dme_manifest_log.objects.create(
+                    fk_booking_id=booking.pk_booking_id,
+                    manifest_url=file_name,
+                    manifest_number=str(booking.vx_fp_order_id),
+                    bookings_cnt=bookings.count(),
+                    is_one_booking=False,
+                    z_createdByAccount=request.user.username,
+                )
+
                 Log(
                     request_payload=payload,
                     request_status="SUCCESS",
@@ -984,7 +1038,7 @@ def pod(request, fp_name):
                 return JsonResponse({"message": error_msg})
             podData = json_data["pod"]["podData"]
 
-        file_name = f"POD_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
+        file_name = f"POD_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}"
 
         file_name += ".jpeg" if _fp_name in ["hunter"] else ".png"
         full_path = f"{S3_URL}/imgs/{_fp_name}_au/{file_name}"
@@ -1038,7 +1092,7 @@ def reprint(request, fp_name):
             podData = json_data["ReprintActionResult"]["LabelPDF"]
 
             try:
-                file_name = f"{fp_name}_reprint_{booking.pu_Address_State}_{booking.b_client_sales_inv_num}_{str(datetime.now())}.pdf"
+                file_name = f"{fp_name}_reprint_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now())}.pdf"
                 full_path = f"{S3_URL}/pdfs/{_fp_name}_au/{file_name}"
 
                 with open(full_path, "wb") as f:
@@ -1101,6 +1155,7 @@ def pricing(request):
         client = booking.get_client()
         client_customer_mark_up = client.client_customer_mark_up or 0
     except:
+        client = None
         client_customer_mark_up = 0
 
     if not success:
@@ -1129,7 +1184,7 @@ def pricing(request):
             results = results.exclude(freight_provider="Sendle")
 
         if not booking.b_dateBookedDate:
-            auto_select_pricing(booking, results, auto_select_type)
+            auto_select_pricing(booking, results, auto_select_type, client)
 
     res_json = {"success": True, "message": message, "results": json_results}
     return JsonResponse(res_json, status=status.HTTP_200_OK)

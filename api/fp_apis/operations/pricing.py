@@ -82,6 +82,82 @@ def _confirm_visible(booking, booking_lines, quotes):
     return quotes
 
 
+def build_special_fp_pricings(booking, packed_status):
+    # Get manually entered surcharges total
+    try:
+        manual_surcharges_total = booking.get_manual_surcharges_total()
+    except:
+        manual_surcharges_total = 0
+
+    quote_0 = API_booking_quotes()
+    quote_0.api_results_id = ""
+    quote_0.fk_booking_id = booking.pk_booking_id
+    quote_0.fk_client_id = booking.b_client_name
+    quote_0.account_code = None
+    quote_0.etd = 3
+    quote_0.fee = 0
+    quote_0.service_code = None
+    quote_0.tax_value_1 = 0
+    quote_0.tax_value_1 = 0
+    quote_0.client_mu_1_minimum_values = 0
+    quote_0.packed_status = packed_status
+    quote_0.x_price_surcharge = manual_surcharges_total
+
+    # Plum & JasonL & BSD & Cadrys & Ariston Wire & Anchor Packagin
+    if (
+        booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
+        or booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+        or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+        or booking.kf_client_id == "f821586a-d476-434d-a30b-839a04e10115"
+        or booking.kf_client_id == "15732b05-d597-419b-8dc5-90e633d9a7e9"
+        or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
+    ):
+        # restrict delivery postal code
+        postal_code = int(booking.de_To_Address_PostalCode or 0)
+        if (
+            postal_code
+            and (
+                (  # Metro / CBD Melbourne
+                    (postal_code >= 3000 and postal_code <= 3207)
+                    or (postal_code >= 8000 and postal_code <= 8499)
+                )
+                or (  # Metro / CBD Brisbane
+                    (postal_code >= 4000 and postal_code <= 4207)
+                    or (postal_code >= 9000 and postal_code <= 9499)
+                )
+                or (  # Metro / CBD Sydney
+                    (postal_code >= 1000 and postal_code <= 2249)
+                    or (postal_code >= 2760 and postal_code <= 2770)
+                )
+                or (  # Metro Adelaide
+                    (postal_code >= 5000 and postal_code <= 5199)
+                    or (postal_code >= 5900 and postal_code <= 5999)
+                )
+            )
+            # Restrict same state
+            and booking.pu_Address_State
+            and booking.de_To_Address_State
+            and booking.pu_Address_State.lower() != booking.de_To_Address_State.lower()
+        ):
+            quote_0.freight_provider = "Deliver-ME"
+            quote_0.service_name = "Deliver-ME Direct"
+            quote_0.save()
+
+        quote_1 = quote_0
+        quote_1.pk = None
+        quote_1.freight_provider = "Customer Collect"
+        quote_0.service_name = None
+        quote_1.save()
+
+    # JasonL
+    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        quote_2 = quote_0
+        quote_2.pk = None
+        quote_2.freight_provider = "In House Fleet"
+        quote_0.service_name = None
+        quote_2.save()
+
+
 def pricing(
     body,
     booking_id,
@@ -95,6 +171,7 @@ def pricing(
         * is_pricing_only: only get pricing info
         * packed_statuses: array of options (ORIGINAL, AUTO_PACKED, MANUAL_PACKED, SCANNED_PACKED)
     """
+    LOG_ID = "[PRICING]"
     booking_lines = []
     booking = None
 
@@ -134,48 +211,60 @@ def pricing(
 
     try:
         client = DME_clients.objects.get(company_name__iexact=booking.b_client_name)
+        client_fps = Client_FP.objects.filter(client=client, is_active=True)
     except:
         client = None
+        client_fps = []
 
-    if not booking_lines:
+    try:
         for packed_status in packed_statuses:
-            booking_lines = Booking_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id,
-                is_deleted=False,
-                packed_status=packed_status,
-            )
-
-            if booking_lines:
-                _loop_process(
-                    booking,
-                    booking_lines,
-                    is_pricing_only,
-                    packed_status,
-                    client,
-                    pu_zones,
-                    de_zones,
+            _booking_lines = []
+            if not booking_lines:
+                _booking_lines = Booking_lines.objects.filter(
+                    fk_booking_id=booking.pk_booking_id,
+                    is_deleted=False,
+                    packed_status=packed_status,
                 )
-    else:
-        for packed_status in packed_statuses:
+            else:
+                for booking_line in booking_lines:
+                    if booking_line.packed_status != packed_status:
+                        continue
+                    _booking_lines.append(booking_line)
+
+            if not _booking_lines:
+                continue
+
+            build_special_fp_pricings(booking, packed_status)
             _loop_process(
                 booking,
-                booking_lines,
+                _booking_lines,
                 is_pricing_only,
                 packed_status,
                 client,
                 pu_zones,
                 de_zones,
+                client_fps,
             )
 
-    quotes = API_booking_quotes.objects.filter(
-        fk_booking_id=booking.pk_booking_id, is_used=False
-    )
+        quotes = API_booking_quotes.objects.filter(
+            fk_booking_id=booking.pk_booking_id, is_used=False
+        )
 
-    return booking, True, "Retrieved all Pricing info", quotes
+        return booking, True, "Retrieved all Pricing info", quotes
+    except Exception as e:
+        logger.error(f"{LOG_ID} Booking: {booking}, Error: {e}")
+        return booking, False, str(e), []
 
 
 def _loop_process(
-    booking, booking_lines, is_pricing_only, packed_status, client, pu_zones, de_zones
+    booking,
+    booking_lines,
+    is_pricing_only,
+    packed_status,
+    client,
+    pu_zones,
+    de_zones,
+    client_fps,
 ):
     try:
         loop = asyncio.new_event_loop()
@@ -188,6 +277,7 @@ def _loop_process(
                 packed_status,
                 pu_zones,
                 de_zones,
+                client_fps,
             )
         )
     finally:
@@ -213,14 +303,20 @@ def _loop_process(
             gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
 
         # Apply Markups (FP Markup and Client Markup)
-        quotes = apply_markups(quotes, client, fp)
+        quotes = apply_markups(quotes, client, fps, client_fps)
 
         # Confirm visible
         quotes = _confirm_visible(booking, booking_lines, quotes)
 
 
 async def _pricing_process(
-    booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
+    booking,
+    booking_lines,
+    is_pricing_only,
+    packed_status,
+    pu_zones,
+    de_zones,
+    client_fps,
 ):
     try:
         await asyncio.wait_for(
@@ -231,6 +327,7 @@ async def _pricing_process(
                 packed_status,
                 pu_zones,
                 de_zones,
+                client_fps,
             ),
             timeout=PRICING_TIME,
         )
@@ -239,15 +336,17 @@ async def _pricing_process(
 
 
 async def pricing_workers(
-    booking, booking_lines, is_pricing_only, packed_status, pu_zones, de_zones
+    booking,
+    booking_lines,
+    is_pricing_only,
+    packed_status,
+    pu_zones,
+    de_zones,
+    client_fps,
 ):
     # Schedule n pricing works *concurrently*:
     _workers = set()
     logger.info("#910 [PRICING] - Building Pricing workers...")
-
-    client_fps = Client_FP.objects.prefetch_related("fp").filter(
-        client__company_name__iexact=booking.b_client_name, is_active=True
-    )
 
     if client_fps:
         client_fps = list(client_fps.values_list("fp__fp_company_name", flat=True))
@@ -262,6 +361,7 @@ async def pricing_workers(
             if (
                 booking.b_dateBookedDate
                 and booking.vx_freight_provider.lower() != _fp_name
+                and booking.vx_freight_provider not in SPECIAL_FPS
             ):
                 continue
         except:

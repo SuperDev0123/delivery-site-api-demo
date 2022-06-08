@@ -30,7 +30,7 @@ def _is_used_client_credential(fp_name, client_name, account_code):
     return False
 
 
-def _apply_mu(quote, fp, client):
+def _apply_mu(quote, fp, client, client_fp):
     """
     Convert FP price to DME price
 
@@ -40,7 +40,7 @@ def _apply_mu(quote, fp, client):
     logger.info(f"[FP $ -> DME $] Start quote: {quote}")
 
     # FP MU(Fuel Levy)
-    fp_mu = fp.fp_markupfuel_levy_percent
+    fp_mu = (client_fp and client_fp.fuel_levy) or fp.fp_markupfuel_levy_percent
 
     # DME will consider tax on `invoicing` stage
     # tax = quote.tax_value_1 if quote.tax_value_1 else 0
@@ -88,7 +88,7 @@ def _apply_mu(quote, fp, client):
     return quoted_dollar, fuel_levy_base, client_mu
 
 
-def apply_markups(quotes, client, fp):
+def apply_markups(quotes, client, fps, client_fps):
     logger.info(f"[APPLY MU] Start")
 
     if not quotes:
@@ -98,11 +98,25 @@ def apply_markups(quotes, client, fp):
     logger.info(f"[APPLY MU] Booking.fk_booking_id: {quotes[0].fk_booking_id}")
 
     for quote in quotes:
+        fp = None
+        _client_fp = None
+
+        for _fp in fps:
+            if quote.freight_provider.lower() == _fp.fp_company_name.lower():
+                fp = _fp
+
+        for client_fp in client_fps:
+            if client_fp.fp == fp:
+                _client_fp = client_fp
+                break
+
         client_mu_1_minimum_values, fuel_levy_base, client_mu = _apply_mu(
-            quote, fp, client
+            quote, fp, client, _client_fp
         )
         quote.client_mu_1_minimum_values = client_mu_1_minimum_values
-        quote.mu_percentage_fuel_levy = fp.fp_markupfuel_levy_percent
+        quote.mu_percentage_fuel_levy = (
+            _client_fp and _client_fp.fuel_levy
+        ) or fp.fp_markupfuel_levy_percent
         quote.fuel_levy_base = fuel_levy_base
         quote.client_mark_up_percent = client_mu
         quote.save()

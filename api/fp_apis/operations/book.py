@@ -6,10 +6,10 @@ import requests
 from datetime import datetime
 
 from api.common import status_history, trace_error
-from api.utils import get_eta_pu_by, get_eta_de_by
 from api.file_operations.directory import create_dir
 from api.operations.email_senders import send_booking_status_email
-from api.models import Log, Api_booking_confirmation_lines
+from api.operations.api_booking_confirmation_lines import index as api_bcl
+from api.models import Log, Api_booking_confirmation_lines, Dme_manifest_log
 
 from api.fp_apis.pre_check import pre_check_book
 from api.fp_apis.payload_builder import get_book_payload
@@ -23,6 +23,21 @@ from api.fp_apis.constants import (
 
 
 logger = logging.getLogger(__name__)
+
+
+def built_in_book(booking, booker):
+    """
+    Used to avoid calling Truck from TNT
+    """
+    from api.fp_apis.utils import gen_consignment_num
+
+    booking.v_FPBookingNumber = gen_consignment_num(
+        booking.vx_freight_provider, booking.b_bookingID_Visual
+    )
+    booking.b_dateBookedDate = datetime.now()
+    booking.b_error_Capture = None
+    status_history.create(booking, "Booked", booker)
+    booking.save()
 
 
 def book(fp_name, booking, booker):
@@ -40,24 +55,20 @@ def book(fp_name, booking, booker):
         error_msg = f"Error while build payload {str(e)}"
         return False, error_msg
 
-    # JasonL & BSD
-    if (
-        booking.b_client_warehouse_code == "BSD_MERRYLANDS"
-        or booking.b_client_warehouse_code == "JASON_L_BOT"
-    ) and _fp_name == "tnt":
-        # JasonL Botany warehouse doesn't need any trucks from TNT
-        booking.v_FPBookingNumber = f"DME{str(booking.b_bookingID_Visual).zfill(9)}"
-        booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
-        booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
-            booking, booking.api_booking_quote
-        )
-        booking.b_dateBookedDate = datetime.now()
-        booking.b_error_Capture = None
-        status_history.create(booking, "Booked", booker)
-        booking.save()
+    # BSD: when doesn't need any trucks from TNT
+    if _fp_name == "tnt":
+        if booking.b_client_warehouse_code == "BSD_MERRYLANDS":
+            built_in_book(booking, booker)
+            message = f"Successfully booked({booking.v_FPBookingNumber})"
+            return True, message
+        elif booking.z_manifest_url:
+            manifest_name = booking.z_manifest_url.split("/")[1]
+            manifest_logs = Dme_manifest_log.objects.filter(manifest_url=manifest_name)
 
-        message = f"Successfully booked({booking.v_FPBookingNumber})"
-        return True, message
+            if manifest_logs and not manifest_logs.first().need_truck:
+                built_in_book(booking, booker)
+                message = f"Successfully booked({booking.v_FPBookingNumber})"
+                return True, message
 
     logger.info(f"### Payload ({fp_name} book): {payload}")
     url = DME_LEVEL_API_URL + "/booking/bookconsignment"
@@ -124,10 +135,6 @@ def book(fp_name, booking, booker):
                 booking.jobNumber = json_data["jobNumber"]
 
             booking.fk_fp_pickup_id = json_data["consignmentNumber"]
-            booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
-            booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
-                booking, booking.api_booking_quote
-            )
             booking.b_dateBookedDate = datetime.now()
             status_history.create(booking, "Booked", booker)
             booking.b_error_Capture = None
@@ -206,15 +213,7 @@ def book(fp_name, booking, booker):
                     send_booking_status_email(booking.pk, email_template_name, booker)
             # Save Label for Startrack and AusPost
             elif _fp_name in ["startrack", "auspost"] and is_get_label:
-                Api_booking_confirmation_lines.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                ).delete()
-
-                for item in json_data["items"]:
-                    book_con = Api_booking_confirmation_lines(
-                        fk_booking_id=booking.pk_booking_id,
-                        api_item_id=item["item_id"],
-                    ).save()
+                api_bcl.create(booking, json_data["items"])
             # Increase Conote Number and Manifest Count for DHL, kf_client_id of DHLPFM is hardcoded now
             elif _fp_name == "dhl" and is_get_label:
                 if booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000002":

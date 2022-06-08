@@ -24,16 +24,22 @@ def get_booking_lines(bookings):
     )
 
 
-def build_manifest(booking_ids, username=""):
+def build_manifest(booking_ids, username="", need_truck=False, timestamp=None):
     bookings = Bookings.objects.filter(pk__in=booking_ids)
     booking_lines = get_booking_lines(bookings)
     vx_freight_provider = bookings.first().vx_freight_provider.upper()
 
     if vx_freight_provider == "DHL":
-        file_name = build_DHL_manifest(bookings, booking_lines, username)
+        file_name = build_DHL_manifest(
+            bookings, booking_lines, username, need_truck, timestamp
+        )
     elif vx_freight_provider == "TAS":
-        file_name = build_TAS_manifest(bookings, booking_lines, username)
+        file_name = build_TAS_manifest(
+            bookings, booking_lines, username, need_truck, timestamp
+        )
     else:
-        file_name = build_default_manifest(bookings, booking_lines, username)
+        file_name = build_default_manifest(
+            bookings, booking_lines, username, need_truck, timestamp
+        )
 
     return bookings, file_name

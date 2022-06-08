@@ -13,6 +13,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.db import transaction
+from django.db.models import Q
 from rest_framework import views, serializers, status
 from rest_framework.response import Response
 from rest_framework import authentication, permissions, viewsets
@@ -50,6 +51,7 @@ from api.clients.plum import index as plum
 from api.clients.tempo import index as tempo
 from api.clients.bsd import index as bsd
 from api.clients.jason_l import index as jason_l
+from api.clients.anchor_packaging import index as anchor_packaging
 from api.clients.jason_l.operations import (
     create_or_update_product as jasonL_create_or_update_product,
 )
@@ -677,6 +679,15 @@ def push_boks(request):
                 username=user.username,
                 method=request.method,
             )
+        elif (
+            dme_account_num == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
+        ):  # Anchor Packaging
+            result = anchor_packaging.push_boks(
+                payload=request.data,
+                client=client,
+                username=user.username,
+                method=request.method,
+            )
         else:  # Standard Client
             result = standard.push_boks(request.data, client)
 
@@ -811,25 +822,33 @@ def manifest_boks(request):
 @api_view(["GET"])
 @permission_classes((AllowAny,))
 def get_delivery_status(request):
+    """
+    GET request should have `identifier` param
+
+    If length is over 32 - `b_client_booking_ref_num`
+    """
+
     from api.fp_apis.utils import get_dme_status_from_fp_status
 
-    client_booking_id = request.GET.get("identifier")
+    identifier = request.GET.get("identifier")
     quote_data = {}
+    last_milestone = "Delivered"
 
     # 1. Try to find from dme_bookings table
     booking = Bookings.objects.filter(
-        b_client_booking_ref_num=client_booking_id
+        Q(b_client_booking_ref_num=identifier) | Q(pk_booking_id=identifier)
     ).first()
 
     if booking:
         client = DME_clients.objects.get(dme_account_num=booking.kf_client_id)
         b_status = booking.b_status
         quote = booking.api_booking_quote
-        category = get_status_category_from_status(b_status)
 
+        # Category
+        category = get_status_category_from_status(b_status)
         if not category:
             logger.info(
-                f"#301 - unknown_status - client_booking_id={client_booking_id}, status={b_status}"
+                f"#301 - unknown_status - identifier={identifier}, status={b_status}"
             )
             return Response(
                 {
@@ -841,47 +860,39 @@ def get_delivery_status(request):
                 status=HTTP_400_BAD_REQUEST,
             )
 
-        status_history = Dme_status_history.objects.filter(
+        status_histories = Dme_status_history.objects.filter(
             fk_booking_id=booking.pk_booking_id
         ).order_by("-z_createdTimeStamp")
 
-        if status_history:
-            last_updated = (
-                dme_time_lib.convert_to_AU_SYDNEY_tz(
-                    status_history.first().event_time_stamp
-                ).strftime("%d/%m/%Y %H:%M")
-                if status_history.first().event_time_stamp
-                else ""
-            )
-        else:
-            last_updated = ""
+        last_updated = ""
+        if status_histories and status_histories.first().event_time_stamp:
+            last_updated = dme_time_lib.convert_to_AU_SYDNEY_tz(
+                status_histories.first().event_time_stamp
+            ).strftime("%d/%m/%Y %H:%M")
 
-        lines = Booking_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id, packed_status=Booking_lines.ORIGINAL
+        booking_lines = Booking_lines.objects.filter(
+            fk_booking_id=booking.pk_booking_id
         )
 
-        # BSD
-        if (
-            booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
-            and booking.api_booking_quote
-        ):
-            lines = Booking_lines.objects.filter(
-                fk_booking_id=booking.pk_booking_id,
-                packed_status=booking.api_booking_quote.packed_status,
-            )
-
-        has_deleted_lines = lines.filter(is_deleted=True).exists()
-
-        if has_deleted_lines:
-            lines = lines.filter(is_deleted=True, e_item_type__isnull=False)
-        else:
-            lines = lines.filter(is_deleted=False)
-
-        lines = (
-            lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
+        booking_lines = (
+            booking_lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
             .exclude(e_item__icontains="(Ignored)")
-            .only("pk_lines_id", "e_qty", "e_item", "e_item_type")
+            .only(
+                "pk_lines_id",
+                "e_type_of_packaging",
+                "e_qty",
+                "e_item",
+                "e_item_type",
+                "e_dimUOM",
+                "e_dimLength",
+                "e_dimWidth",
+                "e_dimHeight",
+                "e_Total_KG_weight",
+            )
         )
+
+        original_lines = booking_lines.filter(packed_status=Booking_lines.ORIGINAL)
+        packed_lines = booking_lines.filter(packed_status=Booking_lines.SCANNED_PACK)
 
         booking_dict = {
             "uid": booking.pk,
@@ -910,25 +921,44 @@ def get_delivery_status(request):
             "b_064_b_del_phone_main": booking.de_to_Phone_Main,
             "b_000_3_consignment_number": booking.v_FPBookingNumber,
             "vx_freight_provider": booking.vx_freight_provider,
+            "vx_serviceName": booking.vx_serviceName,
+            "z_pod_signed_url": booking.z_pod_signed_url,
+            "z_pod_url": booking.z_pod_url,
         }
 
-        def line_to_dict(line):
-            try:
-                product = Client_Products.objects.get(
-                    child_model_number=line.e_item_type
-                ).description
-            except Exception as e:
-                logger.error(f"Client product doesn't exist: {e}")
+        def serialize_lines(lines, need_product=False):
+            _lines = []
+            for line in lines:
                 product = ""
 
-            return {
-                "e_item_type": line.e_item_type,
-                "l_003_item": line.e_item,
-                "l_002_qty": line.e_qty,
-                "product": product,
-            }
+                if need_product:
+                    try:
+                        product = Client_Products.objects.get(
+                            child_model_number=line.e_item_type
+                        ).description
+                    except Exception as e:
+                        logger.error(f"Client product doesn't exist: {e}")
+                        pass
 
-        lines = map(line_to_dict, lines)
+                _lines.append(
+                    {
+                        "e_type_of_packaging": line.e_type_of_packaging,
+                        "e_qty": line.e_qty,
+                        "e_item": line.e_item,
+                        "e_item_type": line.e_item_type,
+                        "e_dimUOM": line.e_dimUOM,
+                        "e_dimLength": line.e_dimLength,
+                        "e_dimWidth": line.e_dimWidth,
+                        "e_dimHeight": line.e_dimHeight,
+                        "e_Total_KG_weight": line.e_Total_KG_weight,
+                        "product": product,
+                    }
+                )
+
+            return _lines
+
+        original_lines = serialize_lines(original_lines, True)
+        packed_lines = serialize_lines(packed_lines, False)
 
         json_quote = None
 
@@ -937,23 +967,36 @@ def get_delivery_status(request):
             quote_data = SimpleQuoteSerializer(quote, context=context).data
             json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
 
-        last_milestone = "Delivered"
-        if category == "Booked":
-            step = 2
-        elif category == "Transit":
-            step = 3
-        elif category == "On Board for Delivery":
-            step = 4
-        elif category == "Complete":
-            step = 5
-        elif category == "Futile":
-            step = 5
-            last_milestone = "Futile Delivery"
-        elif category == "Returned":
-            step = 5
-            last_milestone = "Returned"
-        else:
+        if b_status in [
+            "In Transit",
+            "Partially In Transit",
+            "On-Forwarded",
+            "Futile Delivery",
+            "Delivery Delayed",
+            "Delivery Rebooked",
+            "Partially Delivered",
+        ]:
             step = 1
+        elif b_status in [
+            "On Board for Delivery",
+        ]:
+            step = 2
+        elif b_status in [
+            "Collected by Customer",
+            "Delivered",
+            "Lost In Transit",
+            "Damaged",
+            "Returning",
+            "Returned",
+            "Closed",
+            "Cancelled",
+            "On Hold",
+            "Cancel Requested",
+        ]:
+            step = 3
+            last_milestone = b_status if b_status != "Collected" else "Delivered"
+        else:
+            step = 0
             b_status = "Processing"
 
         steps = [
@@ -982,77 +1025,82 @@ def get_delivery_status(request):
                     and not booking.b_status in ["Closed", "Cancelled"]
                     and index == 4
                 ):
-                    timestamps.append(
-                        booking.s_21_Actual_Delivery_TimeStamp.strftime(
+                    delivery_date = ""
+                    if booking.s_21_Actual_Delivery_TimeStamp:
+                        delivery_date = booking.s_21_Actual_Delivery_TimeStamp.strftime(
                             "%d/%m/%Y %H:%M"
                         )
-                    )
+                    elif booking.z_ModifiedTimestamp:
+                        delivery_date = booking.z_ModifiedTimestamp.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    elif booking.b_dateBookedDate:
+                        delivery_date = booking.b_dateBookedDate.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    elif booking.puPickUpAvailFrom_Date:
+                        delivery_date = booking.puPickUpAvailFrom_Date.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    elif booking.z_CreatedTimestamp:
+                        delivery_date = booking.z_CreatedTimestamp.strftime(
+                            "%d/%m/%Y %H:%M"
+                        )
+                    else:
+                        delivery_date = ""
+                    timestamps.append(delivery_date)
                 else:
                     status_time = get_status_time_from_category(
                         booking.pk_booking_id, item
                     )
                     timestamps.append(
-                        dme_time_lib.convert_to_AU_SYDNEY_tz(status_time).strftime(
-                            "%d/%m/%Y %H:%M"
-                        )
-                        if status_time
-                        else None
+                        status_time.strftime("%d/%m/%Y %H:%M") if status_time else None
                     )
 
-        if step == 1:
-            eta = (
-                # (
-                #     dme_time_lib.convert_to_AU_SYDNEY_tz(booking.puPickUpAvailFrom_Date)
-                #     + timedelta(days=int(json_quote["eta"].split()[0]))
-                # ).strftime("%d/%m/%Y")
-                dme_time_lib.next_business_day(
-                    dme_time_lib.convert_to_AU_SYDNEY_tz(
-                        booking.puPickUpAvailFrom_Date
-                    ),
-                    int(json_quote["eta"].split()[0]),
-                    booking.vx_freight_provider,
-                ).strftime("%d/%m/%Y")
-                if json_quote and booking.puPickUpAvailFrom_Date
-                else ""
-            )
+        if step == 0:
+            from api.utils import get_eta_de_by
+
+            eta = get_eta_de_by(booking, booking.api_booking_quote)
         else:
-            eta = (
-                # (
-                #     dme_time_lib.convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate)
-                #     + timedelta(days=int(json_quote["eta"].split()[0]))
-                # ).strftime("%d/%m/%Y")
-                dme_time_lib.next_business_day(
-                    dme_time_lib.convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate),
-                    int(json_quote["eta"].split()[0]),
-                    booking.vx_freight_provider,
-                ).strftime("%d/%m/%Y")
-                if json_quote and booking.b_dateBookedDate
-                else ""
-            )
+            from api.utils import get_eta_pu_by, get_eta_de_by
+
+            s_06 = booking.get_s_06()
+
+            if not s_06:
+                booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
+                booking.s_06_Latest_Delivery_Date_TimeSet = get_eta_de_by(
+                    booking, booking.api_booking_quote
+                )
+                booking.save()
+                s_06 = booking.get_s_06()
+
+            eta = dme_time_lib.convert_to_AU_SYDNEY_tz(s_06).strftime("%d/%m/%Y %H:%M")
 
         try:
-            fp_status_history = (
+            fp_status_histories = (
                 FP_status_history.objects.values(
                     "id", "status", "desc", "event_timestamp"
                 )
                 .filter(booking_id=booking.id)
                 .order_by("-event_timestamp")
             )
-            fp_status_history = [
+            fp_status_histories = [
                 {
                     **item,
                     "desc": get_dme_status_from_fp_status(
                         booking.vx_freight_provider, item["status"]
-                    ),
-                    "event_timestamp": dme_time_lib.convert_to_AU_SYDNEY_tz(
-                        item["event_timestamp"]
-                    ),
+                    )
+                    if (
+                        not item["desc"]
+                        or str(booking.b_bookingID_Visual) in item["desc"]
+                    )
+                    else item["desc"],
                 }
-                for item in fp_status_history
+                for item in fp_status_histories
             ]
         except Exception as e:
             logger.info(f"Get FP status history error: {str(e)}")
-            fp_status_history = []
+            fp_status_histories = []
 
         return Response(
             {
@@ -1061,17 +1109,20 @@ def get_delivery_status(request):
                 "last_updated": last_updated,
                 "quote": json_quote,
                 "booking": booking_dict,
-                "lines": lines,
+                "original_lines": original_lines,
+                "packed_lines": packed_lines,
                 "eta_date": eta,
                 "last_milestone": last_milestone,
                 "timestamps": timestamps,
                 "logo_url": client.logo_url,
-                "scans": fp_status_history,
+                "scans": fp_status_histories,
             }
         )
 
     # 2. Try to find from Bok tables
-    bok_1 = BOK_1_headers.objects.filter(client_booking_id=client_booking_id).first()
+    bok_1 = BOK_1_headers.objects.filter(
+        Q(client_booking_id=identifier) | Q(pk_header_id=identifier)
+    ).first()
 
     if not bok_1:
         return Response(
@@ -1084,7 +1135,7 @@ def get_delivery_status(request):
             status=HTTP_400_BAD_REQUEST,
         )
 
-    lines = (
+    booking_lines = (
         BOK_2_lines.objects.filter(
             fk_header_id=bok_1.pk_header_id, is_deleted=True, e_item_type__isnull=False
         )
@@ -1151,7 +1202,7 @@ def get_delivery_status(request):
             "product": product,
         }
 
-    lines = map(line_to_dict, lines)
+    original_lines = map(line_to_dict, booking_lines)
 
     quote = bok_1.quote
     json_quote, eta = None, None
@@ -1188,7 +1239,7 @@ def get_delivery_status(request):
             "quote": json_quote,
             "booking": booking_dict,
             "eta_date": eta,
-            "last_milestone": "Delivered",
+            "last_milestone": last_milestone,
             "timestamps": [
                 dme_time_lib.convert_to_AU_SYDNEY_tz(bok_1.date_processed).strftime(
                     "%d/%m/%Y %H:%M:%S"
@@ -1202,6 +1253,8 @@ def get_delivery_status(request):
             ],
             "logo_url": client.logo_url,
             "scans": [],
+            "original_lines": original_lines,
+            "packed_lines": [],
         }
     )
 

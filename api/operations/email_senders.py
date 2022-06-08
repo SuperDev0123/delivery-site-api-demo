@@ -19,11 +19,10 @@ from api.models import (
     Dme_status_history,
     API_booking_quotes,
     Client_Products,
+    DME_Options,
 )
 from api.outputs.email import send_email
 from api.helpers.etd import get_etd
-
-logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +33,15 @@ def send_booking_status_email(bookingId, emailName, sender):
     """
     from api.common.common_times import convert_to_AU_SYDNEY_tz
 
+    LOG_ID = "[Tempo Status Email]"
+
     if settings.ENV in ["local", "dev"]:
         logger.info("Email trigger is ignored on LOCAL & DEV.")
+        return
+
+    option = DME_Options.objects.get(option_name="send_email_to_customer")
+    if option.option_value == 0:
+        logger.info(f"{LOG_ID} Disabled!")
         return
 
     templates = DME_Email_Templates.objects.filter(emailName=emailName)
@@ -469,7 +475,7 @@ def send_booking_status_email(bookingId, emailName, sender):
 
         cc_emails.append("dev.deliverme@gmail.com")
 
-    send_email(to_emails, cc_emails, subject, html, files, mime_type)
+    send_email(to_emails, cc_emails, [], subject, html, files, mime_type)
 
     EmailLogs.objects.create(
         booking_id=bookingId,
@@ -488,48 +494,64 @@ def send_status_update_email(
     When 'Plum Products Australia Ltd' bookings status is updated
     """
     from api.fp_apis.utils import get_status_time_from_category
+    from api.common.common_times import convert_to_AU_SYDNEY_tz
 
     LOG_ID = "[STATUS UPDATE EMAIL]"
     logger.info(
         f"{LOG_ID} BookingID: {booking.b_bookingID_Visual}, OrderNum: {booking.b_client_order_num}, New Status: {booking.b_status}"
     )
+
+    option = DME_Options.objects.get(option_name="send_email_to_customer")
+    if option.option_value == 0:
+        logger.info(f"{LOG_ID} Disabled!")
+        return
+
     b_status = booking.b_status
     quote = booking.api_booking_quote
 
-    if not category:
-        logger.info(
-            f"#301 - status_update_email - unknown_status - client_booking_id={booking.client_booking_id}, status={b_status}"
-        )
-        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-
-    status_history = Dme_status_history.objects.filter(
+    status_histories = Dme_status_history.objects.filter(
         fk_booking_id=booking.pk_booking_id
     ).order_by("-z_createdTimeStamp")
 
-    if status_history:
-        last_updated = (
-            status_history.first().event_time_stamp.strftime("%d/%m/%Y %H:%M")
-            if status_history.first().event_time_stamp
-            else ""
-        )
-    else:
-        last_updated = ""
+    last_updated = ""
+    if status_histories and status_histories.first().event_time_stamp:
+        last_updated = convert_to_AU_SYDNEY_tz(
+            status_histories.first().event_time_stamp
+        ).strftime("%d/%m/%Y %H:%M")
 
     last_milestone = "Delivered"
-    if category == "Booked":
+    if b_status in [
+        "Picking",
+        "Ready for Booking",
+        "Ready for Despatch",
+        "Booked",
+        "Futile Pickup",
+        "Pickup Rebooked",
+    ]:
         step = 2
-    elif category == "Transit":
+    elif b_status in [
+        "In Transit",
+        "Partial In Transit",
+        "On-Forwarded",
+        "Delivery Rebooked",
+        "Delivery Delayed",
+    ]:
         step = 3
-    elif category == "On Board for Delivery":
+    elif b_status == "On Board for Delivery":
         step = 4
-    elif category == "Complete":
+    elif b_status in [
+        "Lost In Transit",
+        "Damaged",
+        "Returning",
+        "Returned",
+        "Cancelled",
+        "Closed",
+        "Delivered",
+        "Collected",
+        "Partially Delivered",
+    ]:
         step = 5
-    elif category == "Futile":
-        step = 5
-        last_milestone = "Futile Delivery"
-    elif category == "Returned":
-        step = 5
-        last_milestone = "Returned"
+        last_milestone = b_status if b_status != "Collected" else "Delivered"
     else:
         step = 1
         b_status = "Processing"
@@ -721,6 +743,7 @@ def send_status_update_email(
     send_email(
         to_emails,
         cc_emails,
+        [],
         subject,
         html,
         [],
@@ -766,7 +789,7 @@ def send_picking_slip_printed_email(
             f"@109 [send_picking_slip_printed_email] DEV MODE --- subject: {subject}"
         )
     else:
-        send_email(to_emails, [], subject, message)
+        send_email(to_emails, [], [], subject, message)
 
 
 def send_email_missing_dims(client_name, order_num, lines_missing_dims):
@@ -781,10 +804,13 @@ def send_email_missing_dims(client_name, order_num, lines_missing_dims):
     cc_emails = [
         "dev.deliverme@gmail.com",
     ]
-    send_email(to_emails, cc_emails, subject, message)
+    send_email(to_emails, cc_emails, [], subject, message)
 
 
 def send_email_missing_status(booking, fp_name, b_status_API):
+    # Deactivated on 2022-02-16
+    return None
+
     message = f"#818 FP name: {fp_name.upper()}, New status: {b_status_API}"
     logger.error(message)
 
@@ -802,7 +828,7 @@ def send_email_missing_status(booking, fp_name, b_status_API):
     if fp_name.upper() == "ALLIED":
         to_emails.append("betty.petrov@alliedexpress.com.au")
 
-    send_email(to_emails, cc_emails, subject, message)
+    send_email(to_emails, cc_emails, [], subject, message)
 
 
 def send_email_manual_book(booking):
@@ -820,7 +846,7 @@ def send_email_manual_book(booking):
         to_emails = ["bookings@deliver-me.com.au", "care@deliver-me.com.au"]
         cc_emails = ["dev.deliverme@gmail.com"]
 
-    send_email(to_emails, cc_emails, subject, message)
+    send_email(to_emails, cc_emails, [], subject, message)
 
 
 def send_email_to_admins(subject, message):
@@ -842,4 +868,9 @@ def send_email_to_admins(subject, message):
             to_emails = ["goldj@deliver-me.com.au"]
 
         cc_emails = ["dev.deliverme@gmail.com", "goldj@deliver-me.com.au"]
-        send_email(to_emails, cc_emails, subject, message)
+        send_email(to_emails, cc_emails, [], subject, message)
+
+
+def send_email_to_developers(subject, message):
+    cc_emails = ["dev.deliverme@gmail.com", "goldj@deliver-me.com.au"]
+    send_email(to_emails, cc_emails, [], subject, message)

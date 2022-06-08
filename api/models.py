@@ -1,5 +1,6 @@
 import pytz
 import logging
+import math
 from datetime import datetime, date, timedelta, time
 
 from django.utils import timezone
@@ -12,6 +13,7 @@ from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import User
 from django.dispatch import receiver
+from api.helpers.cubic import get_cubic_meter, getM3ToKgFactor
 
 from api.common import trace_error, constants as dme_constants
 
@@ -161,7 +163,7 @@ class Client_warehouses(models.Model):
         default=None,
     )
     contact_name = models.CharField(
-        max_length=64,
+        max_length=128,
         null=True,
         default=None,
     )
@@ -170,15 +172,27 @@ class Client_warehouses(models.Model):
         null=True,
         default=None,
     )
-    hours = models.IntegerField(verbose_name=_("warehouse hours"))
-    type = models.CharField(
-        verbose_name=_("warehouse type"), max_length=30, blank=True, null=True
+    hours = models.CharField(
+        max_length=64,
+        blank=False,
+        null=True,
+        default=None,
+    )
+    business_type = models.CharField(
+        verbose_name=_("warehouse type"), max_length=64, blank=True, null=True
     )
     client_warehouse_code = models.CharField(
         verbose_name=_("warehouse code"), max_length=100, blank=True, null=True
     )
     success_type = models.IntegerField(default=0)
     use_dme_label = models.BooleanField(default=False)
+    instructions_linehual = models.CharField(
+        max_length=255,
+        blank=False,
+        null=True,
+        default=None,
+    )
+    main_warehouse = models.BooleanField(default=False)
 
     class Meta:
         db_table = "dme_client_warehouses"
@@ -270,6 +284,8 @@ class Dme_manifest_log(models.Model):
     manifest_url = models.CharField(max_length=200, blank=True, null=True)
     is_one_booking = models.BooleanField(blank=True, null=True, default=False)
     bookings_cnt = models.IntegerField(default=0, blank=True, null=True)
+    # Used for manifests bookings to book on TNT
+    need_truck = models.BooleanField(default=False, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -348,6 +364,8 @@ class Fp_freight_providers(models.Model):
     service_cutoff_time = models.TimeField(default=None, blank=True, null=True)
     rule_type = models.ForeignKey(RuleTypes, on_delete=models.CASCADE, null=True)
     hex_color_code = models.CharField(max_length=6, blank=True, null=True)
+    category = models.CharField(max_length=64, blank=True, null=True, default=None)
+    last_vehicle_number = models.IntegerField(default=0, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -366,7 +384,6 @@ class Fp_freight_providers(models.Model):
         blank=True,
         auto_now=True,
     )
-    hex_color_code = models.CharField(max_length=6, blank=True, null=True)
 
     class Meta:
         db_table = "fp_freight_providers"
@@ -400,6 +417,7 @@ class FP_vehicles(models.Model):
         default=None,
     )
     max_mass = models.IntegerField(default=0, null=True, blank=True)
+    max_cbm = models.FloatField(default=None, null=True)  # Cubic Meter
     pallets = models.IntegerField(default=0, null=True, blank=True)
     pallet_UOM = models.CharField(
         max_length=16,
@@ -621,18 +639,6 @@ class API_booking_quotes(models.Model):
     z_fp_delivery_hours = models.IntegerField(
         verbose_name=_("Delivery Hours"), blank=True, null=True
     )
-    s_05_LatestPickUpDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest PickUP Date Time Final"),
-        default=timezone.now,
-        blank=True,
-        null=True,
-    )
-    s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest Delivery Date Time Final"),
-        default=timezone.now,
-        blank=True,
-        null=True,
-    )
     z_03_selected_lowest_priced_FC_that_passed = models.FloatField(
         verbose_name=_("Selected Lowest Priced FC That Passed"), blank=True, null=True
     )
@@ -742,12 +748,6 @@ class Bookings(models.Model):
         blank=True,
         null=True,
         default=None,
-    )
-    s_05_LatestPickUpDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Lastest PickUp DateTime"), blank=True, null=True, default=None
-    )
-    s_06_LatestDeliveryDateTimeFinal = models.DateTimeField(
-        verbose_name=_("Latest Delivery DateTime"), blank=True, null=True, default=None
     )
     v_FPBookingNumber = models.CharField(
         verbose_name=_("FP Booking Number"),
@@ -1288,6 +1288,13 @@ class Bookings(models.Model):
         null=True,
         default=None,
     )
+    b_promo_code = models.CharField(
+        verbose_name=_("Promotion Code"),
+        max_length=32,
+        blank=True,
+        null=True,
+        default=None,
+    )
     v_service_Type_ID = models.CharField(
         verbose_name=_("Service Type ID"),
         max_length=64,
@@ -1821,9 +1828,7 @@ class Bookings(models.Model):
     inv_billing_status = models.CharField(
         max_length=32, blank=True, null=True, default=None
     )
-    inv_billing_status_note = models.CharField(
-        max_length=255, blank=True, null=True, default=None
-    )
+    inv_billing_status_note = models.TextField(blank=True, null=True, default=None)
     check_pod = models.BooleanField(default=False, blank=True, null=True)
     vx_freight_provider_carrier = models.CharField(
         max_length=32, blank=True, null=True, default=None
@@ -1908,6 +1913,7 @@ class Bookings(models.Model):
     booking_type = models.CharField(
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
+    selected = models.BooleanField(default=None, null=True)
 
     class Meta:
         db_table = "dme_bookings"
@@ -1920,7 +1926,7 @@ class Bookings(models.Model):
 
     def had_status(self, status):
         results = Dme_status_history.objects.filter(
-            fk_booking_id=self.pk_booking_id, status_last__iexact=status
+            fk_booking_id=self.pk_booking_id, status_last__icontains=status
         )
 
         return True if results else False
@@ -1939,26 +1945,26 @@ class Bookings(models.Model):
 
         return status_histories
 
-    @property
-    def business_group(self):
-        customer_group_name = ""
-        customer_groups = Dme_utl_client_customer_group.objects.all()
+    # @property
+    # def business_group(self):
+    #     customer_group_name = ""
+    #     customer_groups = Dme_utl_client_customer_group.objects.all()
 
-        for customer_group in customer_groups:
-            if (
-                customer_group
-                and self.deToCompanyName
-                and customer_group.name_lookup.lower() in self.deToCompanyName.lower()
-            ):
-                customer_group_name = customer_group.group_name
+    #     for customer_group in customer_groups:
+    #         if (
+    #             customer_group
+    #             and self.deToCompanyName
+    #             and customer_group.name_lookup.lower() in self.deToCompanyName.lower()
+    #         ):
+    #             customer_group_name = customer_group.group_name
 
-        return customer_group_name
+    #     return customer_group_name
 
-    @property
-    def dme_delivery_status_category(self):
-        from api.fp_apis.utils import get_status_category_from_status
+    # @property
+    # def dme_delivery_status_category(self):
+    #     from api.fp_apis.utils import get_status_category_from_status
 
-        return get_status_category_from_status(self.b_status)
+    #     return get_status_category_from_status(self.b_status)
 
     def lines(self):
         return Booking_lines.objects.filter(fk_booking_id=self.pk_booking_id)
@@ -1983,23 +1989,23 @@ class Bookings(models.Model):
             logger.error(f"#552 [get_total_lines_qty] - {str(e)}")
             return 0
 
-    @property
-    def client_item_references(self):
-        try:
-            client_item_references = []
-            booking_lines = Booking_lines.objects.filter(
-                fk_booking_id=self.pk_booking_id
-            )
+    # @property
+    # def client_item_references(self):
+    #     try:
+    #         client_item_references = []
+    #         booking_lines = Booking_lines.objects.filter(
+    #             fk_booking_id=self.pk_booking_id
+    #         )
 
-            for booking_line in booking_lines:
-                if booking_line.client_item_reference is not None:
-                    client_item_references.append(booking_line.client_item_reference)
+    #         for booking_line in booking_lines:
+    #             if booking_line.client_item_reference is not None:
+    #                 client_item_references.append(booking_line.client_item_reference)
 
-            return ", ".join(client_item_references)
-        except Exception as e:
-            trace_error.print()
-            logger.error(f"#553 [client_item_references] - {str(e)}")
-            return ""
+    #         return ", ".join(client_item_references)
+    #     except Exception as e:
+    #         trace_error.print()
+    #         logger.error(f"#553 [client_item_references] - {str(e)}")
+    #         return ""
 
     @property
     def clientRefNumbers(self):
@@ -2070,6 +2076,30 @@ class Bookings(models.Model):
         except:
             return None
 
+    def get_manual_surcharges_total(self):
+        _total = 0
+        manual_surcharges = Surcharge.objects.filter(booking=self)
+
+        for surcharge in manual_surcharges:
+            _total += surcharge.qty * surcharge.amount
+
+        return _total
+
+    def get_s_06(self):
+        LOG_ID = "[GET_s_06]"
+
+        if (
+            not self.s_06_Latest_Delivery_Date_TimeSet
+            and not self.s_06_Latest_Delivery_Date_Time_Override
+        ):
+            return None
+            logger.error(f"{LOG_ID} No ETA: {self.b_bookingID_Visual}")
+
+        if self.s_06_Latest_Delivery_Date_Time_Override:
+            return self.s_06_Latest_Delivery_Date_Time_Override
+        elif self.s_06_Latest_Delivery_Date_TimeSet:
+            return self.s_06_Latest_Delivery_Date_TimeSet
+
     def save(self, *args, **kwargs):
         self.z_ModifiedTimestamp = datetime.now()
         creating = self._state.adding
@@ -2078,6 +2108,19 @@ class Bookings(models.Model):
             cls = self.__class__
             old = cls.objects.get(pk=self.pk)
             new = self
+
+            if (
+                old.vx_freight_provider != new.vx_freight_provider
+                and new.vx_freight_provider == "Deliver-ME"
+                and not new.b_booking_project
+            ):
+                self.b_booking_project = "not assigned yet"
+            elif (
+                old.vx_freight_provider != new.vx_freight_provider
+                and old.vx_freight_provider == "Deliver-ME"
+                and new.b_booking_project == "not assigned yet"
+            ):
+                self.b_booking_project = None
 
             changed_fields = []
             for field in cls._meta.get_fields():
@@ -2321,12 +2364,39 @@ class Booking_lines(models.Model):
         # Check if all other lines are picked at Warehouse
         creating = self._state.adding
         self.z_modifiedTimeStamp = datetime.now()
+        self.e_1_Total_dimCubicMeter = round(
+            get_cubic_meter(
+                self.e_dimLength,
+                self.e_dimWidth,
+                self.e_dimHeight,
+                self.e_dimUOM,
+                self.e_qty,
+            ),
+            5,
+        )
+
+        bookings = Bookings.objects.filter(pk_booking_id=self.fk_booking_id).only(
+            "vx_freight_provider"
+        )
+        if bookings:
+            m3ToKgFactor = getM3ToKgFactor(
+                bookings[0].vx_freight_provider,
+                self.e_dimLength,
+                self.e_dimWidth,
+                self.e_dimHeight,
+                self.e_weightPerEach,
+                self.e_dimUOM,
+                self.e_weightUOM,
+            )
+
+            self.total_2_cubic_mass_factor_calc = math.ceil(
+                self.e_1_Total_dimCubicMeter * m3ToKgFactor
+            )
 
         if self.pk:
             cls = self.__class__
             old = cls.objects.get(pk=self.pk)
             new = self
-
             changed_fields = []
             for field in cls._meta.get_fields():
                 field_name = field.name
@@ -2338,19 +2408,20 @@ class Booking_lines(models.Model):
             kwargs["update_fields"] = changed_fields
 
         if not creating and self.picked_up_timestamp:
-            booking = Bookings.objects.get(pk_booking_id=self.fk_booking_id)
+            try:
+                if "plum" in booking.b_client_name.lower():
+                    booking_lines = Booking_lines.objects.filter(
+                        fk_booking_id=booking.pk_booking_id
+                    ).exclude(pk=self.pk)
+                    booking_lines_cnt = booking_lines.count()
+                    picked_up_lines_cnt = booking_lines.filter(
+                        picked_up_timestamp__isnull=False
+                    ).count()
 
-            if "plum" in booking.b_client_name.lower():
-                booking_lines = Booking_lines.objects.filter(
-                    fk_booking_id=booking.pk_booking_id
-                ).exclude(pk=self.pk)
-                booking_lines_cnt = booking_lines.count()
-                picked_up_lines_cnt = booking_lines.filter(
-                    picked_up_timestamp__isnull=False
-                ).count()
-
-                if booking_lines_cnt - 1 == picked_up_lines_cnt:
-                    status_history.create(booking, "Ready for Booking", "DME_BE")
+                    if booking_lines_cnt - 1 == picked_up_lines_cnt:
+                        status_history.create(booking, "Ready for Booking", "DME_BE")
+            except:
+                pass
 
         return super(Booking_lines, self).save(*args, **kwargs)
 
@@ -2973,6 +3044,7 @@ class BOK_1_headers(models.Model):
     b_092_booking_type = models.CharField(
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
+    b_093_b_promo_code = models.CharField(max_length=32, default=None, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)
@@ -4699,7 +4771,7 @@ class EmailLogs(models.Model):
 
 class BookingSets(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=32, blank=True, null=True, default=None)
+    name = models.CharField(max_length=255, blank=True, null=True, default=None)
     booking_ids = models.TextField(blank=True, null=True, default=None)
     note = models.TextField(max_length=512, blank=True, null=True, default=None)
     status = models.CharField(max_length=255, blank=True, null=True, default=None)
@@ -4980,69 +5052,12 @@ class Client_FP(models.Model):
     id = models.AutoField(primary_key=True)
     client = models.ForeignKey(DME_clients, on_delete=models.CASCADE)
     fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
+    fuel_levy = models.FloatField(default=None, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     z_createdTimeStamp = models.DateTimeField(null=True, auto_now_add=True)
 
     class Meta:
         db_table = "client_fp"
-
-
-class CostOption(models.Model):
-    id = models.AutoField(primary_key=True)
-    code = models.CharField(max_length=16, default=None, null=True)
-    description = models.CharField(max_length=64, default=None, null=True)
-    initial_markup_percentage = models.FloatField(default=0, null=True)
-    is_active = models.BooleanField(default=True)
-    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
-    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
-    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
-    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = "dme_cost_options"
-
-
-class CostOptionMap(models.Model):
-    """
-    Mapping table from FP cost option to DME's
-    """
-
-    id = models.AutoField(primary_key=True)
-    fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE)
-    fp_cost_option = models.CharField(max_length=128, default=None, null=True)
-    dme_cost_option = models.ForeignKey(CostOption, on_delete=models.CASCADE)
-    is_active = models.BooleanField(default=True)
-    amount = models.FloatField(default=0, null=True)
-    is_percentage = models.BooleanField(default=False)
-    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
-    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
-    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
-    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = "dme_utl_map_fp_cost_options"
-
-
-class BookingCostOption(models.Model):
-    id = models.AutoField(primary_key=True)
-    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
-    cost_option = models.ForeignKey(CostOption, on_delete=models.CASCADE)
-    is_active = models.BooleanField(default=True)
-    amount = models.FloatField(default=0, null=True)
-    is_percentage = models.BooleanField(default=False)
-    qty = models.FloatField(default=1, null=True)
-    markup_percentage = models.FloatField(default=0, null=True)
-    z_createdAt = models.DateTimeField(null=True, default=timezone.now)
-    z_createdBy = models.CharField(max_length=32, blank=True, null=True)
-    z_modifiedAt = models.DateTimeField(null=True, default=timezone.now)
-    z_modifiedBy = models.CharField(max_length=32, blank=True, null=True)
-
-    class Meta:
-        db_table = "dme_booking_cost_options"
-        unique_together = (
-            "booking",
-            "cost_option",
-        )
 
 
 class FPRouting(models.Model):
@@ -5105,15 +5120,63 @@ class PostalCode(models.Model):
 
 class Surcharge(models.Model):
     id = models.AutoField(primary_key=True)
-    quote = models.ForeignKey(API_booking_quotes, on_delete=models.CASCADE)
+    quote = models.ForeignKey(API_booking_quotes, on_delete=models.CASCADE, null=True)
     fp = models.ForeignKey(Fp_freight_providers, on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=255, default=None, null=True)
     amount = models.FloatField(null=True, default=None)
     line_id = models.CharField(max_length=36, default=None, null=True)  # Line/BOK_2 pk
     qty = models.IntegerField(blank=True, null=True, default=0)  # Line/BOK_2 qty
 
+    ### New fields from 2022-02-24 ###
+    booking = models.ForeignKey(
+        Bookings, on_delete=models.CASCADE, null=True, default=None
+    )
+    # Visible to Customer
+    visible = models.BooleanField(default=False)
+    # Is manually entered by DME admin
+    is_manually_entered = models.BooleanField(default=False)
+    connote_or_reference = models.CharField(max_length=64, default=None, null=True)
+    booked_date = models.DateTimeField(null=True, default=timezone.now)
+    eta_pu_date = models.DateTimeField(null=True, default=None)
+    eta_de_date = models.DateTimeField(null=True, default=None)
+    actual_pu_date = models.DateTimeField(null=True, default=None)
+    actual_de_date = models.DateTimeField(null=True, default=None)
+
+    def save(self, *args, **kwargs):
+        creating = self._state.adding
+
+        if not creating:
+            cls = self.__class__
+            old = cls.objects.get(pk=self.pk)
+            new = self
+
+            changed_fields = []
+            for field in cls._meta.get_fields():
+                field_name = field.name
+                try:
+                    if getattr(old, field_name) != getattr(new, field_name):
+                        changed_fields.append(field_name)
+                except Exception as ex:  # Catch field does not exist exception
+                    pass
+            kwargs["update_fields"] = changed_fields
+        return super(Surcharge, self).save(*args, **kwargs)
+
     class Meta:
         db_table = "dme_surcharge"
+
+
+@receiver(post_save, sender=Surcharge)
+def post_save_surcharge(sender, instance, created, update_fields, **kwargs):
+    from api.signal_handlers.surcharge import post_save_handler
+
+    post_save_handler(instance, created, update_fields)
+
+
+@receiver(post_delete, sender=Surcharge)
+def post_delete_surcharge(sender, instance, **kwargs):
+    from api.signal_handlers.surcharge import post_delete_handler
+
+    post_delete_handler(instance)
 
 
 class FP_status_history(models.Model):
@@ -5149,6 +5212,12 @@ class ZohoTicketSummary(models.Model):
 class S_Bookings(models.Model):
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(blank=True, null=True, default=0)
+    b_client_booking_ref_num = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        default=None,
+    )
     b_dateBookedDate = models.DateTimeField(blank=True, null=True, default=None)
     v_FPBookingNumber = models.CharField(
         max_length=40,
@@ -5252,6 +5321,18 @@ class S_Bookings(models.Model):
     )
     last_cs_note = models.TextField(null=True, default=None)
     last_cs_note_timestamp = models.DateTimeField(null=True, default=None)
+    s_06_Estimated_Delivery_TimeStamp = models.DateTimeField(
+        blank=True, null=True, default=None
+    )
+    s_21_Actual_Delivery_TimeStamp = models.DateTimeField(
+        blank=True, null=True, default=None
+    )
+    b_booking_Priority = models.CharField(
+        max_length=32,
+        blank=True,
+        null=True,
+        default=None,
+    )
     z_createdAt = models.DateTimeField(null=True, default=timezone.now)
     z_updatedAt = models.DateTimeField(null=True, default=timezone.now)
 
@@ -5325,3 +5406,90 @@ class DMEBookingCSNote(models.Model):
 
     class Meta:
         db_table = "dme_booking_cs_note"
+
+
+class DME_Vehicle(models.Model):
+    id = models.AutoField(primary_key=True)
+    number = models.CharField(max_length=32, blank=True, null=True, default=None)
+    code = models.CharField(max_length=128, blank=True, null=True, default=None)
+    vehicle = models.CharField(max_length=128, blank=True, null=True, default=None)
+    provider = models.CharField(max_length=128, blank=True, null=True, default=None)
+    suburb_from = models.CharField(max_length=32, blank=True, null=True, default=None)
+    suburb_to = models.CharField(max_length=32, blank=True, null=True, default=None)
+    linehaul_booked_date = models.DateTimeField(null=True)
+    departure_date_planned = models.TimeField(null=True)
+    arrival_date_planned = models.DateTimeField(null=True)
+    arrival_date_actual = models.DateTimeField(null=True)
+    inv_linehaul_cost_ex_gst = models.FloatField(blank=True, null=True)
+    guarantor = models.CharField(max_length=64, blank=True, null=True, default=None)
+    guaranteed_fill_percent = models.FloatField(blank=True, null=True)
+    notes = models.CharField(max_length=255, blank=True, null=True, default=None)
+    status = models.CharField(max_length=64, blank=True, null=True, default=None)
+    active = models.BooleanField(null=True, default=None)
+    paid_for_by = models.CharField(max_length=32, blank=True, null=True, default=None)
+    constant_1 = models.BooleanField(null=True, default=None)
+    fp_to_view = models.CharField(max_length=64, blank=True, null=True, default=None)
+    consignment_to_view = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    fp_invoice_id_to_set = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    dme_linehaul_extra01 = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    dme_linehaul_extra02 = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
+    planned_arrival = models.CharField(
+        max_length=32, blank=True, null=True, default=None
+    )
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"),
+        null=True,
+        blank=True,
+        auto_now_add=True,
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        auto_now=True,
+    )
+
+    class Meta:
+        db_table = "dme_vehicle"
+
+
+class LinehaulOrder(models.Model):
+    id = models.AutoField(primary_key=True)
+    linehaul = models.ForeignKey(DME_Vehicle, on_delete=models.CASCADE)
+    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE)
+    quote = models.ForeignKey(API_booking_quotes, on_delete=models.CASCADE)
+    z_createdByAccount = models.CharField(
+        verbose_name=_("Created by account"), max_length=64, blank=True, null=True
+    )
+    z_createdTimeStamp = models.DateTimeField(
+        verbose_name=_("Created Timestamp"),
+        null=True,
+        blank=True,
+        auto_now_add=True,
+    )
+    z_modifiedByAccount = models.CharField(
+        verbose_name=_("Modified by account"), max_length=64, blank=True, null=True
+    )
+    z_modifiedTimeStamp = models.DateTimeField(
+        verbose_name=_("Modified Timestamp"),
+        null=True,
+        blank=True,
+        auto_now=True,
+    )
+
+    class Meta:
+        db_table = "dme_linehaul_orders"

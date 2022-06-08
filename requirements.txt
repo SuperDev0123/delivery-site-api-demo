@@ -94,3 +94,4 @@ WebOb==1.8.6
 XlsxWriter==1.1.2
 zeep==3.4.0
 zplgrf==1.6.0
+numpy==1.21.5

@@ -1,5 +1,6 @@
 import re
 import time
+import pytz
 from datetime import datetime
 
 from rest_framework import serializers
@@ -35,9 +36,6 @@ from api.models import (
     DME_Augment_Address,
     DME_Roles,
     DME_clients,
-    CostOption,
-    CostOptionMap,
-    BookingCostOption,
     Pallet,
     Surcharge,
     Dme_utl_fp_statuses,
@@ -47,6 +45,7 @@ from api.models import (
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
 from api.common import math as dme_math
+from api.common.constants import BOOKING_FIELDS_4_ALLBOOKING_TABLE
 from api.fp_apis.operations.surcharge.common import SURCHARGE_NAME_DESC
 from api.fp_apis.operations.surcharge.index import (
     get_surcharges as get_surcharges_with_quote,
@@ -96,35 +95,20 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
         return None
 
     def get_remaining_time(self, obj):
-        if obj.de_Deliver_By_Date:
-            now = datetime.now()
-            future = datetime(
-                year=obj.de_Deliver_By_Date.year,
-                month=obj.de_Deliver_By_Date.month,
-                day=obj.de_Deliver_By_Date.day,
-                hour=obj.de_Deliver_By_Hours or 0,
-                minute=obj.de_Deliver_By_Minutes or 0,
-            )
-            time_delta = future - now
+        if obj.s_06_Latest_Delivery_Date_TimeSet:
+            utcnow = datetime.utcnow().replace(tzinfo=pytz.UTC)
+            time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - utcnow
             days = time_delta.days
             hours = int(time_delta.seconds / 60 / 60)
             mins = int(time_delta.seconds / 60 % 60)
-
             return f"{str(days).zfill(2)}:{str(hours).zfill(2)}:{str(mins).zfill(2)}"
 
         return None
 
     def get_remaining_time_in_seconds(self, obj):
-        if obj.de_Deliver_By_Date:
-            now = datetime.now()
-            future = datetime(
-                year=obj.de_Deliver_By_Date.year,
-                month=obj.de_Deliver_By_Date.month,
-                day=obj.de_Deliver_By_Date.day,
-                hour=obj.de_Deliver_By_Hours or 0,
-                minute=obj.de_Deliver_By_Minutes or 0,
-            )
-            time_delta = future - now
+        if obj.s_06_Latest_Delivery_Date_TimeSet:
+            utcnow = datetime.utcnow().replace(tzinfo=pytz.UTC)
+            time_delta = obj.s_06_Latest_Delivery_Date_TimeSet - utcnow
             days = time_delta.days
             return days * 24 * 3600 + time_delta.seconds
 
@@ -169,89 +153,27 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
         }
 
     def get_cost_dollar(self, obj):
-        if obj.api_booking_quote:
+        if obj.inv_sell_quoted_override:
+            return round(obj.inv_sell_quoted_override, 2)
+        elif obj.inv_booked_quoted:
+            return round(obj.inv_booked_quoted, 2)
+        elif obj.inv_sell_quoted:
+            return round(obj.inv_sell_quoted, 2)
+        elif obj.api_booking_quote:
             return round(obj.api_booking_quote.client_mu_1_minimum_values, 2)
 
     class Meta:
         model = Bookings
         read_only_fields = (
-            "clientRefNumbers",  # property
-            "gap_ras",  # property
+            # "clientRefNumbers",  # property
+            # "gap_ras",  # property
             "de_Deliver_By_Time",
             "remaining_time",
             "remaining_time_in_seconds",
             "cheapest_quote",
             "cost_dollar",
         )
-        fields = read_only_fields + (
-            "id",
-            "pk_booking_id",
-            "b_bookingID_Visual",
-            "puCompany",
-            "pu_Address_Street_1",
-            "pu_Address_street_2",
-            "pu_Address_PostalCode",
-            "pu_Address_Suburb",
-            "pu_Address_Country",
-            "de_To_Address_Street_1",
-            "de_To_Address_Street_2",
-            "de_To_Address_PostalCode",
-            "de_To_Address_Suburb",
-            "de_To_Address_Country",
-            "deToCompanyName",
-            "v_FPBookingNumber",
-            "vx_freight_provider",
-            "vx_serviceName",
-            "z_label_url",
-            "z_pod_url",
-            "z_pod_signed_url",
-            "z_manifest_url",
-            "pu_Address_State",
-            "de_To_Address_State",
-            "b_status",
-            "b_status_category",
-            "b_dateBookedDate",
-            "s_20_Actual_Pickup_TimeStamp",
-            "s_21_Actual_Delivery_TimeStamp",
-            "b_client_name",
-            "fk_client_warehouse",
-            "b_client_warehouse_code",
-            "b_clientPU_Warehouse",
-            "booking_Created_For",
-            "b_clientReference_RA_Numbers",
-            "de_to_PickUp_Instructions_Address",
-            "b_dateBookedDate",
-            "z_lock_status",
-            "dme_status_detail",
-            "dme_status_action",
-            "puPickUpAvailFrom_Date",
-            "pu_PickUp_By_Date",
-            "de_Deliver_From_Date",
-            "de_Deliver_By_Date",
-            "b_client_order_num",
-            "b_client_sales_inv_num",
-            "b_client_name_sub",
-            "x_manual_booked_flag",
-            "b_fp_qty_delivered",
-            "manifest_timestamp",
-            "b_booking_project",
-            "z_calculated_ETA",
-            "b_project_due_date",
-            "delivery_booking",
-            "fp_store_event_date",
-            "fp_store_event_time",
-            "fp_store_event_desc",
-            "fp_received_date_time",
-            "b_given_to_transport_date_time",
-            "z_downloaded_shipping_label_timestamp",
-            "api_booking_quote",
-            "b_status_API",
-            "b_error_Capture",
-            "kf_client_id",
-            "z_locked_status_time",
-            "b_booking_Priority",
-            "b_booking_Category",
-        )
+        fields = read_only_fields + tuple(BOOKING_FIELDS_4_ALLBOOKING_TABLE)
 
 
 class BookingSerializer(serializers.ModelSerializer):
@@ -266,6 +188,7 @@ class BookingSerializer(serializers.ModelSerializer):
     inv_cost_quoted = serializers.FloatField(read_only=True)
     qtys_in_stock = serializers.SerializerMethodField(read_only=True)
     children = serializers.SerializerMethodField(read_only=True)
+    cs_notes_cnt = serializers.SerializerMethodField(read_only=True)
 
     def get_eta_pu_by(self, obj):
         return utils.get_eta_pu_by(obj)
@@ -310,6 +233,8 @@ class BookingSerializer(serializers.ModelSerializer):
                 return round(
                     obj.inv_sell_quoted_override * (1 + client_customer_mark_up), 2
                 )
+            elif obj.inv_booked_quoted:
+                return round(obj.inv_booked_quoted * (1 + client_customer_mark_up), 2)
             elif obj.inv_sell_quoted:
                 return round(obj.inv_sell_quoted * (1 + client_customer_mark_up), 2)
 
@@ -411,6 +336,9 @@ class BookingSerializer(serializers.ModelSerializer):
 
         return _qtys_in_stock
 
+    def get_cs_notes_cnt(self, obj):
+        return DMEBookingCSNote.objects.filter(booking_id=obj.pk).count()
+
     class Meta:
         model = Bookings
         read_only_fields = (
@@ -419,15 +347,16 @@ class BookingSerializer(serializers.ModelSerializer):
             "pricing_cost",  # serializer method
             "pricing_account_code",  # serializer method
             "pricing_service_name",  # serializer method
-            "business_group",  # property
-            "client_item_references",  # property
-            "clientRefNumbers",  # property
-            "gap_ras",  # property
+            # "business_group",  # property
+            # "client_item_references",  # property
+            # "clientRefNumbers",  # property
+            # "gap_ras",  # property
             "is_auto_augmented",  # Auto Augmented
             "customer_cost",  # Customer cost (Client: Plum)
             "quote_packed_status",
             "qtys_in_stock",  # Child booking related field
             "children",  # Child booking related field
+            "cs_notes_cnt",
         )
         fields = read_only_fields + (
             "id",
@@ -487,6 +416,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "consignment_label_link",
             "s_02_Booking_Cutoff_Time",
             "z_CreatedTimestamp",
+            "z_ModifiedTimestamp",
             "b_dateBookedDate",
             "total_lines_qty_override",
             "total_1_KG_weight_override",
@@ -508,7 +438,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "de_Deliver_By_Date",
             "de_Deliver_By_Hours",
             "de_Deliver_By_Minutes",
-            "client_item_references",
+            # "client_item_references",
             "v_service_Type",
             "vx_serviceName",
             "vx_account_code",
@@ -548,6 +478,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "vx_futile_Booking_Notes",
             "s_05_Latest_Pick_Up_Date_TimeSet",
             "s_06_Latest_Delivery_Date_TimeSet",
+            "s_06_Latest_Delivery_Date_Time_Override",
             "b_handling_Instructions",
             "b_status_API",
             "b_booking_Notes",
@@ -727,7 +658,8 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         return client_customer_mark_up
 
     def get_surcharges(self, obj):
-        surcharges = get_surcharges_with_quote(obj)
+        booking = self.context.get("booking")
+        surcharges = get_surcharges_with_quote(obj, booking)
         context = {"client_mark_up_percent": obj.client_mark_up_percent}
         return SurchargeSerializer(surcharges, context=context, many=True).data
 
@@ -887,6 +819,7 @@ class FpSerializer(serializers.ModelSerializer):
             "service_cutoff_time",
             "rule_type",
             "rule_type_code",
+            "fp_markupfuel_levy_percent",
         )
 
 
@@ -1057,41 +990,6 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CostOptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CostOption
-        fields = ("id", "code", "description", "initial_markup_percentage")
-
-
-class CostOptionMapSerializer(serializers.ModelSerializer):
-    cost_option = serializers.SerializerMethodField(read_only=True)
-
-    def get_cost_option(self, obj):
-        return CostOptionSerializer(obj.dme_cost_option).data
-
-    class Meta:
-        model = CostOptionMap
-        exclude = (
-            "z_createdBy",
-            "z_modifiedAt",
-            "z_modifiedBy",
-            "fp",
-            "dme_cost_option",
-            "is_active",
-        )
-
-
-class BookingCostOptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BookingCostOption
-        exclude = (
-            "z_createdBy",
-            "z_modifiedAt",
-            "z_modifiedBy",
-            "is_active",
-        )
-
-
 class PalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
@@ -1103,7 +1001,10 @@ class SurchargeSerializer(serializers.ModelSerializer):
     amount_cl = serializers.SerializerMethodField(read_only=True)
 
     def get_description(self, obj):
-        return SURCHARGE_NAME_DESC[obj.fp.fp_company_name.upper()][obj.name]
+        try:
+            return SURCHARGE_NAME_DESC[obj.fp.fp_company_name.upper()][obj.name]
+        except:
+            return ""
 
     def get_amount_cl(self, obj):
         client_mark_up_percent = self.context.get("client_mark_up_percent", 0)

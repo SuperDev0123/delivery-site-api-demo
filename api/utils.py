@@ -50,10 +50,15 @@ from reportlab.lib import colors
 from django.conf import settings
 from api.models import *
 from api.common import trace_error
-from api.common.common_times import next_business_day, convert_to_UTC_tz
+from api.common.common_times import (
+    next_business_day,
+    convert_to_UTC_tz,
+    TIME_DIFFERENCE,
+)
 from api.operations.generate_xls_report import build_xls
 from api.outputs.email import send_email
 from api.fp_apis.utils import gen_consignment_num
+from api.helpers import string
 
 if settings.ENV == "local":
     production = False  # Local
@@ -216,6 +221,18 @@ def get_sydney_now_time(return_type="char"):
         return sydney_now
     elif return_type == "date-char":
         return sydney_now.strftime("%Y-%m-%d")
+
+
+def get_utc_now_time(return_type="char"):
+    utc_tz = pytz.timezone("UTC")
+    utc_now = datetime.now().replace(microsecond=0).astimezone(utc_tz)
+
+    if return_type == "char":
+        return utc_now.strftime("%Y-%m-%d %H:%M:%S")
+    elif return_type == "datetime":
+        return utc_now
+    elif return_type == "date-char":
+        return utc_now.strftime("%Y-%m-%d")
 
 
 def get_available_bookings(mysqlcon, booking_ids):
@@ -2641,6 +2658,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],  # Recipient email address(list)
             [],  # CC
+            [],  # BCC
             "Bookings XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Bookings) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2652,6 +2670,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],  # Recipient email address(list)
             [],
+            [],  # BCC
             "BookingLines XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Booking Lines) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2668,6 +2687,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Bookings with Gaps XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Booking With Gaps) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2684,6 +2704,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Bookings with Gaps XLS Report from Deliver-Me(DME only can generate this report)",  # Subject of email
             "Here is the excel report(DME Booking With Gaps) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2695,6 +2716,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Whse XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Whse) you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2711,6 +2733,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Pending Bookings XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2722,6 +2745,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Booked Bookings XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2738,6 +2762,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "PickedUp Bookings XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2749,6 +2774,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Box XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2760,6 +2786,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Futile XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
@@ -2771,7 +2798,20 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "Goods Delivered Bookings XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "goods_sent":
+        filepath = build_xls(
+            bookings, "goods_sent", username, start_date, end_date, show_field_name
+        )
+        send_email(
+            [email_addr],
+            [],
+            [],  # BCC
+            "Goods Sent XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
         )
@@ -2814,6 +2854,7 @@ def build_xls_and_send(
         send_email(
             [email_addr],
             [],
+            [],  # BCC
             "All XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report(Bookings & Booking Lines & Booking With Gaps & Whse) you generated from Deliver-Me.",  # Message of email
             attachments,  # Attachment file path(list)
@@ -2883,6 +2924,8 @@ def get_pu_by(booking):
                 0,
             ),
         )
+
+        return convert_to_UTC_tz(pu_by)
     elif booking.puPickUpAvailFrom_Date:
         puPickUpAvailFrom_Date = booking.puPickUpAvailFrom_Date
 
@@ -2900,66 +2943,62 @@ def get_pu_by(booking):
             ),
         )
 
-    return pu_by
+        return convert_to_UTC_tz(pu_by)
+    else:
+        return datetime.now()
 
 
 def get_eta_pu_by(booking):
+    LOG_ID = ["ETA_PU_BY"]
+
     try:
-        _eta_pu_by = get_pu_by(booking)
-
-        if _eta_pu_by:
-            _eta_pu_by = convert_to_UTC_tz(_eta_pu_by)
-
-        return _eta_pu_by
-
-        # if get_pu_by(booking) is None:
-        #     sydney_tz = pytz.timezone("Australia/Sydney")
-        #     etd_pu_by = datetime.now().replace(microsecond=0).astimezone(sydney_tz)
-        #     weekno = etd_pu_by.weekday()
-
-        #     if weekno > 4:
-        #         etd_pu_by = etd_pu_by + timedelta(days=7 - weekno)
-
-        #     etd_pu_by = etd_pu_by.replace(minute=0, hour=17, second=0)
-
-        #     return etd_pu_by
-        # else:
-        #     return get_pu_by(booking)
+        if booking.b_dateBookedDate:
+            return booking.b_dateBookedDate
+        else:
+            return get_pu_by(booking)
     except Exception as e:
         trace_error.print()
-        logger.info(f"Error #1001: {e}")
+        logger.info(f"{LOG_ID} Error #1001: {e}")
         return None
 
 
 def get_eta_de_by(booking, quote):
-    try:
-        etd_de_by = get_eta_pu_by(booking)
+    LOG_ID = ["ETA_DE_BY"]
+    current_hour = (datetime.now().hour + TIME_DIFFERENCE) % 24
 
-        if etd_de_by and quote:
+    try:
+        eta_pu_by = get_eta_pu_by(booking)
+
+        if quote:
             from api.fp_apis.utils import get_etd_in_hour
 
-            freight_provider = Fp_freight_providers.objects.get(
-                fp_company_name=booking.vx_freight_provider
-            )
             etd_in_hour = get_etd_in_hour(quote)
+            fp = Fp_freight_providers.objects.get(
+                fp_company_name=quote.freight_provider
+            )
 
-            if etd_de_by and etd_in_hour:
-                etd_de_by = etd_de_by + timedelta(hours=etd_in_hour)
-                weekno = etd_de_by.weekday()
+            # Service cut off time
+            if not fp.service_cutoff_time or fp.service_cutoff_time.hour > current_hour:
+                etd_de_by = eta_pu_by + timedelta(hours=etd_in_hour)
+            else:
+                etd_de_by = eta_pu_by + timedelta(hours=etd_in_hour + 24)
+        else:
+            # Service cut off time
+            if 12 > current_hour:
+                etd_de_by = eta_pu_by + timedelta(hours=3 * 24)
+            else:
+                etd_de_by = eta_pu_by + timedelta(hours=4 * 24)
 
-                if weekno > 4:
-                    etd_de_by = etd_de_by + timedelta(days=7 - weekno)
+        # Workdays
+        weekno = etd_de_by.weekday()
+        if weekno > 4:
+            etd_de_by = etd_de_by + timedelta(days=7 - weekno)
 
-                return convert_to_UTC_tz(etd_de_by)
-        return None
+        return etd_de_by
     except Exception as e:
         trace_error.print()
-        logger.info(f"Error #1002: {e}")
+        logger.info(f"{LOG_ID} Error #1001: {e}")
         return None
-
-
-def ireplace(old, repl, text):
-    return re.sub("(?i)" + re.escape(old), lambda m: repl, text)
 
 
 def sanitize_address(address):
@@ -2968,6 +3007,6 @@ def sanitize_address(address):
 
     dme_augment_address = DME_Augment_Address.objects.all()
     for rule in dme_augment_address:
-        address = ireplace(rule.origin_word, rule.augmented_word, address)
+        address = string.ireplace(rule.origin_word, rule.augmented_word, address)
 
     return address

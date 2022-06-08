@@ -1,6 +1,6 @@
 import logging
 
-from api.models import DME_SMS_Templates
+from api.models import DME_SMS_Templates, DME_Options
 from api.outputs.sms import send_sms
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,11 @@ def send_status_update_sms(
     if not category in ["Transit", "On Board for Delivery", "Complete"]:
         return
 
+    option = DME_Options.objects.get(option_name="send_sms_to_customer")
+    if option.option_value == 0:
+        logger.info(f"{LOG_ID} Disabled!")
+        return
+
     logger.info(
         f"{LOG_ID} BookingID: {bookingNo}, PhoneNumber: {phone_number}, Category: {category}"
     )
@@ -37,7 +42,7 @@ def send_status_update_sms(
     elif category == "Complete":
         template = DME_SMS_Templates.objects.get(smsName="Status Update - Delivered")
 
-    client_name = "" 
+    client_name = ""
     if client == "Jason L":
         client_name = "Jason.l"
     elif client == "Plum Products Australia Ltd":

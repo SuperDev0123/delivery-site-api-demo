@@ -47,7 +47,7 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 
 from api.models import Booking_lines, FPRouting, Fp_freight_providers
 from api.operations.email_senders import send_email_to_admins
-
+from api.operations.api_booking_confirmation_lines import index as api_bcl
 from api.fp_apis.utils import gen_consignment_num
 
 logger = logging.getLogger("dme_api")
@@ -82,6 +82,9 @@ def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
     item_index = str(line_index).zfill(3)
     items_count = str(sscc_cnt).zfill(3)
     postal_code = booking.de_To_Address_PostalCode
+
+    label_code = f"{consignment_num}{item_index}"
+    api_bcl.create(booking, [{"label_code": label_code}])
 
     return f"{consignment_num}{item_index}{items_count}{postal_code}"
 
@@ -282,7 +285,7 @@ def build_label(
                     #     style_right_bg,
                     # ),
                     Paragraph("", style_center),
-                    hunter_img
+                    hunter_img,
                 ]
             ]
 
@@ -560,7 +563,8 @@ def build_label(
 
             d = Drawing(100, 100)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            d.add(QrCodeWidget(value=barcode))
+            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
+            d.add(QrCodeWidget(value=codeString))
 
             data = [[t1, d]]
 

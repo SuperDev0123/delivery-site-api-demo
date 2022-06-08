@@ -683,7 +683,10 @@ def get_getlabel_payload(booking, fp_name):
             payload[
                 "collectionInstructions"
             ] = f"{payload['pickupAddress']['instruction']}"
-        if payload["dropAddress"]["instruction"]:
+        if (
+            payload["dropAddress"]["instruction"]
+            and payload["dropAddress"]["instruction"] != " "
+        ):
             payload[
                 "collectionInstructions"
             ] += f" {payload['dropAddress']['instruction']}"

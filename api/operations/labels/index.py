@@ -75,6 +75,6 @@ def get_barcode(booking, booking_lines, line_index=1, sscc_cnt=1):
     if fp_name == "hunter":
         result = hunter.gen_barcode(booking, booking_lines, line_index, sscc_cnt)
     else:  # "auspost", "startrack", "TNT", "State Transport"
-        result = ship_it.gen_barcode(booking, booking_lines)
+        result = ship_it.gen_barcode(booking, booking_lines, line_index, sscc_cnt)
 
     return result

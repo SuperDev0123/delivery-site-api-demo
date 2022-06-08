@@ -13,10 +13,12 @@ from api.fp_apis.utils import get_status_category_from_status
 from api.operations.labels.index import build_label
 from api.operations.pronto_xi.index import update_note as update_pronto_note
 from api.operations.genesis.index import create_shared_booking, update_shared_booking
+from api.operations.booking.quote import get_quote_again
 from api.common.booking_quote import set_booking_quote
 from api.common import trace_error
 from api.helpers.list import *
 from api.convertors.pdf import pdf_merge
+
 
 logger = logging.getLogger(__name__)
 IMPORTANT_FIELDS = [
@@ -41,7 +43,7 @@ IMPORTANT_FIELDS = [
     "de_to_floor_access_by",
     "pu_service",
     "de_service",
-    "z_label_url",
+    "booking_type",
 ]
 
 GENESIS_FIELDS = [
@@ -63,6 +65,10 @@ GENESIS_FIELDS = [
     "de_to_Phone_Mobile",
     "de_to_Phone_Main",
     "booked_for_comm_communicate_via",
+    "b_booking_Priority",
+    "s_06_Latest_Delivery_Date_TimeSet",
+    "s_06_Latest_Delivery_Date_Time_Override",
+    "s_21_Actual_Delivery_TimeStamp",
 ]
 
 if settings.ENV == "local":
@@ -88,8 +94,8 @@ def pre_save_handler(instance, update_fields):
             instance.dme_status_detail_updated_at = datetime.now()
 
         # Mail Genesis
-        # if old.b_dateBookedDate and intersection(GENESIS_FIELDS, update_fields or []):
-        #     update_shared_booking(instance)
+        if old.b_dateBookedDate and intersection(GENESIS_FIELDS, update_fields or []):
+            update_shared_booking(instance)
 
         if old.b_status != instance.b_status:
             if instance.b_status == "Booked":
@@ -97,8 +103,8 @@ def pre_save_handler(instance, update_fields):
 
             # Mail Genesis
             if old.b_dateBookedDate is None and instance.b_dateBookedDate:
-                # create_shared_booking(instance)
-                pass
+                create_shared_booking(instance)
+                # pass
             elif instance.b_status == "In Transit":
                 try:
                     booking_Lines_cnt = Booking_lines.objects.filter(
@@ -182,17 +188,23 @@ def post_save_handler(instance, created, update_fields):
         not created
         and not instance.z_lock_status
         and intersection(IMPORTANT_FIELDS, update_fields or [])
+        and instance.kf_client_id
+        != "461162D2-90C7-BF4E-A905-000000000004"  # Ignore when plum scans
     ):
         logger.info(f"{LOG_ID} Updated important field.")
-        set_booking_quote(instance, None)
 
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=instance.pk_booking_id,
-            is_used=False,
-        )
-        for quote in quotes:
-            quote.is_used = True
-            quote.save()
+        # Reset selected Quote and connected Quotes
+        if instance.booking_type != "DMEA":
+            set_booking_quote(instance, None)
+            quotes = API_booking_quotes.objects.filter(
+                fk_booking_id=instance.pk_booking_id,
+                is_used=False,
+            )
+            for quote in quotes:
+                quote.is_used = True
+                quote.save()
+        elif instance.booking_type == "DMEA":
+            get_quote_again(instance)
 
     if (
         instance.vx_freight_provider
@@ -224,7 +236,9 @@ def post_save_handler(instance, created, update_fields):
             instance.vx_account_code = quote.account_code
             instance.vx_serviceName = quote.service_name
             instance.v_service_Type = quote.service_code
-            instance.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
+            instance.inv_cost_quoted = quote.fee * (
+                1 + (quote.mu_percentage_fuel_levy or 0)
+            )
 
             if instance.b_status == Booking_lines.SCANNED_PACK:
                 instance.inv_sell_quoted = quote.client_mu_1_minimum_values
