@@ -3277,7 +3277,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 pk_booking_id=request.data["fk_booking_id"]
             ).order_by("id")
 
-            if bookings.count > 1:
+            if bookings.count() > 1:
                 error_msg = f'{LOG_ID} Duplicated {request.data["fk_booking_id"]}'
                 logger.error(error_msg)
                 send_email_to_admins(
