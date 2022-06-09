@@ -284,7 +284,7 @@ class UserViewSet(viewsets.ViewSet):
 
         if dme_employee is not None:
             user_type = "DME"
-            dme_clients = DME_clients.objects.all()
+            dme_clients = DME_clients.objects.all().order_by('company_name')
         else:
             user_type = "CLIENT"
             client_employee = Client_employees.objects.filter(
