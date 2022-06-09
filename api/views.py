@@ -3283,9 +3283,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 send_email_to_admins(
                     "Duplicated pk_booking_id", request.data["fk_booking_id"]
                 )
-                booking = Bookings.last()
+                booking = bookings.last()
             else:
-                booking = Bookings.first()
+                booking = bookings.first()
 
             status_last = request.data.get("status_last")
             event_time_stamp = request.data.get("event_time_stamp")
