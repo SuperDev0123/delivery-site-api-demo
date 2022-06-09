@@ -284,7 +284,7 @@ class UserViewSet(viewsets.ViewSet):
 
         if dme_employee is not None:
             user_type = "DME"
-            dme_clients = DME_clients.objects.all()
+            dme_clients = DME_clients.objects.all().order_by("company_name")
         else:
             user_type = "CLIENT"
             client_employee = Client_employees.objects.filter(
@@ -293,7 +293,7 @@ class UserViewSet(viewsets.ViewSet):
             client_employee_role = client_employee.get_role()
             dme_clients = DME_clients.objects.filter(
                 pk_id_dme_client=int(client_employee.fk_id_dme_client_id)
-            )
+            ).order_by("company_name")
 
         if not dme_clients.exists():
             return JsonResponse({"dme_clients": []})
