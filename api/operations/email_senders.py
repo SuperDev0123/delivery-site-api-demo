@@ -92,16 +92,17 @@ def send_booking_status_email(bookingId, emailName, sender):
 
     files = []
     DMEBOOKINGNUMBER = booking.b_bookingID_Visual
-    BOOKEDDATE = (
-        convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate)
-        if booking.b_dateBookedDate
-        else ""
-    )
-    DELIVERYDATE = (
-        convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp)
-        if booking.s_21_Actual_Delivery_TimeStamp
-        else ""
-    )
+
+    BOOKEDDATE = ""
+    if booking.b_dateBookedDate:
+        BOOKEDDATE = convert_to_AU_SYDNEY_tz(booking.b_dateBookedDate)
+        BOOKEDDATE = BOOKEDDATE.strftime("%d/%m/%Y %H:%M")
+
+    DELIVERYDATE = ""
+    if booking.s_21_Actual_Delivery_TimeStamp:
+        DELIVERYDATE = convert_to_AU_SYDNEY_tz(booking.s_21_Actual_Delivery_TimeStamp)
+        DELIVERYDATE = DELIVERYDATE.strftime("%d/%m/%Y %H:%M")
+
     TOADDRESSCONTACT = f" {booking.pu_Contact_F_L_Name}"
     FUTILEREASON = booking.vx_futile_Booking_Notes
     BOOKING_NUMBER = booking.b_bookingID_Visual
@@ -124,16 +125,20 @@ def send_booking_status_email(bookingId, emailName, sender):
         pass
 
     SERVICE = booking.vx_serviceName
-    LATEST_PICKUP_TIME = (
-        convert_to_AU_SYDNEY_tz(booking.s_05_Latest_Pick_Up_Date_TimeSet)
-        if booking.s_05_Latest_Pick_Up_Date_TimeSet
-        else ""
-    )
-    LATEST_DELIVERY_TIME = (
-        convert_to_AU_SYDNEY_tz(booking.s_06_Latest_Delivery_Date_TimeSet)
-        if booking.s_06_Latest_Delivery_Date_TimeSet
-        else ""
-    )
+    LATEST_PICKUP_TIME = ""
+    if booking.s_05_Latest_Pick_Up_Date_TimeSet:
+        LATEST_PICKUP_TIME = convert_to_AU_SYDNEY_tz(
+            booking.s_05_Latest_Pick_Up_Date_TimeSet
+        )
+        LATEST_PICKUP_TIME = LATEST_PICKUP_TIME.strftime("%d/%m/%Y %H:%M")
+
+    LATEST_DELIVERY_TIME = ""
+    if booking.s_06_Latest_Delivery_Date_TimeSet:
+        LATEST_DELIVERY_TIME = convert_to_AU_SYDNEY_tz(
+            booking.s_06_Latest_Delivery_Date_TimeSet
+        )
+        LATEST_DELIVERY_TIME = LATEST_DELIVERY_TIME.strftime("%d/%m/%Y %H:%M")
+
     DELIVERY_ETA = booking.z_calculated_ETA
     INSTRUCTIONS = booking.b_handling_Instructions
 

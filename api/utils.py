@@ -2944,6 +2944,8 @@ def get_pu_by(booking):
         )
 
         return convert_to_UTC_tz(pu_by)
+    elif booking.b_dateBookedDate:
+        return booking.b_dateBookedDate
     else:
         return datetime.now()
 
@@ -2952,10 +2954,7 @@ def get_eta_pu_by(booking):
     LOG_ID = ["ETA_PU_BY"]
 
     try:
-        if booking.b_dateBookedDate:
-            return booking.b_dateBookedDate
-        else:
-            return get_pu_by(booking)
+        return get_pu_by(booking)
     except Exception as e:
         trace_error.print()
         logger.info(f"{LOG_ID} Error #1001: {e}")
