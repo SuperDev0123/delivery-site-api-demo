@@ -1,10 +1,17 @@
-from dataclasses import replace
 from django.db.models import Q
 from datetime import datetime, date, timedelta
 
 from api.common.common_times import convert_to_UTC_tz, TIME_DIFFERENCE
 
+def replace_operator(keyword):
+    keyword = keyword.replace("or", '|')
+    keyword = keyword.replace("||", '|')
+    keyword = keyword.replace("and", '&')
+    keyword = keyword.replace("&&", '&')
 
+    return keyword
+
+    
 def _build_query(keyword, field_name, search_type):
     q = Q()
 
@@ -17,11 +24,38 @@ def _build_query(keyword, field_name, search_type):
     elif search_type == "regex":
         filter = field_name + "__" + search_type
         keyword = keyword.replace("*", "[a-zA-Z0-9]+")
-        q = Q(**{filter: keyword})
-    else:
-        filter = field_name + "__" + search_type
-        for keyword in keyword.split("|"):
-            q |= Q(**{filter: keyword.strip()})
+        if "|" in keyword:
+            for key in keyword.split("|"):
+                q1 = Q()
+                if "&" in key:
+                    for k in key.split("&"):
+                        q1 &= Q(**{filter: k.strip()})
+                    q |= q1
+                else:
+                    q1 = Q(**{filter: key.strip()})
+                    q |= q1
+        elif "&" in keyword:
+            for key in keyword.split("&"):
+                q &= Q(**{filter: key.strip()})
+        else:
+            q &= Q(**{filter: keyword.strip()})
+    elif search_type == "icontains":
+        filter = field_name
+        if "|" in keyword:
+            for key in keyword.split("|"):
+                q1 = Q()
+                if "&" in key:
+                    for k in key.split("&"):
+                        q1 &= Q(**{filter: k.strip()})
+                    q |= q1
+                else:
+                    q1 = Q(**{filter: key.strip()})
+                    q |= q1
+        elif "&" in keyword:
+            for key in keyword.split("&"):
+                q &= Q(**{filter: key.strip()})
+        else:
+            q &= Q(**{filter: keyword.strip()})
 
     return q
 
@@ -67,8 +101,9 @@ def filter_bookings_by_columns(queryset, column_filters, active_tab_index):
 
     for field_name in field_names:
         keyword = column_filters.get(field_name)
-
+        
         if keyword:
+            keyword = replace_operator(keyword)
             if "<>''" in keyword or '<>""' in keyword:
                 queryset = queryset.exclude(_build_query(keyword, field_name, "isnull"))
             elif (
@@ -78,7 +113,7 @@ def filter_bookings_by_columns(queryset, column_filters, active_tab_index):
                 or '""' in keyword
             ):
                 queryset = queryset.filter(_build_query(keyword, field_name, "isnull"))
-            elif "<>" in keyword:
+            elif "<>" in keyword and "*" not in keyword:
                 queryset = queryset.exclude(
                     _build_query(keyword[2:], field_name, "icontains")
                 )
