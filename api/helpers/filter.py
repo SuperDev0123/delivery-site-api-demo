@@ -21,7 +21,7 @@ def _build_query(keyword, field_name, search_type):
         q1 = Q(**{filter1: True})
         q2 = Q(**{filter2: ""})
         q = q1 | q2
-    elif search_type == "regex":
+    elif search_type == "iregex":
         filter = field_name + "__" + search_type
         keyword = keyword.replace("*", "[a-zA-Z0-9]+")
         if "|" in keyword:
@@ -119,11 +119,11 @@ def filter_bookings_by_columns(queryset, column_filters, active_tab_index):
                 )
             elif "<>" in keyword and "*" in keyword:
                 queryset = queryset.exclude(
-                    _build_query(keyword[2:], field_name, "regex")
+                    _build_query(keyword[2:], field_name, "iregex")
                 )
             elif "=" in keyword and "*" in keyword:
                 queryset =  queryset.filter(
-                    _build_query(keyword[1:], field_name, "regex")
+                    _build_query(keyword[1:], field_name, "iregex")
                 )
             else:
                 queryset = queryset.filter(
