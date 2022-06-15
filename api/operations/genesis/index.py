@@ -86,8 +86,10 @@ def create_shared_booking(booking):
     s_booking.booked_for_comm_communicate_via = booking.booked_for_comm_communicate_via
     s_booking.b_booking_Priority = booking.b_booking_Priority
     s_booking.s_06_Estimated_Delivery_TimeStamp = (
+        booking.s_06_Latest_Delivery_Date_TimeSet
+    )
+    s_booking.s_06_Estimated_Delivery_TimeStamp = (
         booking.s_06_Latest_Delivery_Date_Time_Override
-        or booking.s_06_Latest_Delivery_Date_TimeSet
     )
     s_booking.s_21_Actual_Delivery_TimeStamp = booking.s_21_Actual_Delivery_TimeStamp
     s_booking.z_createdAt = datetime.now()
@@ -214,8 +216,10 @@ def update_shared_booking(booking, is_for="all"):
         )
         s_booking.b_booking_Priority = booking.b_booking_Priority
         s_booking.s_06_Estimated_Delivery_TimeStamp = (
+            booking.s_06_Latest_Delivery_Date_TimeSet
+        )
+        s_booking.s_06_Estimated_Delivery_TimeStamp = (
             booking.s_06_Latest_Delivery_Date_Time_Override
-            or booking.s_06_Latest_Delivery_Date_TimeSet
         )
         s_booking.s_21_Actual_Delivery_TimeStamp = (
             booking.s_21_Actual_Delivery_TimeStamp

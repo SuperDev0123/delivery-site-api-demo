@@ -5324,6 +5324,9 @@ class S_Bookings(models.Model):
     s_06_Estimated_Delivery_TimeStamp = models.DateTimeField(
         blank=True, null=True, default=None
     )
+    s_06_Latest_Delivery_Date_Time_Override = models.DateTimeField(
+        blank=True, null=True, default=None
+    )
     s_21_Actual_Delivery_TimeStamp = models.DateTimeField(
         blank=True, null=True, default=None
     )
