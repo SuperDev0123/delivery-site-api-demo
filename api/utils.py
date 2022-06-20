@@ -147,24 +147,6 @@ def getFileCheckHistory(filename):
         return error
 
 
-def get_client_name(request):
-    user_id = request.user.id
-    dme_employee = (
-        DME_employees.objects.select_related().filter(fk_id_user=user_id).first()
-    )
-
-    if dme_employee is not None:
-        return "dme"
-    else:
-        client_employee = (
-            Client_employees.objects.select_related().filter(fk_id_user=user_id).first()
-        )
-        client = DME_clients.objects.get(
-            pk_id_dme_client=client_employee.fk_id_dme_client_id
-        )
-        return client.company_name
-
-
 def calc_collect_after_status_change(pk_booking_id, status):
     booking_lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
 
@@ -2890,7 +2872,7 @@ def tables_in_query(sql_str):
     return result
 
 
-def get_clientname(request):
+def get_clientname_with_request(request):
     user_id = request.user.id
     dme_employee = (
         DME_employees.objects.select_related().filter(fk_id_user=user_id).first()

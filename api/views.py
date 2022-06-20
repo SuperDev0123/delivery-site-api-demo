@@ -61,10 +61,9 @@ from api.utils import (
     build_xls_and_send,
     make_3digit,
     get_sydney_now_time,
-    get_client_name,
     calc_collect_after_status_change,
     tables_in_query,
-    get_clientname,
+    get_clientname_with_request,
 )
 from api.operations.manifests.index import build_manifest
 from api.operations.csv.index import build_csv
@@ -1347,7 +1346,7 @@ class BookingsViewSet(viewsets.ViewSet):
             first_date,
             last_date,
             show_field_name,
-            get_clientname(request),
+            get_clientname_with_request(request),
         )
         return JsonResponse({"status": "started generate xml"})
 
@@ -1650,7 +1649,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"])
     def get_manifest_report(self, request, format=None):
-        clientname = get_client_name(self.request)
+        clientname = get_clientname_with_request(self.request)
         page_index = int(request.GET["index"])
 
         if not clientname in ["Jason L", "Bathroom Sales Direct", "BioPak", "dme"]:
@@ -4015,11 +4014,13 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         ):
             res = list(serializer.data)[0]
             res["freight_provider"] = booking.vx_freight_provider
+
             quoted_amount = (
-                booking.inv_sell_quoted_override
-                if booking.inv_sell_quoted_override
-                else booking.inv_sell_quoted
+                booking.inv_booked_quoted
+                or booking.inv_sell_quoted_override
+                or booking.inv_sell_quoted
             )
+
             res["client_mu_1_minimum_values"] = quoted_amount
             quote = booking.api_booking_quote
             surcharge_total = quote.x_price_surcharge if quote.x_price_surcharge else 0
@@ -4368,7 +4369,7 @@ def get_manifest(request):
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
     username = body["username"]
-    clientname = get_client_name(request)
+    clientname = get_clientname_with_request(request)
     need_truck = body.get("needTruck") or False
     is_from_fm = body.get("isFromFM") or False
     timestamp = body.get("timestamp") or None
@@ -5036,8 +5037,10 @@ class BookingSetsViewSet(viewsets.ModelViewSet):
         MAX_SETS_COUNT = 25
         queryset = BookingSets.objects.all()
 
-        if get_clientname(request) != "dme":
-            queryset = queryset.filter(z_createdByAccount=get_clientname(request))
+        if get_clientname_with_request(request) != "dme":
+            queryset = queryset.filter(
+                z_createdByAccount=get_clientname_with_request(request)
+            )
 
         queryset = queryset.order_by("-id")[:MAX_SETS_COUNT]
         serializer = BookingSetsSerializer(queryset, many=True)
@@ -5051,7 +5054,7 @@ class BookingSetsViewSet(viewsets.ModelViewSet):
 
         request.data["booking_ids"] = ", ".join(bookingIds)
         request.data["status"] = "Created"
-        request.data["z_createdByAccount"] = get_clientname(request)
+        request.data["z_createdByAccount"] = get_clientname_with_request(request)
         request.data["z_createdTimeStamp"] = str(datetime.now())
 
         # prevent empty string
