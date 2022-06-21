@@ -15,6 +15,8 @@ from api.fp_apis.operations.surcharge.allied import allied
 from api.fp_apis.operations.surcharge.hunter import hunter
 from api.fp_apis.operations.surcharge.camerons import camerons
 from api.fp_apis.operations.surcharge.northline import northline
+from api.fp_apis.operations.surcharge.jasonl import jasonl
+from api.fp_apis.operations.surcharge.bsd import bsd
 
 
 logger = logging.getLogger(__name__)
@@ -241,6 +243,10 @@ def find_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         surcharge_opt_funcs = camerons()
     elif booking["vx_freight_provider"].lower() == "northline":
         surcharge_opt_funcs = northline()
+    elif booking["vx_freight_provider"].lower() == "Deliver-ME" and booking["b_client_name"] == "Jason L":
+        surcharge_opt_funcs = jasonl()
+    elif booking["vx_freight_provider"].lower() == "Deliver-ME" and booking["b_client_name"] == "Bathroom Sales Direct":
+        surcharge_opt_funcs = bsd()
 
     if surcharge_opt_funcs:
         for opt_func in surcharge_opt_funcs["order"]:
