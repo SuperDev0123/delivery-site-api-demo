@@ -299,6 +299,7 @@ def _loop_process(
             for fp in fps:
                 if quote.freight_provider.lower() == fp.fp_company_name.lower():
                     quote_fp = fp
+                    break
 
             gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
 
