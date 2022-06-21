@@ -118,7 +118,7 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
             line["e_weightUOM"]
         )
 
-        is_pallet = line["e_type_of_packaging"].lower() in PALLETS
+        is_pallet = line["e_type_of_packaging"].upper() in PALLETS
         m3_to_kg_factor = get_m3_to_kg_factor(
             fp.fp_company_name,
             {
@@ -325,6 +325,7 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
                             }
                         )
                         total += line["quantity"] * result["value"]
+
                 if line_surcharges:
                     surcharges.append(
                         {
@@ -375,24 +376,14 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
     try:
         surcharges = find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type)
     except Exception as e:
-        print("@! - ", str(e))
         logger.error(f"{LOG_ID} Booking: {booking_obj}, Quote: {quote_obj}")
         raise Exception("One booking line has an extremely big demension!")
 
     # Create new Surcharge objects
     for surcharge in surcharges:
-        surcharge_obj = Surcharge()
-        surcharge_obj.quote = quote_obj
-        surcharge_obj.name = surcharge["name"]
-        surcharge_obj.amount = surcharge["value"]
-        surcharge_obj.fp = fp
-        surcharge_obj.visible = True
-        surcharge_obj.qty = 1
-        surcharge_obj.save()
-        total += float(surcharge["value"])
-        result.append(surcharge_obj)
-
         lines = surcharge.get("lines")
+        total += float(surcharge["value"])
+
         if lines:
             for line in lines:
                 surcharge_obj = Surcharge()
@@ -405,6 +396,16 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
                 surcharge_obj.visible = True
                 surcharge_obj.save()
                 result.append(surcharge_obj)
+        else:
+            surcharge_obj = Surcharge()
+            surcharge_obj.quote = quote_obj
+            surcharge_obj.name = surcharge["name"]
+            surcharge_obj.amount = surcharge["value"]
+            surcharge_obj.fp = fp
+            surcharge_obj.visible = True
+            surcharge_obj.qty = 1
+            surcharge_obj.save()
+            result.append(surcharge_obj)
 
     # Get manually entered surcharges total
     try:
