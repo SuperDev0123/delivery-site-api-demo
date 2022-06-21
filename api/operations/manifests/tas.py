@@ -68,14 +68,14 @@ def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
 
     # start check if pdfs folder exists
     if production:
-        local_filepath = "/opt/s3_public/pdfs/tas_au/"
+        local_filepath = "/opt/s3_public/pdfs/tas_au"
         local_filepath_dup = (
             "/opt/s3_public/pdfs/tas_au/archive/"
             + str(datetime.now().strftime("%Y_%m_%d"))
             + "/"
         )
     else:
-        local_filepath = "./static/pdfs/tas_au/"
+        local_filepath = "./static/pdfs/tas_au"
         local_filepath_dup = (
             "./static/pdfs/tas_au/archive/"
             + str(datetime.now().strftime("%Y_%m_%d"))

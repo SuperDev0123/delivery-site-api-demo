@@ -342,9 +342,9 @@ def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
 
     # start check if pdfs folder exists
     if production:
-        local_filepath = "/opt/s3_public/pdfs/startrack_au/"
+        local_filepath = "/opt/s3_public/pdfs/startrack_au"
     else:
-        local_filepath = "./static/pdfs/startrack_au/"
+        local_filepath = "./static/pdfs/startrack_au"
 
     if not os.path.exists(local_filepath):
         os.makedirs(local_filepath)

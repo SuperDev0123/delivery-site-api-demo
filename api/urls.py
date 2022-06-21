@@ -7,6 +7,7 @@ from .views_status import *
 from .views_client import *
 from .views_zoho import *
 from .views_external_apis import *
+from .views_spojit import *
 from .fp_apis import apis as fp_apis
 from .file_operations.uploads import get_upload_status
 
@@ -126,6 +127,11 @@ urlpatterns += [
     url(r"^send_zoho_ticket_reply/", send_zoho_ticket_reply),
     url(r"^get_zoho_departments/", get_zoho_departments),
     url(r"^get_zoho_ticket_summaries/", get_zoho_ticket_summaries),
+    # SPOJIT apis
+    url(r"^spojit/whse/scan/", spojit_scan),
+    url(r"^spojit/whse/reprint_label/", spojit_reprint_label),
+    url(r"^spojit/whse/ready/", spojit_ready),
+    url(r"^spojit/whse/manifest/", spojit_manifest),
     # url(r"^bulk_pricing/", bulk_pricing),
     # Client apis
     url(r"^get_delivery_status/", get_delivery_status),
