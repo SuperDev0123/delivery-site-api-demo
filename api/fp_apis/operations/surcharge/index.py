@@ -97,9 +97,9 @@ def build_dict_data(booking_obj, line_objs, quote_obj, data_type):
     return booking, lines
 
 
-def find_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
+def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
     booking, lines = build_dict_data(booking_obj, line_objs, quote_obj, data_type)
-    m3_to_kg_factor = get_m3_to_kg_factor(booking["vx_freight_provider"])
+    m3_to_kg_factor = get_m3_to_kg_factor(fp.fp_company_name)
 
     dead_weight, cubic_weight, total_qty, total_cubic = 0, 0, 0, 0
     lengths, widths, heights = [], [], []
@@ -120,7 +120,7 @@ def find_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
 
         is_pallet = line["e_type_of_packaging"].lower() in PALLETS
         m3_to_kg_factor = get_m3_to_kg_factor(
-            booking["vx_freight_provider"],
+            fp.fp_company_name,
             {
                 "is_pallet": is_pallet,
                 "item_length": item_length,
@@ -184,7 +184,7 @@ def find_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
                 "de_to_address_state": booking["de_To_Address_State"],
                 "de_to_address_postcode": booking["de_To_Address_PostalCode"],
                 "de_to_address_suburb": booking["de_To_Address_Suburb"],
-                "vx_freight_provider": booking["vx_freight_provider"],
+                "vx_freight_provider": fp.fp_company_name,
                 "vx_service_name": booking["vx_serviceName"],
                 "is_dangerous": is_dangerous,
                 "is_jason_l": booking["client_id"]
@@ -223,7 +223,7 @@ def find_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
         "max_diagonal": max(diagonals),
         "min_diagonal": min(diagonals),
         "total_qty": total_qty,
-        "vx_freight_provider": booking["vx_freight_provider"],
+        "vx_freight_provider": fp.fp_company_name,
         "vx_service_name": booking["vx_serviceName"],
         "has_dangerous_item": has_dangerous_item,
         "is_tail_lift": booking["pu_tail_lift"] or booking["del_tail_lift"],
@@ -233,19 +233,28 @@ def find_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
     }
 
     surcharges, surcharge_opt_funcs = [], []
-    if booking["vx_freight_provider"].lower() == "tnt":
+
+    if fp.fp_company_name.lower() == "tnt":
         surcharge_opt_funcs = tnt()
-    elif booking["vx_freight_provider"].lower() == "allied":
+    elif fp.fp_company_name.lower() == "allied":
         surcharge_opt_funcs = allied()
-    elif booking["vx_freight_provider"].lower() == "hunter":
+    elif fp.fp_company_name.lower() == "hunter":
         surcharge_opt_funcs = hunter()
-    elif booking["vx_freight_provider"].lower() == "camerons":
+    elif fp.fp_company_name.lower() == "camerons":
         surcharge_opt_funcs = camerons()
-    elif booking["vx_freight_provider"].lower() == "northline":
+    elif fp.fp_company_name.lower() == "northline":
         surcharge_opt_funcs = northline()
-    elif booking["vx_freight_provider"].lower() == "Deliver-ME" and booking["b_client_name"] == "Jason L":
+    # Jason L
+    elif (
+        fp.fp_company_name == "Deliver-ME"
+        and booking["client_id"] == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+    ):
         surcharge_opt_funcs = jasonl()
-    elif booking["vx_freight_provider"].lower() == "Deliver-ME" and booking["b_client_name"] == "Bathroom Sales Direct":
+    # BSD
+    elif (
+        fp.fp_company_name == "Deliver-ME"
+        and booking["client_id"] == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+    ):
         surcharge_opt_funcs = bsd()
 
     if surcharge_opt_funcs:
@@ -256,7 +265,7 @@ def find_surcharges(booking_obj, line_objs, quote_obj, data_type="bok_1"):
                 surcharges.append(result)
 
     if surcharge_opt_funcs:
-        if booking["vx_freight_provider"].lower() == "allied":
+        if fp.fp_company_name.lower() == "allied":
             line_surcharges = []
             for opt_func in surcharge_opt_funcs["line"]:
                 for line in lines_data:
@@ -364,8 +373,9 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
 
     # Calc new surcharge opts
     try:
-        surcharges = find_surcharges(booking_obj, line_objs, quote_obj, data_type)
+        surcharges = find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type)
     except Exception as e:
+        print("@! - ", str(e))
         logger.error(f"{LOG_ID} Booking: {booking_obj}, Quote: {quote_obj}")
         raise Exception("One booking line has an extremely big demension!")
 
