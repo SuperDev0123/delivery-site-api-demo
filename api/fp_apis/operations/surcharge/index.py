@@ -15,8 +15,10 @@ from api.fp_apis.operations.surcharge.allied import allied
 from api.fp_apis.operations.surcharge.hunter import hunter
 from api.fp_apis.operations.surcharge.camerons import camerons
 from api.fp_apis.operations.surcharge.northline import northline
-from api.fp_apis.operations.surcharge.jasonl import jasonl
-from api.fp_apis.operations.surcharge.bsd import bsd
+from api.fp_apis.operations.surcharge.deliver_me import (
+    jasonl as deliver_me_jasonl,
+    bsd as deliver_me_bsd,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -249,13 +251,13 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
         fp.fp_company_name == "Deliver-ME"
         and booking["client_id"] == "1af6bcd2-6148-11eb-ae93-0242ac130002"
     ):
-        surcharge_opt_funcs = jasonl()
+        surcharge_opt_funcs = deliver_me_jasonl()
     # BSD
     elif (
         fp.fp_company_name == "Deliver-ME"
         and booking["client_id"] == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
     ):
-        surcharge_opt_funcs = bsd()
+        surcharge_opt_funcs = deliver_me_bsd()
 
     if surcharge_opt_funcs:
         for opt_func in surcharge_opt_funcs["order"]:

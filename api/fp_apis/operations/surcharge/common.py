@@ -1,4 +1,20 @@
 SURCHARGE_NAME_DESC = {
+    "DELIVER-ME": {
+        "Pallet 1.2W * 1.2L or less (SYD - MEL)": "Deliver-ME Direct (Into Premises) SYD - MEL (65%)",
+        "Up to Pallet 1.2W * 1.6L (SYD - MEL)": "Deliver-ME Direct (Into Premises) SYD - MEL (50%)",
+        "Up to Pallet 1.2W * 1.6L (SYD - MEL)": "Deliver-ME Direct (Into Premises) SYD - MEL (50%)",
+        "Pallet 1.2W * 1.2L or less (SYD - BRIS)": "Deliver-ME Direct (Into Premises) SYD - BRIS (65%)",
+        "Up to Pallet 1.2W * 1.6L (SYD - BRIS)": "Deliver-ME Direct (Into Premises) SYD - BRIS (50%)",
+        "Up to Pallet 1.2W * 1.6L (SYD - BRIS)": "Deliver-ME Direct (Into Premises) SYD - BRIS (50%)",
+        "Pallet 1.2W * 1.2L or less (SYD - ADE)": "Deliver-ME Direct (Into Premises) SYD - ADE (65%)",
+        "Up to Pallet 1.2W * 1.6L (SYD - ADE)": "Deliver-ME Direct (Into Premises) SYD - ADE (50%)",
+        "Up to Pallet 1.2W * 1.6L (SYD - ADE)": "Deliver-ME Direct (Into Premises) SYD - ADE (50%)",
+        "Non Pallet CBM (SYD - MEL)": "Deliver-ME Direct (Into Premises) SYD - MEL (65%)",
+        "Non Pallet CBM (SYD - BRIS)": "Deliver-ME Direct (Into Premises) SYD - BRIS (50%)",
+        "Non Pallet CBM (SYD - ADE)": "Deliver-ME Direct (Into Premises) SYD - ADE (50%)",
+        "PU tail lift man (Pickup)": "Additional Service fee for 2 man",
+        "DE tail lift man (Delivery)": "Additional Service fee for 2 man",
+    },
     "ALLIED": {
         "Lengths [LSC] 1.20-2.39 metre": "Items that exceed lenghts in any direction will attract a surcharge",
         "Lengths [LSC] 2.40-3.59 metre": "Items that exceed lenghts in any direction will attract a surcharge",
