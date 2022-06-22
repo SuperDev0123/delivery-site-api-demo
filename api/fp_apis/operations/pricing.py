@@ -125,10 +125,6 @@ def build_special_fp_pricings(booking, packed_status):
                     (postal_code >= 4000 and postal_code <= 4207)
                     or (postal_code >= 9000 and postal_code <= 9499)
                 )
-                or (  # Metro / CBD Sydney
-                    (postal_code >= 1000 and postal_code <= 2249)
-                    or (postal_code >= 2760 and postal_code <= 2770)
-                )
                 or (  # Metro Adelaide
                     (postal_code >= 5000 and postal_code <= 5199)
                     or (postal_code >= 5900 and postal_code <= 5999)
@@ -151,8 +147,6 @@ def build_special_fp_pricings(booking, packed_status):
                 postal_code >= 8000 and postal_code <= 8499
             ):
                 quote_0.service_name = "Deliver-ME Direct (Into Premises) (65%)"
-            else:
-                quote_0.service_name = "Deliver-ME Direct"
 
             quote_0.freight_provider = "Deliver-ME"
             quote_0.save()
