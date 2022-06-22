@@ -139,8 +139,22 @@ def build_special_fp_pricings(booking, packed_status):
             and booking.de_To_Address_State
             and booking.pu_Address_State.lower() != booking.de_To_Address_State.lower()
         ):
+            if (postal_code >= 5000 and postal_code <= 5199) or (
+                postal_code >= 5900 and postal_code <= 5999
+            ):
+                quote_0.service_name = "Deliver-ME Direct (Into Premises) (50%)"
+            elif (postal_code >= 4000 and postal_code <= 4207) or (
+                postal_code >= 9000 and postal_code <= 9499
+            ):
+                quote_0.service_name = "Deliver-ME Direct (Into Premises) (50%)"
+            elif (postal_code >= 3000 and postal_code <= 3207) or (
+                postal_code >= 8000 and postal_code <= 8499
+            ):
+                quote_0.service_name = "Deliver-ME Direct (Into Premises) (65%)"
+            else:
+                quote_0.service_name = "Deliver-ME Direct"
+
             quote_0.freight_provider = "Deliver-ME"
-            quote_0.service_name = "Deliver-ME Direct"
             quote_0.save()
 
         quote_1 = quote_0
