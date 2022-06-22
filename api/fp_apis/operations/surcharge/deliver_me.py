@@ -80,7 +80,7 @@ def jasonl():
                 return {
                     "name": "Non Pallet, per CBM (SYD - MEL)",
                     "description": "Deliver-ME Direct (Into Premises) SYD - MEL (65%)",
-                    "value": 131.54 * param["cubic_meter"],
+                    "value": 131.54 * param["one_item_cubic_meter"],
                 }
             elif (de_postal >= 4000 and de_postal <= 4207) or (
                 de_postal >= 9000 and de_postal <= 9499
@@ -88,7 +88,7 @@ def jasonl():
                 return {
                     "name": "Non Pallet, per CBM (SYD - BRIS)",
                     "description": "Deliver-ME Direct (Into Premises) SYD - BRIS (50%)",
-                    "value": 206.55 * param["cubic_meter"],
+                    "value": 206.55 * param["one_item_cubic_meter"],
                 }
             elif (de_postal >= 5000 and de_postal <= 5199) or (
                 de_postal >= 5900 and de_postal <= 5999
@@ -96,7 +96,7 @@ def jasonl():
                 return {
                     "name": "Non Pallet, per CBM (SYD - ADE)",
                     "description": "Deliver-ME Direct (Into Premises) SYD - ADE (50%)",
-                    "value": 247.89 * param["cubic_meter"],
+                    "value": 247.89 * param["one_item_cubic_meter"],
                 }
 
     def pu_tail_fee(param):

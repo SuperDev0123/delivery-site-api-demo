@@ -154,12 +154,12 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
             )
             * m3_to_kg_factor
         )
-        item_cubic_meter = get_cubic_meter(
+        one_item_cubic_meter = get_cubic_meter(
             line["e_dimLength"],
             line["e_dimWidth"],
             line["e_dimHeight"],
             line["e_dimUOM"],
-            line["e_qty"],
+            1,
         )
 
         lengths.append(item_length)
@@ -185,7 +185,7 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
                 "diagonal": item_diagonal,
                 "dead_weight": math.ceil(item_dead_weight),
                 "max_weight": math.ceil(item_max_weight),
-                "cubic_meter": item_cubic_meter,
+                "one_item_cubic_meter": one_item_cubic_meter,
                 "is_pallet": is_pallet,
                 "quantity": line["e_qty"],
                 "pu_address_state": booking["pu_Address_State"],
