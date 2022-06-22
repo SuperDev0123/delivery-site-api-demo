@@ -14,7 +14,7 @@ from rest_framework.decorators import (
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
-from api.warehouses.index import *
+from api.warehouses import index as warehouse
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def spojit_scan(request):
     logger.info(f"{LOG_ID} Payload: {request.data}")
 
     try:
-        res_json = scanned(request.data)
+        res_json = warehouse.scanned(request.data)
         return JsonResponse(res_json, status=200)
     except Exception as e:
         logger.error(f"{LOG_ID} Error: {str(e)}")
@@ -42,7 +42,7 @@ def spojit_reprint_label(request):
     logger.info(f"{LOG_ID} Payload: {request.GET}")
 
     try:
-        res_json = reprint_label(request.GET)
+        res_json = warehouse.reprint_label(request.GET)
         return JsonResponse(res_json, status=200)
     except Exception as e:
         logger.error(f"{LOG_ID} Error: {str(e)}")
@@ -58,7 +58,7 @@ def spojit_ready(request):
     logger.info(f"{LOG_ID} Payload: {request.POST}")
 
     try:
-        res_json = ready(request.data)
+        res_json = warehouse.ready(request.data)
         return JsonResponse(res_json, status=200)
     except Exception as e:
         logger.error(f"{LOG_ID} Error: {str(e)}")
@@ -74,7 +74,7 @@ def spojit_manifest(request):
     logger.info(f"{LOG_ID} Payload: {request.POST}")
 
     try:
-        res_json = manifest(request.data)
+        res_json = warehouse.manifest(request.data)
         return JsonResponse(res_json, status=200)
     except Exception as e:
         logger.error(f"{LOG_ID} Error: {str(e)}")
