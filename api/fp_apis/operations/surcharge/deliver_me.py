@@ -78,25 +78,25 @@ def jasonl():
                 de_postal >= 8000 and de_postal <= 8499
             ):  # Melbourne
                 return {
-                    "name": "Non Pallet CBM (SYD - MEL)",
+                    "name": "Non Pallet, per CBM (SYD - MEL)",
                     "description": "Deliver-ME Direct (Into Premises) SYD - MEL (65%)",
-                    "value": 131.54,
+                    "value": 131.54 * param["cubic_meter"],
                 }
             elif (de_postal >= 4000 and de_postal <= 4207) or (
                 de_postal >= 9000 and de_postal <= 9499
             ):  # Brisbane
                 return {
-                    "name": "Non Pallet CBM (SYD - BRIS)",
+                    "name": "Non Pallet, per CBM (SYD - BRIS)",
                     "description": "Deliver-ME Direct (Into Premises) SYD - BRIS (50%)",
-                    "value": 206.55,
+                    "value": 206.55 * param["cubic_meter"],
                 }
             elif (de_postal >= 5000 and de_postal <= 5199) or (
                 de_postal >= 5900 and de_postal <= 5999
             ):  # Adelaide
                 return {
-                    "name": "Non Pallet CBM (SYD - ADE)",
+                    "name": "Non Pallet, per CBM (SYD - ADE)",
                     "description": "Deliver-ME Direct (Into Premises) SYD - ADE (50%)",
-                    "value": 247.89,
+                    "value": 247.89 * param["cubic_meter"],
                 }
 
     def pu_tail_fee(param):
