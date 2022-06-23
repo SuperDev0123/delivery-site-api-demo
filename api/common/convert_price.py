@@ -113,7 +113,10 @@ def apply_markups(quotes, client, fps, client_fps):
         client_mu_1_minimum_values, fuel_levy_base, client_mu = _apply_mu(
             quote, fp, client, _client_fp
         )
-        quote.client_mu_1_minimum_values = client_mu_1_minimum_values
+
+        if not (quote.fee == 0 and quote.x_price_surcharge == 0):
+            quote.client_mu_1_minimum_values = client_mu_1_minimum_values
+
         quote.mu_percentage_fuel_levy = (
             _client_fp and _client_fp.fuel_levy
         ) or fp.fp_markupfuel_levy_percent
