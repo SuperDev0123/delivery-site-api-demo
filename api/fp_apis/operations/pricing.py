@@ -29,6 +29,7 @@ from api.fp_apis.response_parser import parse_pricing_response
 from api.fp_apis.payload_builder import get_pricing_payload
 from api.fp_apis.constants import (
     S3_URL,
+    SPECIAL_FPS,
     PRICING_TIME,
     FP_CREDENTIALS,
     BUILT_IN_PRICINGS,
@@ -82,13 +83,14 @@ def _confirm_visible(booking, booking_lines, quotes):
     return quotes
 
 
-def build_special_fp_pricings(booking, packed_status):
+def build_special_fp_pricings(booking, booking_lines, packed_status):
     # Get manually entered surcharges total
     try:
         manual_surcharges_total = booking.get_manual_surcharges_total()
     except:
         manual_surcharges_total = 0
 
+    postal_code = int(booking.de_To_Address_PostalCode or 0)
     quote_0 = API_booking_quotes()
     quote_0.api_results_id = ""
     quote_0.fk_booking_id = booking.pk_booking_id
@@ -102,6 +104,18 @@ def build_special_fp_pricings(booking, packed_status):
     quote_0.client_mu_1_minimum_values = 0
     quote_0.packed_status = packed_status
     quote_0.x_price_surcharge = manual_surcharges_total
+    quote_0.mu_percentage_fuel_levy = 0
+
+    # JasonL (SYD - SYD)
+    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002" and (
+        (postal_code >= 1000 and postal_code <= 2249)
+        or (postal_code >= 2760 and postal_code <= 2770)
+    ):
+        quote_3 = quote_0
+        quote_3.pk = None
+        quote_3.freight_provider = "In House Fleet"
+        quote_3.service_name = None
+        quote_3.save()
 
     # Plum & JasonL & BSD & Cadrys & Ariston Wire & Anchor Packagin
     if (
@@ -113,7 +127,6 @@ def build_special_fp_pricings(booking, packed_status):
         or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
     ):
         # restrict delivery postal code
-        postal_code = int(booking.de_To_Address_PostalCode or 0)
         if (
             postal_code
             and (
@@ -135,34 +148,18 @@ def build_special_fp_pricings(booking, packed_status):
             and booking.de_To_Address_State
             and booking.pu_Address_State.lower() != booking.de_To_Address_State.lower()
         ):
-            if (postal_code >= 5000 and postal_code <= 5199) or (
-                postal_code >= 5900 and postal_code <= 5999
-            ):
-                quote_0.service_name = "Deliver-ME Direct (Into Premises) (50%)"
-            elif (postal_code >= 4000 and postal_code <= 4207) or (
-                postal_code >= 9000 and postal_code <= 9499
-            ):
-                quote_0.service_name = "Deliver-ME Direct (Into Premises) (50%)"
-            elif (postal_code >= 3000 and postal_code <= 3207) or (
-                postal_code >= 8000 and postal_code <= 8499
-            ):
-                quote_0.service_name = "Deliver-ME Direct (Into Premises) (65%)"
+            quote_1 = quote_0
+            quote_1.freight_provider = "Deliver-ME"
+            result = get_self_pricing(quote_1.freight_provider, booking, booking_lines)
+            quote_1.fee = result["price"]["inv_cost_quoted"]
+            quote_1.client_mu_1_minimum_values = result["price"]["inv_sell_quoted"]
+            quote_1.save()
 
-            quote_0.freight_provider = "Deliver-ME"
-            quote_0.save()
-
-        quote_1 = quote_0
-        quote_1.pk = None
-        quote_1.freight_provider = "Customer Collect"
-        quote_0.service_name = None
-        quote_1.save()
-
-    # JasonL
-    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
         quote_2 = quote_0
         quote_2.pk = None
-        quote_2.freight_provider = "In House Fleet"
-        quote_0.service_name = None
+        quote_2.fee = 0
+        quote_2.client_mu_1_minimum_values = 0
+        quote_2.freight_provider = "Customer Collect"
         quote_2.save()
 
 
@@ -242,7 +239,7 @@ def pricing(
             if not _booking_lines:
                 continue
 
-            build_special_fp_pricings(booking, packed_status)
+            build_special_fp_pricings(booking, _booking_lines, packed_status)
             _loop_process(
                 booking,
                 _booking_lines,
@@ -304,6 +301,9 @@ def _loop_process(
 
         # Calculate Surcharges
         for quote in quotes:
+            if quote.freight_provider in SPECIAL_FPS:  # skip Special FPs
+                continue
+
             for fp in fps:
                 if quote.freight_provider.lower() == fp.fp_company_name.lower():
                     quote_fp = fp

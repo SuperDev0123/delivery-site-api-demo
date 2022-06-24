@@ -13,6 +13,7 @@ from api.fp_apis.built_in import (
     tnt,
     hunter,
     sendle,
+    deliver_me,
 )
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,8 @@ def get_pricing(
             prices = sendle.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones
             )
+        elif fp_name.lower() == "deliver-me":
+            prices = deliver_me.get_pricing(booking, booking_lines)
     except Exception as e:
         trace_error.print()
         message = f"@800 {LOG_ID} {str(e)}"

@@ -1,7 +1,7 @@
 import logging
 
 from api.models import DME_clients, Fp_freight_providers
-from api.fp_apis.constants import FP_CREDENTIALS
+from api.fp_apis.constants import FP_CREDENTIALS, SPECIAL_FPS
 
 
 logger = logging.getLogger(__name__)
@@ -98,6 +98,9 @@ def apply_markups(quotes, client, fps, client_fps):
     logger.info(f"[APPLY MU] Booking.fk_booking_id: {quotes[0].fk_booking_id}")
 
     for quote in quotes:
+        if quote.freight_provider in SPECIAL_FPS:  # skip Special FPs
+            continue
+
         fp = None
         _client_fp = None
 
@@ -186,6 +189,9 @@ def interpolate_gaps(quotes, client):
         f"[$ INTERPOLATE] Lowest Clinet quote: {lowest_pricing.pk}({lowest_pricing.fee})"
     )
     for quote in quotes:
+        if quote.freight_provider in SPECIAL_FPS:  # skip Special FPs
+            continue
+
         fp_name = quote.freight_provider.lower()
         client_name = quote.fk_client_id.lower()
         account_code = quote.account_code

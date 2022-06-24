@@ -50,6 +50,7 @@ from api.fp_apis.operations.surcharge.common import SURCHARGE_NAME_DESC
 from api.fp_apis.operations.surcharge.index import (
     get_surcharges as get_surcharges_with_quote,
 )
+from api.fp_apis.constants import SPECIAL_FPS
 
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
@@ -654,6 +655,9 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         )
 
     def get_client_customer_mark_up(self, obj):
+        if obj.freight_provider in SPECIAL_FPS:
+            return 0
+
         client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
         return client_customer_mark_up
 
@@ -664,7 +668,10 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         return SurchargeSerializer(surcharges, context=context, many=True).data
 
     def get_cost_dollar(self, obj):
-        return obj.fee * (1 + obj.client_mark_up_percent)
+        if obj.freight_provider in SPECIAL_FPS:
+            return round(obj.fee, 2)
+
+        return round(obj.fee * (1 + obj.client_mark_up_percent), 2)
 
     def get_fuel_levy_base_cl(self, obj):
         return obj.fuel_levy_base * (1 + obj.client_mark_up_percent)
@@ -688,6 +695,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     surcharge_total = serializers.SerializerMethodField(read_only=True)
     surcharge_total_cl = serializers.SerializerMethodField(read_only=True)
     cost_dollar = serializers.SerializerMethodField(read_only=True)
+    sell_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
 
@@ -695,13 +703,19 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return obj.pk
 
     def get_client_customer_mark_up(self, obj):
+        if obj.freight_provider in SPECIAL_FPS:
+            return 0
+
         client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
         return client_customer_mark_up
 
     def get_cost(self, obj):
         cost = obj.client_mu_1_minimum_values
-        client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
 
+        if obj.freight_provider in SPECIAL_FPS:
+            return round(cost, 2)
+
+        client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
         if client_customer_mark_up:
             cost = cost * (1 + client_customer_mark_up)
 
@@ -727,7 +741,10 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return obj.freight_provider
 
     def get_cost_dollar(self, obj):
-        return obj.fee * (1 + obj.client_mark_up_percent)
+        if obj.freight_provider in SPECIAL_FPS:
+            return round(obj.fee, 2)
+
+        return round(obj.fee * (1 + obj.client_mark_up_percent), 2)
 
     def get_fuel_levy_base_cl(self, obj):
         return obj.fuel_levy_base * (1 + obj.client_mark_up_percent)
