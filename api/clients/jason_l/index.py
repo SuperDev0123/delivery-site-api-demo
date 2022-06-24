@@ -43,6 +43,7 @@ from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations import product_operations as product_oper
 from api.operations.email_senders import send_email_to_admins, send_email_missing_dims
 from api.operations.labels.index import build_label, get_barcode
+from api.operations.booking_line import index as line_oper
 
 # from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
 # from api.operations.pronto_xi.index import send_info_back
@@ -543,31 +544,14 @@ def push_boks(payload, client, username, method):
                 or line["l_007_dim_height"] == 0
                 or line["l_009_weight_per_each"] == 0
             ):
-                zero_dims = []
                 lines_missing_dims.append(line["e_item_type"])
-                if not line["l_005_dim_length"]:
-                    zero_dims.append("length")
 
-                if not line["l_006_dim_width"]:
-                    zero_dims.append("width")
-
-                if not line["l_007_dim_height"]:
-                    zero_dims.append("height")
-
-                if not line["l_009_weight_per_each"]:
-                    zero_dims.append("weight")
-
-                line["l_003_item"] = f"(Ignored) - {', '.join(zero_dims)} are 0."
-                line["l_005_dim_length"] = line["l_005_dim_length"] or 0.1
-                line["l_006_dim_width"] = line["l_006_dim_width"] or 0.1
-                line["l_007_dim_height"] = line["l_007_dim_height"] or 0.1
-                line["l_009_weight_per_each"] = line["l_009_weight_per_each"] or 0.1
-
+            line = line_oper.handle_zero(line)
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
 
-                if not line["is_deleted"] and not "(Ignored)" in line["l_003_item"]:
+                if not line["is_deleted"]:
                     bok_2_objs.append(bok_2_obj)
                     line["pk_lines_id"] = bok_2_obj.pk
                     new_bok_2s.append({"booking_line": line})

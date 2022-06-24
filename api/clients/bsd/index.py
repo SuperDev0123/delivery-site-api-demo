@@ -9,6 +9,7 @@ from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
 from api.common import common_times as dme_time_lib, constants as dme_constants
 from api.operations import product_operations as product_oper
+from api.operations.booking_line import index as line_oper
 from api.clients.operations.index import get_suburb_state
 from api.common.common_times import next_business_day
 
@@ -82,6 +83,7 @@ def push_boks(payload, client, username, method):
             l_001 = "Carton" or _bok_2.get("l_001_type_of_packaging")
             _bok_2["l_001_type_of_packaging"] = l_001
 
+            _bok_2 = line_oper.handle_zero(_bok_2)
             bok_2_serializer = BOK_2_Serializer(data=_bok_2)
             if bok_2_serializer.is_valid():
                 bok_2_serializer.save()
@@ -105,7 +107,7 @@ def push_boks(payload, client, username, method):
                 if bok_3_serializer.is_valid():
                     bok_3_serializer.save()
                 else:
-                    message = f"Serialiser Error - {bok_2_serializer.errors}"
+                    message = f"Serialiser Error - {bok_3_serializer.errors}"
                     logger.info(f"@8831 {LOG_ID} {message}")
                     raise Exception(message)
 

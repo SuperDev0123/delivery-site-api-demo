@@ -43,7 +43,7 @@ from api.fp_apis.utils import (
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations.email_senders import send_email_to_admins, send_email_missing_dims
 from api.operations.labels.index import build_label, get_barcode
-
+from api.operations.booking_line import index as line_oper
 from api.clients.operations.index import get_warehouse, get_suburb_state
 from api.helpers.cubic import get_cubic_meter
 from api.convertors.pdf import pdf_merge
@@ -260,6 +260,7 @@ def push_boks(payload, client, username, method):
             line["l_008_weight_UOM"] = _item["l_008_weight_UOM"].upper()
             line["b_093_packed_status"] = BOK_2_lines.ORIGINAL
 
+            line = line_oper.handle_zero(line)
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()

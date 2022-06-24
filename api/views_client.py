@@ -439,11 +439,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_2.zbl_131_decimal_1 = line.get("zbl_131_decimal_1")
                 bok_2.e_item_type = line.get("e_item_type")
                 bok_2.l_002_qty = line.get("e_qty")
-                bok_2.l_003_item = (
-                    line.get("e_item")
-                    if not line.get("is_ignored")
-                    else f'{line.get("e_item")} (Ignored)'
-                )
+                bok_2.l_003_item = line.get("e_item")
                 bok_2.l_004_dim_UOM = line.get("e_dimUOM")
                 bok_2.l_005_dim_length = line.get("e_dimLength")
                 bok_2.l_006_dim_width = line.get("e_dimWidth")
@@ -487,11 +483,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                 bok_2.zbl_131_decimal_1 = line.get("zbl_131_decimal_1")
                 bok_2.e_item_type = line.get("e_item_type")
                 bok_2.l_002_qty = line.get("e_qty")
-                bok_2.l_003_item = (
-                    line.get("e_item")
-                    if not line.get("is_ignored")
-                    else f'{line.get("e_item")} (Ignored)'
-                )
+                bok_2.l_003_item = line.get("e_item")
                 bok_2.l_004_dim_UOM = line.get("e_dimUOM")
                 bok_2.l_005_dim_length = line.get("e_dimLength")
                 bok_2.l_006_dim_width = line.get("e_dimWidth")
@@ -874,21 +866,19 @@ def get_delivery_status(request):
             fk_booking_id=booking.pk_booking_id
         )
 
-        booking_lines = (
-            booking_lines.exclude(zbl_102_text_2__in=SERVICE_GROUP_CODES)
-            .exclude(e_item__icontains="(Ignored)")
-            .only(
-                "pk_lines_id",
-                "e_type_of_packaging",
-                "e_qty",
-                "e_item",
-                "e_item_type",
-                "e_dimUOM",
-                "e_dimLength",
-                "e_dimWidth",
-                "e_dimHeight",
-                "e_Total_KG_weight",
-            )
+        booking_lines = booking_lines.exclude(
+            zbl_102_text_2__in=SERVICE_GROUP_CODES
+        ).only(
+            "pk_lines_id",
+            "e_type_of_packaging",
+            "e_qty",
+            "e_item",
+            "e_item_type",
+            "e_dimUOM",
+            "e_dimLength",
+            "e_dimWidth",
+            "e_dimHeight",
+            "e_Total_KG_weight",
         )
 
         original_lines = booking_lines.filter(packed_status=Booking_lines.ORIGINAL)

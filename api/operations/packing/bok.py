@@ -22,16 +22,14 @@ def auto_repack(bok_1, repack_status, pallet_id, client):
     new_bok_2s = []
 
     # Get Boks
-    bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id).exclude(
-        l_003_item__icontains="(ignored)"
-    )
+    bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
     bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=bok_1.pk_header_id)
 
     # Delete existing Bok_2s and Bok_3s
     bok_2s.filter(l_003_item="Auto repacked item").delete()
     bok_3s.delete()
     bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id).exclude(
-        Q(zbl_102_text_2__in=SERVICE_GROUP_CODES) | Q(l_003_item__icontains="(ignored)")
+        zbl_102_text_2__in=SERVICE_GROUP_CODES
     )
 
     # Get Pallet

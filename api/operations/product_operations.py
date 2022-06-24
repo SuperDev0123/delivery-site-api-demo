@@ -63,16 +63,16 @@ def get_product_items(bok_2s, client, is_web=False, is_bundle_by_model_number=Tr
 
             line = {
                 "e_item_type": model_number,
-                "description": "(Ignored)",
+                "description": "(Missed Product)",
                 "qty": qty,
                 "e_dimUOM": "m",
                 "e_weightUOM": "kg",
                 "e_dimLength": 0.5,
                 "e_dimWidth": 0.5,
                 "e_dimHeight": 0.5,
-                "e_weightPerEach": 0.5,
+                "e_weightPerEach": 1,
                 "zbl_131_decimal_1": zbl_131_decimal_1,
-                "zbl_102_text_2": "(Ignored)",
+                "zbl_102_text_2": "(Missed Product)",
                 "e_type_of_packaging": e_type_of_packaging or "Carton",
             }
 

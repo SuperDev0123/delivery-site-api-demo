@@ -144,11 +144,7 @@ def bok_quote(bok_1, packed_status):
     LOG_ID = "[BOK QUOTE]"
 
     # Get Boks
-    bok_2s = (
-        bok_1.bok_2s()
-        .filter(is_deleted=False, b_093_packed_status=packed_status)
-        .exclude(l_003_item__icontains="(ignored)")
-    )
+    bok_2s = bok_1.bok_2s().filter(is_deleted=False, b_093_packed_status=packed_status)
     client = DME_clients.objects.get(pk=21)
 
     # Get next business day

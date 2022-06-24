@@ -41,6 +41,7 @@ from api.operations.manifests.index import build_manifest
 from api.operations.email_senders import send_email_to_admins
 from api.operations import product_operations as product_oper
 from api.operations import paperless
+from api.operations.booking_line import index as line_oper
 from api.clients.operations.index import get_warehouse, get_suburb_state
 from api.clients.plum.operations import detect_modified_data
 
@@ -594,6 +595,7 @@ def push_boks(payload, client, username, method):
                 line["e_item_type"] = item["e_item_type"]
                 line["b_093_packed_status"] = BOK_2_lines.ORIGINAL
 
+                line = line_oper.handle_zero(line)
                 bok_2_serializer = BOK_2_Serializer(data=line)
                 if bok_2_serializer.is_valid():
                     result = bok_2_serializer.save()
@@ -616,6 +618,7 @@ def push_boks(payload, client, username, method):
                 _bok_2["l_001_type_of_packaging"] = l_001
                 _bok_2["b_093_packed_status"] = BOK_2_lines.ORIGINAL
 
+                _bok_2 = line_oper.handle_zero(_bok_2)
                 bok_2_serializer = BOK_2_Serializer(data=_bok_2)
                 if bok_2_serializer.is_valid():
                     result = bok_2_serializer.save()
@@ -640,7 +643,7 @@ def push_boks(payload, client, username, method):
                     if bok_3_serializer.is_valid():
                         bok_3_serializer.save()
                     else:
-                        message = f"Serialiser Error - {bok_2_serializer.errors}"
+                        message = f"Serialiser Error - {bok_3_serializer.errors}"
                         logger.info(f"@8831 {LOG_ID} {message}")
                         raise Exception(message)
 
