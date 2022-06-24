@@ -692,7 +692,6 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     surcharge_total = serializers.SerializerMethodField(read_only=True)
     surcharge_total_cl = serializers.SerializerMethodField(read_only=True)
     cost_dollar = serializers.SerializerMethodField(read_only=True)
-    sell_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
 
