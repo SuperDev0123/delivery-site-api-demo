@@ -655,9 +655,6 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         )
 
     def get_client_customer_mark_up(self, obj):
-        if obj.freight_provider in SPECIAL_FPS:
-            return 0
-
         client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
         return client_customer_mark_up
 
@@ -669,7 +666,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
 
     def get_cost_dollar(self, obj):
         if obj.freight_provider in SPECIAL_FPS:
-            return round(obj.fee, 2)
+            return round(obj.client_mu_1_minimum_values, 2)
 
         return round(obj.fee * (1 + obj.client_mark_up_percent), 2)
 
@@ -703,9 +700,6 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return obj.pk
 
     def get_client_customer_mark_up(self, obj):
-        if obj.freight_provider in SPECIAL_FPS:
-            return 0
-
         client_customer_mark_up = self.context.get("client_customer_mark_up", 0)
         return client_customer_mark_up
 
@@ -742,7 +736,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
 
     def get_cost_dollar(self, obj):
         if obj.freight_provider in SPECIAL_FPS:
-            return round(obj.fee, 2)
+            return round(obj.client_mu_1_minimum_values, 2)
 
         return round(obj.fee * (1 + obj.client_mark_up_percent), 2)
 

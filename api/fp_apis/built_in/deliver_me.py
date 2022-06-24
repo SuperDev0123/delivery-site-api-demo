@@ -30,51 +30,51 @@ def get_pricing(booking, booking_lines):
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
                 if not is_pallet:
-                    inv_cost_quoted += 81.45
-                    inv_sell_quoted += 137.50
+                    inv_cost_quoted += 81.45 * cubic_meter * line.e_qty
+                    inv_sell_quoted += 137.50 * cubic_meter * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.2:
-                    inv_cost_quoted += 167.86
-                    inv_sell_quoted += 198.89
+                    inv_cost_quoted += 167.86 * line.e_qty
+                    inv_sell_quoted += 198.89 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.6:
-                    inv_cost_quoted += 224.29
-                    inv_sell_quoted += 268.33
+                    inv_cost_quoted += 224.29 * line.e_qty
+                    inv_sell_quoted += 268.33 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.85:
-                    inv_cost_quoted += 224.29
-                    inv_sell_quoted += 268.33
+                    inv_cost_quoted += 224.29 * line.e_qty
+                    inv_sell_quoted += 268.33 * line.e_qty
             elif (postal_code >= 4000 and postal_code <= 4207) or (
                 postal_code >= 9000 and postal_code <= 9499
             ):  # Brisbane
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
                 if not is_pallet:
-                    inv_cost_quoted += 155.03
-                    inv_sell_quoted += 212.94
+                    inv_cost_quoted += 155.03 * cubic_meter * line.e_qty
+                    inv_sell_quoted += 212.94 * cubic_meter * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.2:
-                    inv_cost_quoted += 234.25
-                    inv_sell_quoted += 265.56
+                    inv_cost_quoted += 234.25 * line.e_qty
+                    inv_sell_quoted += 265.56 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.6:
-                    inv_cost_quoted += 323.88
-                    inv_sell_quoted += 471.11
+                    inv_cost_quoted += 323.88 * line.e_qty
+                    inv_sell_quoted += 471.11 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.85:
-                    inv_cost_quoted += 323.88
-                    inv_sell_quoted += 471.11
+                    inv_cost_quoted += 323.88 * line.e_qty
+                    inv_sell_quoted += 471.11 * line.e_qty
             elif (postal_code >= 5000 and postal_code <= 5199) or (
                 postal_code >= 5900 and postal_code <= 5999
             ):  # Adelaide
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
                 if not is_pallet:
-                    inv_cost_quoted += 184.67
-                    inv_sell_quoted += 254.28
+                    inv_cost_quoted += 184.67 * cubic_meter * line.e_qty
+                    inv_sell_quoted += 254.28 * cubic_meter * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.2:
-                    inv_cost_quoted += 287.36
-                    inv_sell_quoted += 321.11
+                    inv_cost_quoted += 287.36 * line.e_qty
+                    inv_sell_quoted += 321.11 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.6:
-                    inv_cost_quoted += 403.54
-                    inv_sell_quoted += 582.22
+                    inv_cost_quoted += 403.54 * line.e_qty
+                    inv_sell_quoted += 582.22 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.85:
-                    inv_cost_quoted += 403.54
-                    inv_sell_quoted += 582.22
+                    inv_cost_quoted += 403.54 * line.e_qty
+                    inv_sell_quoted += 582.22 * line.e_qty
         # BSD
         elif booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8":
             if (postal_code >= 3000 and postal_code <= 3207) or (
@@ -83,51 +83,51 @@ def get_pricing(booking, booking_lines):
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
                 if not is_pallet:
-                    inv_cost_quoted += 81.45
-                    inv_sell_quoted += 141.5
+                    inv_cost_quoted += 81.45 * cubic_meter * line.e_qty
+                    inv_sell_quoted += 141.5 * cubic_meter * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.2:
-                    inv_cost_quoted += 167.86
-                    inv_sell_quoted += 206.06
+                    inv_cost_quoted += 167.86 * line.e_qty
+                    inv_sell_quoted += 206.06 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.6:
-                    inv_cost_quoted += 224.29
-                    inv_sell_quoted += 279.08
+                    inv_cost_quoted += 224.29 * line.e_qty
+                    inv_sell_quoted += 279.08 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.85:
-                    inv_cost_quoted += 224.29
-                    inv_sell_quoted += 279.08
+                    inv_cost_quoted += 224.29 * line.e_qty
+                    inv_sell_quoted += 279.08 * line.e_qty
             elif (postal_code >= 4000 and postal_code <= 4207) or (
                 postal_code >= 9000 and postal_code <= 9499
             ):  # Brisbane
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
                 if not is_pallet:
-                    inv_cost_quoted += 155.03
-                    inv_sell_quoted += 218.07
+                    inv_cost_quoted += 155.03 * cubic_meter * line.e_qty
+                    inv_sell_quoted += 218.07 * cubic_meter * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.2:
-                    inv_cost_quoted += 234.25
-                    inv_sell_quoted += 272.44
+                    inv_cost_quoted += 234.25 * line.e_qty
+                    inv_sell_quoted += 272.44 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.6:
-                    inv_cost_quoted += 323.88
-                    inv_sell_quoted += 484.89
+                    inv_cost_quoted += 323.88 * line.e_qty
+                    inv_sell_quoted += 484.89 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.85:
-                    inv_cost_quoted += 323.88
-                    inv_sell_quoted += 484.89
+                    inv_cost_quoted += 323.88 * line.e_qty
+                    inv_sell_quoted += 484.89 * line.e_qty
             elif (postal_code >= 5000 and postal_code <= 5199) or (
                 postal_code >= 5900 and postal_code <= 5999
             ):  # Adelaide
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
                 if not is_pallet:
-                    inv_cost_quoted += 184.67
-                    inv_sell_quoted += 257.59
+                    inv_cost_quoted += 184.67 * cubic_meter * line.e_qty
+                    inv_sell_quoted += 257.59 * cubic_meter * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.2:
-                    inv_cost_quoted += 287.36
-                    inv_sell_quoted += 325.56
+                    inv_cost_quoted += 287.36 * line.e_qty
+                    inv_sell_quoted += 325.56 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.6:
-                    inv_cost_quoted += 403.54
-                    inv_sell_quoted += 591.11
+                    inv_cost_quoted += 403.54 * line.e_qty
+                    inv_sell_quoted += 591.11 * line.e_qty
                 elif is_pallet and width <= 1.2 and length <= 1.85:
-                    inv_cost_quoted += 403.54
-                    inv_sell_quoted += 591.11
+                    inv_cost_quoted += 403.54 * line.e_qty
+                    inv_sell_quoted += 591.11 * line.e_qty
 
     pu_tail_lift = booking.b_booking_tail_lift_pickup
     if pu_tail_lift and int(pu_tail_lift) > 1:
