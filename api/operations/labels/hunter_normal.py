@@ -1,5 +1,6 @@
 # Python 3.6.6
 
+from this import d
 import pysftp
 
 cnopts = pysftp.CnOpts()
@@ -83,10 +84,10 @@ def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
     items_count = str(sscc_cnt).zfill(3)
     postal_code = booking.de_To_Address_PostalCode
 
-    label_code = f"{consignment_num}{item_index}"
+    label_code = f"{consignment_num}{item_index}{items_count}{postal_code}"
     api_bcl.create(booking, [{"label_code": label_code}])
 
-    return f"{consignment_num}{item_index}{items_count}{postal_code}"
+    return label_code
 
 
 from reportlab.platypus.flowables import Flowable
@@ -276,15 +277,35 @@ def build_label(
             if one_page_label and k > 0:
                 continue
 
+            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
+            
+            d1 = Drawing(100, 40)
+            d1.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            d1.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
+
+            t2 = [
+                [
+                    d1
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>%s&nbsp;&nbsp;&nbsp;</font>"
+                        % (
+                            label_settings["font_size_small"],
+                            "DME QR Code"
+                        ),
+                        style_center,
+                    )
+                ],
+            ]
+
             data = [
                 [
                     dme_img,
                     # Paragraph(
-                    #     "<font size=%s><b>%s</b><br/><br/></font>"
-                    #     % (label_settings["font_size_extra_large"], "Hunter Express"),
-                    #     style_right_bg,
+                    #     "", style_center
                     # ),
-                    Paragraph("", style_center),
+                    t2,
                     hunter_img,
                 ]
             ]
@@ -297,11 +318,13 @@ def build_label(
                 data,
                 colWidths=[t1_w, t2_w, t3_w],
                 style=[
-                    ("VALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMBORDER", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (1, 0), (1, 0), 16),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ],
             )
@@ -559,21 +582,41 @@ def build_label(
                 ],
             )
 
+            
+            
+
+            d2 = Drawing(100, 100)
             barcode = gen_barcode(booking, lines, j, sscc_cnt)
+            codeString = barcode
+            # codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
+            d2.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            d2.add(QrCodeWidget(value=codeString))
 
-            d = Drawing(100, 100)
-            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            d.add(QrCodeWidget(value=codeString))
-
-            data = [[t1, d]]
+            t3 = [
+                [
+                    d2
+                ],
+                [
+                    Paragraph(
+                        "<font size=%s>%s&nbsp;&nbsp;&nbsp;</font>"
+                        % (
+                            label_settings["font_size_small"],
+                            "Hunter QR Code"
+                        ),
+                        style_center,
+                    )
+                ],
+            ]
+           
+            data = [[t1, t3]]
 
             t1_w = float(label_settings["label_image_size_length"]) * (3 / 4) * mm
-            t2_w = float(label_settings["label_image_size_length"]) * (1 / 4) * mm
+            # t2_w = float(label_settings["label_image_size_length"]) * (1 / 4) * mm
+            t3_w = float(label_settings["label_image_size_length"]) * (1 / 4) * mm
 
             shell_table = Table(
                 data,
-                colWidths=[t1_w, t2_w],
+                colWidths=[t1_w, t3_w],
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
