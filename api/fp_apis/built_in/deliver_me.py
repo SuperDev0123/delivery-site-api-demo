@@ -38,7 +38,6 @@ def get_pricing(booking, booking_lines):
                 elif is_pallet and length <= 1.2 and width <= 1.6:
                     inv_cost_quoted += 224.29 * line.e_qty
                     inv_sell_quoted += 268.33 * line.e_qty
-                    print("@3  ")
                 elif is_pallet and length <= 1.2 and width <= 1.85:
                     inv_cost_quoted += 224.29 * line.e_qty
                     inv_sell_quoted += 268.33 * line.e_qty
