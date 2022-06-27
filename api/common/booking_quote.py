@@ -18,8 +18,10 @@ def set_booking_quote(booking, quote=None):
         booking.inv_sell_quoted = None
         booking.s_02_Booking_Cutoff_Time = None
         booking.v_vehicle_Type = None
+        booking.packed_status = None
     else:
         booking.api_booking_quote = quote
+        booking.packed_status = quote.packed_status
         booking.vx_freight_provider = quote.freight_provider
         booking.vx_account_code = quote.account_code
         booking.vx_serviceName = quote.service_name

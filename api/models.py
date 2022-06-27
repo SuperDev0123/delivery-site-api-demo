@@ -712,6 +712,17 @@ class Bookings(models.Model):
     DMEP = "DMEP"  # Pickup
     BOOKING_TYPE_CHOICES = ((DMEM, "DMEM"), (DMEA, "DMEA"), (DMEP, "DMEP"))
 
+    ORIGINAL = "original"
+    AUTO_PACK = "auto"
+    MANUAL_PACK = "manual"
+    SCANNED_PACK = "scanned"
+    PACKED_STATUS_CHOICES = (
+        (ORIGINAL, "original"),
+        (AUTO_PACK, "auto"),
+        (MANUAL_PACK, "manual"),
+        (SCANNED_PACK, "scanned"),
+    )
+
     id = models.AutoField(primary_key=True)
     b_bookingID_Visual = models.IntegerField(
         verbose_name=_("BookingID Visual"), blank=True, null=True, default=0
@@ -1914,6 +1925,9 @@ class Bookings(models.Model):
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
     selected = models.BooleanField(default=None, null=True)
+    packed_status = models.CharField(
+        max_length=16, default=None, null=True, choices=PACKED_STATUS_CHOICES
+    )
 
     class Meta:
         db_table = "dme_bookings"
