@@ -10,7 +10,6 @@ def get_pricing(booking, booking_lines):
     inv_cost_quoted, inv_sell_quoted = 0, 0
 
     for line in booking_lines:
-        print("@2 - ", line, inv_cost_quoted, inv_sell_quoted)
         is_pallet = line.e_type_of_packaging.upper() in PALLETS
         length = line.e_dimLength * _get_dim_amount(line.e_dimUOM)
         width = line.e_dimWidth * _get_dim_amount(line.e_dimUOM)
