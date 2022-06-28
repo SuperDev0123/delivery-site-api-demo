@@ -114,6 +114,8 @@ def partial_pricing(payload, client, warehouse):
         "vx_serviceName": "exp",
         "kf_client_id": warehouse.fk_id_dme_client.dme_account_num,
         "b_client_name": client.company_name,
+        "pu_no_of_assists": bok_1.get("b_072_b_pu_no_of_assists") or 0,
+        "de_no_of_assists": bok_1.get("b_073_b_del_no_of_assists") or 0,
     }
 
     # Product & Child items
@@ -747,6 +749,8 @@ def push_boks(payload, client, username, method):
         "client_warehouse_code": bok_1["b_client_warehouse_code"],
         "kf_client_id": bok_1["fk_client_id"],
         "b_client_name": client.company_name,
+        "pu_no_of_assists": bok_1.get("b_072_b_pu_no_of_assists") or 0,
+        "de_no_of_assists": bok_1.get("b_073_b_del_no_of_assists") or 0,
     }
 
     booking_lines = []
