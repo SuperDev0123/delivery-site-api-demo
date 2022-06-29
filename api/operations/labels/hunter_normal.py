@@ -1,6 +1,5 @@
 # Python 3.6.6
 
-from this import d
 import pysftp
 
 cnopts = pysftp.CnOpts()
