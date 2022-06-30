@@ -22,6 +22,12 @@ def get_pricing(booking, booking_lines):
             1,
         )
 
+        # Set smallert to `length`
+        if length > width:
+            temp = length
+            length = width
+            width = temp
+
         # JasonL
         if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
             if (postal_code >= 3000 and postal_code <= 3207) or (
