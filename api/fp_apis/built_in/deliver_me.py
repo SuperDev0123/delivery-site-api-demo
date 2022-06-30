@@ -148,7 +148,7 @@ def get_pricing(booking, booking_lines):
                     )
                     inv_sell_quoted += one_inv_sell_quoted
                     inv_dme_quoted += (
-                        (inv_sell_quoted - 60)
+                        (one_inv_sell_quoted - 60)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + 60
