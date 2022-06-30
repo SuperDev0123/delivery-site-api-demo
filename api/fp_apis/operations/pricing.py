@@ -239,17 +239,24 @@ def pricing(
             if not _booking_lines:
                 continue
 
+            # Special Pricings
             build_special_fp_pricings(booking, _booking_lines, packed_status)
-            _loop_process(
-                booking,
-                _booking_lines,
-                is_pricing_only,
-                packed_status,
-                client,
-                pu_zones,
-                de_zones,
-                client_fps,
-            )
+
+            # Other Pricings
+            if not is_pricing_only and (
+                booking.b_status != "Delivered"
+                or booking.vx_freight_provider == "Deliver-ME"
+            ):
+                _loop_process(
+                    booking,
+                    _booking_lines,
+                    is_pricing_only,
+                    packed_status,
+                    client,
+                    pu_zones,
+                    de_zones,
+                    client_fps,
+                )
 
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id, is_used=False
