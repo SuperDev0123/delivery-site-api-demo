@@ -153,6 +153,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
             result = get_self_pricing(quote_1.freight_provider, booking, booking_lines)
             quote_1.fee = result["price"]["inv_cost_quoted"]
             quote_1.client_mu_1_minimum_values = result["price"]["inv_sell_quoted"]
+            quote_1.tax_value_5 = result["price"]["inv_dme_quoted"]
             quote_1.save()
 
         quote_2 = quote_0
@@ -160,6 +161,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         quote_2.fee = 0
         quote_2.client_mu_1_minimum_values = 0
         quote_2.freight_provider = "Customer Collect"
+        quote_1.tax_value_5 = None
         quote_2.save()
 
 
@@ -240,17 +242,25 @@ def pricing(
                 continue
 
             # Special Pricings
-            build_special_fp_pricings(booking, _booking_lines, packed_status)
-            _loop_process(
-                booking,
-                _booking_lines,
-                is_pricing_only,
-                packed_status,
-                client,
-                pu_zones,
-                de_zones,
-                client_fps,
-            )
+            try:
+                if (
+                    not is_pricing_only
+                    and booking.b_dateBookedDate
+                    and booking.vx_freight_provider == "Deliver-ME"
+                ):
+                    build_special_fp_pricings(booking, _booking_lines, packed_status)
+            except:
+                build_special_fp_pricings(booking, _booking_lines, packed_status)
+                _loop_process(
+                    booking,
+                    _booking_lines,
+                    is_pricing_only,
+                    packed_status,
+                    client,
+                    pu_zones,
+                    de_zones,
+                    client_fps,
+                )
 
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id, is_used=False
