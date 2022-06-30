@@ -45,6 +45,8 @@ def get_percentage(vehicle_name):
         return 0.256810588
     elif vehicle_name == "DD000049_220504_SYD-MEL":
         return 0.449258378
+    else:
+        return 1
 
 
 def get_pricing(booking, booking_lines):
