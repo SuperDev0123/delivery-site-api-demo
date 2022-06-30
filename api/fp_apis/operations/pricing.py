@@ -245,7 +245,7 @@ def pricing(
             # Other Pricings
             if not is_pricing_only and (
                 booking.b_status != "Delivered"
-                or booking.vx_freight_provider == "Deliver-ME"
+                or booking.vx_freight_provider != "Deliver-ME"
             ):
                 _loop_process(
                     booking,
