@@ -103,11 +103,12 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += (
                         26.45 * cubic_meter * line.e_qty + 55 * line.e_qty
                     )
-                    inv_sell_quoted += (
+                    one_inv_sell_quoted = (
                         77.50 * cubic_meter * line.e_qty + 60 * line.e_qty
                     )
+                    inv_sell_quoted += one_inv_sell_quoted
                     inv_dme_quoted += (
-                        (inv_sell_quoted - 60)
+                        (one_inv_sell_quoted - 60)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + 60
@@ -142,9 +143,10 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += (
                         100.03 * cubic_meter * line.e_qty + 55 * line.e_qty
                     )
-                    inv_sell_quoted += (
+                    one_inv_sell_quoted = (
                         152.94 * cubic_meter * line.e_qty + 60 * line.e_qty
                     )
+                    inv_sell_quoted += one_inv_sell_quoted
                     inv_dme_quoted += (
                         (inv_sell_quoted - 60)
                         * 0.5
@@ -181,11 +183,12 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += (
                         129.67 * cubic_meter * line.e_qty + 55 * line.e_qty
                     )
-                    inv_sell_quoted += (
+                    one_inv_sell_quoted = (
                         194.28 * cubic_meter * line.e_qty + 60 * line.e_qty
                     )
+                    inv_sell_quoted += one_inv_sell_quoted
                     inv_dme_quoted += (
-                        (inv_sell_quoted - 60)
+                        (one_inv_sell_quoted - 60)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + 60
@@ -222,11 +225,12 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += (
                         26.45 * cubic_meter * line.e_qty + 55 * line.e_qty
                     )
-                    inv_sell_quoted += (
+                    one_inv_sell_quoted = (
                         81.50 * cubic_meter * line.e_qty + 65 * line.e_qty
                     )
+                    inv_sell_quoted += one_inv_sell_quoted
                     inv_dme_quoted += (
-                        (inv_sell_quoted - 65)
+                        (one_inv_sell_quoted - 65)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + 65
@@ -261,11 +265,12 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += (
                         100.03 * cubic_meter * line.e_qty + 55 * line.e_qty
                     )
-                    inv_sell_quoted += (
+                    one_inv_sell_quoted = (
                         158.07 * cubic_meter * line.e_qty + 65 * line.e_qty
                     )
+                    inv_sell_quoted += one_inv_sell_quoted
                     inv_dme_quoted += (
-                        (inv_sell_quoted - 65)
+                        (one_inv_sell_quoted - 65)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + 65
@@ -302,12 +307,15 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += (
                         129.67 * cubic_meter * line.e_qty + 55 * line.e_qty
                     )
-                    inv_sell_quoted += (
+                    one_inv_sell_quoted = (
                         197.59 * cubic_meter * line.e_qty + 65 * line.e_qty
                     )
+                    inv_sell_quoted += one_inv_sell_quoted
                     inv_dme_quoted += (
-                        (197.59 - 65) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 65
+                        (one_inv_sell_quoted - 65)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + 60
                     ) * line.e_qty
 
     if booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1:
