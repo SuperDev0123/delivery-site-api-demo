@@ -107,7 +107,9 @@ def get_pricing(booking, booking_lines):
                         77.50 * cubic_meter * line.e_qty + 60 * line.e_qty
                     )
                     inv_dme_quoted += (
-                        (77.50 - 60) * 0.5 / get_percentage(booking.b_booking_project)
+                        (77.50 * cubic_meter - 60)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
                         + 60
                     ) * line.e_qty
             elif (postal_code >= 4000 and postal_code <= 4207) or (
@@ -144,7 +146,9 @@ def get_pricing(booking, booking_lines):
                         152.94 * cubic_meter * line.e_qty + 60 * line.e_qty
                     )
                     inv_dme_quoted += (
-                        (152.94 - 60) * 0.5 / get_percentage(booking.b_booking_project)
+                        (152.94 * cubic_meter - 60)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
                         + 60
                     ) * line.e_qty
             elif (postal_code >= 5000 and postal_code <= 5199) or (
@@ -181,7 +185,9 @@ def get_pricing(booking, booking_lines):
                         194.28 * cubic_meter * line.e_qty + 60 * line.e_qty
                     )
                     inv_dme_quoted += (
-                        (194.28 - 60) * 0.5 / get_percentage(booking.b_booking_project)
+                        (194.28 * cubic_meter - 60)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
                         + 60
                     ) * line.e_qty
         # BSD
@@ -220,7 +226,9 @@ def get_pricing(booking, booking_lines):
                         81.50 * cubic_meter * line.e_qty + 65 * line.e_qty
                     )
                     inv_dme_quoted += (
-                        (81.50 - 65) * 0.5 / get_percentage(booking.b_booking_project)
+                        (81.50 * cubic_meter - 65)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
                         + 65
                     ) * line.e_qty
             elif (postal_code >= 4000 and postal_code <= 4207) or (
@@ -257,7 +265,9 @@ def get_pricing(booking, booking_lines):
                         158.07 * cubic_meter * line.e_qty + 65 * line.e_qty
                     )
                     inv_dme_quoted += (
-                        (158.07 - 65) * 0.5 / get_percentage(booking.b_booking_project)
+                        (158.07 * cubic_meter - 65)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
                         + 65
                     ) * line.e_qty
             elif (postal_code >= 5000 and postal_code <= 5199) or (
@@ -283,7 +293,9 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += 403.54 * line.e_qty
                     inv_sell_quoted += 591.11 * line.e_qty
                     inv_dme_quoted += (
-                        (591.11 - 65) * 0.5 / get_percentage(booking.b_booking_project)
+                        (591.11 * cubic_meter - 65)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
                         + 65
                     ) * line.e_qty
                 else:
