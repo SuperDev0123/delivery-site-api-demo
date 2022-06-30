@@ -55,7 +55,7 @@ def build_quote_report(kf_client_ids, start_date, end_date):
 
     # Write Header
     fileHandler.write(
-        "BookingID, pk_booking_id, BookedDate, FP, OrderNo, QTY, Cubic(M3), Weight(Kg) Quoted $, Booked $, Manual BOOK?\n"
+        "BookingID, pk_booking_id, BookedDate, FP, OrderNo, QTY, Cubic(M3), Weight(Kg) Quoted $, Booked $, Pallet Sized Booked $, Manual BOOK?\n"
     )
 
     # Write Each Line
@@ -149,6 +149,8 @@ def build_quote_report(kf_client_ids, start_date, end_date):
                 + f"${booking.inv_sell_quoted}"
                 + comma
                 + f"${booking.inv_booked_quoted}"
+                + comma
+                + f"${booking.api_booking_quote.tax_value_5}"
                 + comma
                 + f"{'Manual' if booking.x_manual_booked_flag else 'AUTO'}"
             )
