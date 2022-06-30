@@ -45,8 +45,12 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += 224.29 * line.e_qty
                     inv_sell_quoted += 268.33 * line.e_qty
                 else:
-                    inv_cost_quoted += 81.45 * cubic_meter * line.e_qty
-                    inv_sell_quoted += 137.50 * cubic_meter * line.e_qty
+                    inv_cost_quoted += (
+                        26.45 * cubic_meter * line.e_qty + 55 * line.e_qty
+                    )
+                    inv_sell_quoted += (
+                        77.50 * cubic_meter * line.e_qty + 60 * line.e_qty
+                    )
             elif (postal_code >= 4000 and postal_code <= 4207) or (
                 postal_code >= 9000 and postal_code <= 9499
             ):  # Brisbane
@@ -62,8 +66,12 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += 323.88 * line.e_qty
                     inv_sell_quoted += 471.11 * line.e_qty
                 else:
-                    inv_cost_quoted += 155.03 * cubic_meter * line.e_qty
-                    inv_sell_quoted += 212.94 * cubic_meter * line.e_qty
+                    inv_cost_quoted += (
+                        100.03 * cubic_meter * line.e_qty + 55 * line.e_qty
+                    )
+                    inv_sell_quoted += (
+                        152.94 * cubic_meter * line.e_qty + 60 * line.e_qty
+                    )
             elif (postal_code >= 5000 and postal_code <= 5199) or (
                 postal_code >= 5900 and postal_code <= 5999
             ):  # Adelaide
@@ -79,8 +87,12 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += 403.54 * line.e_qty
                     inv_sell_quoted += 582.22 * line.e_qty
                 else:
-                    inv_cost_quoted += 184.67 * cubic_meter * line.e_qty
-                    inv_sell_quoted += 254.28 * cubic_meter * line.e_qty
+                    inv_cost_quoted += (
+                        129.67 * cubic_meter * line.e_qty + 55 * line.e_qty
+                    )
+                    inv_sell_quoted += (
+                        194.28 * cubic_meter * line.e_qty + 60 * line.e_qty
+                    )
         # BSD
         elif booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8":
             if (postal_code >= 3000 and postal_code <= 3207) or (
@@ -98,8 +110,12 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += 224.29 * line.e_qty
                     inv_sell_quoted += 279.08 * line.e_qty
                 else:
-                    inv_cost_quoted += 81.45 * cubic_meter * line.e_qty
-                    inv_sell_quoted += 141.5 * cubic_meter * line.e_qty
+                    inv_cost_quoted += (
+                        26.45 * cubic_meter * line.e_qty + 55 * line.e_qty
+                    )
+                    inv_sell_quoted += (
+                        81.50 * cubic_meter * line.e_qty + 60 * line.e_qty
+                    )
             elif (postal_code >= 4000 and postal_code <= 4207) or (
                 postal_code >= 9000 and postal_code <= 9499
             ):  # Brisbane
@@ -115,8 +131,12 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += 323.88 * line.e_qty
                     inv_sell_quoted += 484.89 * line.e_qty
                 else:
-                    inv_cost_quoted += 155.03 * cubic_meter * line.e_qty
-                    inv_sell_quoted += 218.07 * cubic_meter * line.e_qty
+                    inv_cost_quoted += (
+                        100.03 * cubic_meter * line.e_qty + 55 * line.e_qty
+                    )
+                    inv_sell_quoted += (
+                        158.07 * cubic_meter * line.e_qty + 60 * line.e_qty
+                    )
             elif (postal_code >= 5000 and postal_code <= 5199) or (
                 postal_code >= 5900 and postal_code <= 5999
             ):  # Adelaide
@@ -132,8 +152,12 @@ def get_pricing(booking, booking_lines):
                     inv_cost_quoted += 403.54 * line.e_qty
                     inv_sell_quoted += 591.11 * line.e_qty
                 else:
-                    inv_cost_quoted += 184.67 * cubic_meter * line.e_qty
-                    inv_sell_quoted += 257.59 * cubic_meter * line.e_qty
+                    inv_cost_quoted += (
+                        129.67 * cubic_meter * line.e_qty + 55 * line.e_qty
+                    )
+                    inv_sell_quoted += (
+                        197.59 * cubic_meter * line.e_qty + 60 * line.e_qty
+                    )
 
     if booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1:
         inv_cost_quoted += 30
