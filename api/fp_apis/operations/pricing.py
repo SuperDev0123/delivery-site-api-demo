@@ -240,13 +240,14 @@ def pricing(
                 continue
 
             # Special Pricings
-            build_special_fp_pricings(booking, _booking_lines, packed_status)
-
-            # Other Pricings
-            if not is_pricing_only and (
-                booking.b_status != "Delivered"
-                or booking.vx_freight_provider != "Deliver-ME"
-            ):
+            try:
+                if (
+                    booking.b_status == "Delivered"
+                    and booking.vx_freight_provider == "Deliver-ME"
+                ):
+                    build_special_fp_pricings(booking, _booking_lines, packed_status)
+            except:
+                build_special_fp_pricings(booking, _booking_lines, packed_status)
                 _loop_process(
                     booking,
                     _booking_lines,
