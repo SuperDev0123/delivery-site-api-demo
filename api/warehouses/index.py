@@ -41,11 +41,11 @@ logger = logging.getLogger(__name__)
 def push(bok_1):
     LOG_ID = "[PUSH TO WHSE]"
 
-    check_port_code(bok_1)
+    # check_port_code(bok_1)
 
     try:
         headers = {"content-type": "application/json", "Authorization": SPOJIT_TOKEN}
-        url = f"{SPOJIT_API_URL}/warehouse/push/mcphee"
+        url = f"{SPOJIT_API_URL}/warehouse/push/cargowise"
         bok_2s = BOK_2_lines.objects.filter(
             fk_header_id=bok_1.pk_header_id, b_093_packed_status=BOK_2_lines.ORIGINAL
         )
