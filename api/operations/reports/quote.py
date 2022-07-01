@@ -120,9 +120,9 @@ def build_quote_report(kf_client_ids, start_date, end_date):
                 + comma
                 + f"{round(cubic_meter, 3)}"
                 + comma
-                + f"$0"
+                + f"${booking.inv_sell_quoted}"
                 + comma
-                + f"$0"
+                + f"${booking.inv_booked_quoted}"
                 + comma
                 + f"${booking.api_booking_quote.tax_value_5 if booking.api_booking_quote else 'N/A'}"
                 + comma
