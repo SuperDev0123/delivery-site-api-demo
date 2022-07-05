@@ -12,6 +12,7 @@ from api.models import (
     FC_Log,
     BOK_1_headers,
     BOK_2_lines,
+    Booking_lines,
     Pallet,
     API_booking_quotes,
     DME_clients,
@@ -934,7 +935,7 @@ def isGood4Linehaul(postal_code, booking_lines):
         for line in booking_lines:
             if line["packed_status"] in [
                 BOK_2_lines.ORIGINAL,
-                BOK_2_lines.SCANNED_PACK,
+                Booking_lines.SCANNED_PACK,
             ]:
                 original_lines.append(line)
 
