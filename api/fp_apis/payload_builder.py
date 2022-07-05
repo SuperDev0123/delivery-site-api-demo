@@ -897,7 +897,7 @@ def get_pricing_payload(
 
     payload["pickupAddress"] = {
         "companyName": "" or puCompany,
-        "contact": ((booking.pu_Contact_F_L_Name or " ")[:19])[:19],
+        "contact": (booking.pu_Contact_F_L_Name or " ")[:19],
         "emailAddress": "" or booking.pu_Email,
         "instruction": "",
         "phoneNumber": "0267651109" or booking.pu_Phone_Main,

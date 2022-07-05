@@ -375,9 +375,9 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
         if cost.UOM_charge in PALLETS:  # Pallet Count Filter
             pallet_cnt = get_booking_lines_count(booking_lines)
 
-            if cost.start_qty and cost.start_qty > pallet_cnt:
+            if cost.start_qty and cost.start_qty >= pallet_cnt:
                 continue
-            if cost.end_qty and cost.end_qty < pallet_cnt:
+            if cost.end_qty and cost.end_qty <= pallet_cnt:
                 continue
 
         if cost.max_length:
