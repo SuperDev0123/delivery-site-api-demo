@@ -18,7 +18,8 @@ from api.models import (
     Client_Products,
 )
 from api.serializers import SimpleQuoteSerializer, SurchargeSerializer
-from api.common.constants import AU_STATE_ABBRS
+from api.common.constants import AU_STATE_ABBRS, PALLETS
+from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.clients.operations.index import (
     get_suburb_state,
     get_similar_suburb,
@@ -903,3 +904,58 @@ def parse_sku_string(sku_str):
         results.append({"model_number": sku, "qty": skus_with_cnt[sku]})
 
     return results
+
+
+def isGood4Linehaul(postal_code, booking_lines):
+    """
+    For DMEA price selection,
+    * If the goods are in Metro areas for MEL, BRIS and ADE,
+    * Bookings that have 1 or more Packing UOM = PAL OR
+    * Bookings that have 1 or more other UOM with DIMS where any 2 of L, W and H are >= .5m
+    Then auto select Deliver-ME Direct
+    """
+    _postal_code = int(postal_code or 0)
+    if _postal_code and (
+        (  # Metro / CBD Melbourne
+            (_postal_code >= 3000 and _postal_code <= 3207)
+            or (_postal_code >= 8000 and _postal_code <= 8499)
+        )
+        or (  # Metro / CBD Brisbane
+            (_postal_code >= 4000 and _postal_code <= 4207)
+            or (_postal_code >= 9000 and _postal_code <= 9499)
+        )
+        or (  # Metro Adelaide
+            (_postal_code >= 5000 and _postal_code <= 5199)
+            or (_postal_code >= 5900 and _postal_code <= 5999)
+        )
+    ):
+        original_lines = []
+
+        for line in booking_lines:
+            if line["packed_status"] in [
+                BOK_2_lines.ORIGINAL,
+                BOK_2_lines.SCANNED_PACK,
+            ]:
+                original_lines.append(line)
+
+        pallet_cnt = 0
+        big_carton_cnt = 0
+        for line in original_lines:
+            if line["e_type_of_packaging"].upper() in PALLETS:
+                pallet_cnt += 1
+            else:
+                item_length = line["e_dimLength"] * _get_dim_amount(line["e_dimUOM"])
+                item_width = line["e_dimWidth"] * _get_dim_amount(line["e_dimUOM"])
+                item_height = line["e_dimHeight"] * _get_dim_amount(line["e_dimUOM"])
+
+                if (
+                    (item_length > 0.5 and item_width > 0.5)
+                    or (item_width > 0.5 and item_height > 0.5)
+                    or (item_length > 0.5 and item_height > 0.5)
+                ):
+                    big_carton_cnt += 1
+
+        if pallet_cnt > 0 or big_carton_cnt > 0:
+            return True
+
+    return False

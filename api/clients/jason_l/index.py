@@ -55,6 +55,7 @@ from api.clients.jason_l.operations import (
     sucso_handler,
     get_address,
     parse_sku_string,
+    isGood4Linehaul,
 )
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
 from api.helpers.cubic import get_cubic_meter
@@ -812,6 +813,13 @@ def push_boks(payload, client, username, method):
                 freight_provider=selected_quote.freight_provider,
                 service_name=selected_quote.service_name,
             )
+        elif bok_1.get("shipping_type") == "DMEA" and isGood4Linehaul(
+            booking["de_To_Address_PostalCode"], booking_lines
+        ):
+            quote_set = quote_set.filter(
+                freight_provider="Deliver-ME",
+                packed_status=Booking_lines.ORIGINAL,
+            )
         # All JasonL bookings to State SA are to book with TNT if DMEA no matter what the price
         elif (
             bok_1.get("shipping_type") == "DMEA"
@@ -1038,6 +1046,7 @@ def scanned(payload, client):
 
         # Save
         sscc_lines = {}
+        new_lines = []
         for sscc in sscc_list:
             first_item = None
             for picked_item in picked_items:
@@ -1079,6 +1088,15 @@ def scanned(payload, client):
             new_line.picked_up_timestamp = first_item.get("timestamp") or datetime.now()
             new_line.packed_status = Booking_lines.SCANNED_PACK
             new_line.save()
+            new_lines.append(
+                {
+                    "e_dimUOM": new_line.e_dimUOM,
+                    "e_dimLength": new_line.e_dimLength,
+                    "e_dimWidth": new_line.e_dimWidth,
+                    "e_dimHeight": new_line.e_dimHeight,
+                    "packed_status": Booking_lines.SCANNED_PACK,
+                }
+            )
 
             if not sscc in sscc_lines:
                 sscc_lines[sscc] = [new_line]
@@ -1145,6 +1163,13 @@ def scanned(payload, client):
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,
+                )
+            elif bok_1.get("shipping_type") == "DMEA" and isGood4Linehaul(
+                booking.de_To_Address_PostalCode, new_lines
+            ):
+                quote_set = quote_set.filter(
+                    freight_provider="Deliver-ME",
+                    packed_status=Booking_lines.SCANNED_PACK,
                 )
             else:
                 quotes = quotes.exclude(freight_provider__in=["Sendle", "Hunter"])
