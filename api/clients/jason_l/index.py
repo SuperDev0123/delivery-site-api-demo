@@ -1164,7 +1164,7 @@ def scanned(payload, client):
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,
                 )
-            elif bok_1.get("shipping_type") == "DMEA" and isGood4Linehaul(
+            elif booking.booking_type == "DMEA" and isGood4Linehaul(
                 booking.de_To_Address_PostalCode, new_lines
             ):
                 quote_set = quote_set.filter(
