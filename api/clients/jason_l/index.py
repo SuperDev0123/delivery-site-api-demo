@@ -1168,7 +1168,7 @@ def scanned(payload, client):
             elif booking.booking_type == "DMEA" and isGood4Linehaul(
                 booking.de_To_Address_PostalCode, new_lines
             ):
-                quote_set = quote_set.filter(
+                quotes = quotes.filter(
                     freight_provider="Deliver-ME",
                     packed_status=Booking_lines.SCANNED_PACK,
                 )
