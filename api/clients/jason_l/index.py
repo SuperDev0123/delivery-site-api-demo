@@ -1090,6 +1090,7 @@ def scanned(payload, client):
             new_line.save()
             new_lines.append(
                 {
+                    "e_type_of_packaging": new_line.e_type_of_packaging,
                     "e_dimUOM": new_line.e_dimUOM,
                     "e_dimLength": new_line.e_dimLength,
                     "e_dimWidth": new_line.e_dimWidth,
