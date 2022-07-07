@@ -138,10 +138,10 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
                     (postal_code >= 4000 and postal_code <= 4207)
                     or (postal_code >= 9000 and postal_code <= 9499)
                 )
-                or (  # Metro Adelaide
-                    (postal_code >= 5000 and postal_code <= 5199)
-                    or (postal_code >= 5900 and postal_code <= 5999)
-                )
+                # or (  # Metro Adelaide
+                #     (postal_code >= 5000 and postal_code <= 5199)
+                #     or (postal_code >= 5900 and postal_code <= 5999)
+                # )
             )
             # Restrict same state
             and booking.pu_Address_State

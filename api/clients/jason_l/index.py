@@ -1168,6 +1168,12 @@ def scanned(payload, client):
                     freight_provider="Deliver-ME",
                     packed_status=Booking_lines.SCANNED_PACK,
                 )
+            # All JasonL bookings to State SA are to book with TNT if DMEA no matter what the price
+            elif (
+                booking.shipping_type == "DMEA"
+                and booking.de_To_Address_State.upper() == "SA"
+            ):
+                quotes = quotes.filter(freight_provider="TNT")
             else:
                 quotes = quotes.exclude(freight_provider__in=["Sendle", "Hunter"])
 
