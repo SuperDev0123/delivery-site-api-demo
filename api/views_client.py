@@ -594,6 +594,34 @@ class BOK_3_ViewSet(viewsets.ViewSet):
 
 
 @api_view(["POST"])
+@permission_classes((AllowAny,))
+def quick_pricing(request):
+    LOG_ID = "[QUICK PRICING]"
+    user = request.user
+    logger.info(f"{LOG_ID} Requester: {user.username}")
+    logger.info(f"{LOG_ID} Payload: {request.data}")
+
+    try:
+        results = standard.quick_pricing(request.data)
+
+        if results:
+            logger.info(
+                f"@819 {LOG_ID} Success! \nPayload: {request.data}\nResults: {results}"
+            )
+            return Response({"success": True, "results": results})
+        else:
+            message = "Pricing cannot be returned due to incorrect address information."
+            logger.info(f"@827 {LOG_ID} {message}")
+            res_json = {"success": False, "code": "invalid_request", "message": message}
+            return Response(res_json, status=HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.info(f"@829 {LOG_ID} Exception: {str(e)}")
+        trace_error.print()
+        res_json = {"success": False, "message": str(e)}
+        return Response(res_json, status=HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
 def partial_pricing(request):
     LOG_ID = "[PARTIAL PRICING]"
     user = request.user

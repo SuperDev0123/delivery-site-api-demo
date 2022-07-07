@@ -182,6 +182,7 @@ def bok_quote(bok_1, packed_status):
         "client_warehouse_code": bok_1.b_client_warehouse_code,
         "kf_client_id": bok_1.fk_client_id,
         "b_client_name": client.company_name,
+        "b_booking_project": None,
     }
 
     booking_lines = []

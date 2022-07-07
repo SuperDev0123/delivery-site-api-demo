@@ -95,7 +95,7 @@ def beautify_eta(json_results, quotes, client):
             result["eta_in_hour"] = round(float(result["eta"]), 2)
             result["eta"] = readable_eta
 
-            if client.company_name == "Plum Products Australia Ltd":
+            if client and client.company_name == "Plum Products Australia Ltd":
                 result["eta_in_hour"] = result["eta_in_hour"] + 24
                 result["eta"] = f"{int(result['eta'].split(' ')[0]) + 1} days"
 

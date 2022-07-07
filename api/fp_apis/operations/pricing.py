@@ -260,6 +260,7 @@ def pricing(
 
         return booking, True, "Retrieved all Pricing info", quotes
     except Exception as e:
+        trace_error.print()
         logger.error(f"{LOG_ID} Booking: {booking}, Error: {e}")
         return booking, False, str(e), []
 

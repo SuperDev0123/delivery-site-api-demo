@@ -149,10 +149,6 @@ def partial_pricing(payload, client, warehouse):
         }
         booking_lines.append(booking_line)
 
-    # fps = Fp_freight_providers.objects.filter(fp_company_name__in=AVAILABLE_FPS_4_FC)
-    pu_zones = FP_zones.objects.filter(Q(suburb__iexact=warehouse.suburb) | Q(fk_fp=12))
-    de_zones = FP_zones.objects.filter(Q(suburb__iexact=de_suburb) | Q(fk_fp=12))
-
     _, success, message, quote_set = pricing_oper(
         body={"booking": booking, "booking_lines": booking_lines},
         booking_id=None,

@@ -69,7 +69,6 @@ urlpatterns += [
     url(r"^api-token-auth/", obtain_jwt_token),
     url(r"^api-token-verify/", verify_jwt_token),
     url(r"^warehouses/", WarehouseViewSet.as_view({"get": "list"})),
-    url(r"^suburb/", getSuburbs),
     url(r"^attachments/", getAttachmentsHistory),
     url(
         r"^password_reset/",
@@ -132,6 +131,8 @@ urlpatterns += [
     url(r"^spojit/whse/reprint_label/", spojit_reprint_label),
     url(r"^spojit/whse/ready/", spojit_ready),
     url(r"^spojit/whse/manifest/", spojit_manifest),
+    # PricingOnly
+    url(r"^get-quick-pricing/", quick_pricing),
     # url(r"^bulk_pricing/", bulk_pricing),
     # Client apis
     url(r"^get_delivery_status/", get_delivery_status),

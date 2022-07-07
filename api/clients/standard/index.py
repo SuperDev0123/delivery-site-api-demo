@@ -4,14 +4,133 @@ from datetime import datetime, date
 
 from django.db import transaction
 
-from api.models import Client_warehouses
+from api.models import Client_warehouses, BOK_2_lines
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
 from api.common import common_times as dme_time_lib, constants as dme_constants
-from api.operations import product_operations as product_oper
+from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.clients.operations.index import get_suburb_state
 
 logger = logging.getLogger(__name__)
+
+
+def quick_pricing(payload):
+    LOG_ID = "[PP Jason L]"
+    booking = payload["booking"]
+    lines = payload["booking_lines"]
+    pk_header_id = str(uuid.uuid4())
+    json_results = []
+
+    # Check if has lines
+    if lines and len(lines) == 0:
+        message = "Line items are required."
+        logger.info(f"@815 {LOG_ID} {message}")
+        raise Exception(message)
+
+    # Get next business day
+    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+
+    booking = {
+        "kf_client_id": "461162D2-90C7-BF4E-A905-0242ac130003",  # Pricing-Only
+        "client_warehouse_code": "No - Warehouse",
+        "b_client_name": "Pricing-Only",
+        "pk_booking_id": pk_header_id,
+        "puPickUpAvailFrom_Date": next_biz_day,
+        "b_clientReference_RA_Numbers": "initial_RA_num",
+        "puCompany": "PU Company",
+        "pu_Contact_F_L_Name": "initial_PU_contact",
+        "pu_Email": "pu@email.com",
+        "pu_Phone_Main": "419294339",
+        "pu_Address_Street_1": "PU Street 1",
+        "pu_Address_street_2": "PU Street 2",
+        "pu_Address_Country": "Australia",
+        "pu_Address_Suburb": booking["pu_Address_Suburb"],
+        "pu_Address_PostalCode": booking["pu_Address_PostalCode"],
+        "pu_Address_State": booking["pu_Address_State"],
+        "pu_Address_Type": "business",
+        "deToCompanyName": "initial_DE_company",
+        "de_to_Contact_F_LName": "initial_DE_contact",
+        "de_Email": "de@email.com",
+        "de_to_Phone_Main": "419294339",
+        "de_To_Address_Street_1": "DE Street 1",
+        "de_To_Address_Street_2": "DE Street 2",
+        "de_To_Address_Country": "Australia",
+        "de_To_Address_Suburb": booking["de_To_Address_Suburb"],
+        "de_To_Address_PostalCode": booking["de_To_Address_PostalCode"],
+        "de_To_Address_State": booking["de_To_Address_State"],
+        "de_To_AddressType": "business",
+        "b_booking_tail_lift_pickup": 0,
+        "b_booking_tail_lift_deliver": 0,
+        "vx_serviceName": "exp",
+        "pu_no_of_assists": booking.get("b_072_b_pu_no_of_assists") or 0,
+        "de_no_of_assists": booking.get("b_073_b_del_no_of_assists") or 0,
+        "b_booking_project": None,
+    }
+
+    booking_lines = []
+    for index, line in enumerate(lines):
+        booking_line = {
+            "pk_lines_id": index,
+            "e_type_of_packaging": "Carton" or line["e_type_of_packaging"],
+            "fk_booking_id": pk_header_id,
+            "e_qty": line["e_qty"],
+            "e_item": f"item-{index}",
+            "e_dimUOM": line["e_dimUOM"],
+            "e_dimLength": line["e_dimLength"],
+            "e_dimWidth": line["e_dimWidth"],
+            "e_dimHeight": line["e_dimHeight"],
+            "e_weightUOM": line["e_weightUOM"],
+            "e_weightPerEach": line["e_weightPerEach"],
+            "packed_status": BOK_2_lines.ORIGINAL,
+        }
+        booking_lines.append(booking_line)
+
+    _, success, message, quote_set = pricing_oper(
+        body={"booking": booking, "booking_lines": booking_lines},
+        booking_id=None,
+        is_pricing_only=True,
+    )
+
+    logger.info(
+        f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set}"
+    )
+
+    # Select best quotes(fastest, lowest)
+    if quote_set and quote_set.exists() and quote_set.count() > 0:
+        context = {"client_customer_mark_up": 0}
+        json_results = SimpleQuoteSerializer(quote_set, many=True, context=context).data
+        json_results = dme_time_lib.beautify_eta(json_results, quote_set, None)
+
+        # delete quotes
+        quote_set.delete()
+
+    # Set Express or Standard
+    if len(json_results) == 1:
+        json_results[0]["service_name"] = "Standard"
+    elif len(json_results) > 1:
+        if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
+            json_results[0]["service_name"] = "Express"
+            json_results[1]["service_name"] = "Standard"
+
+            if json_results[0]["eta"] == json_results[1]["eta"]:
+                eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
+                json_results[1]["eta"] = eta
+
+            json_results = [json_results[1], json_results[0]]
+        else:
+            json_results[1]["service_name"] = "Express"
+            json_results[0]["service_name"] = "Standard"
+
+            if json_results[0]["eta"] == json_results[1]["eta"]:
+                eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
+                json_results[0]["eta"] = eta
+
+    if json_results:
+        logger.info(f"@818 {LOG_ID} Success!")
+        return json_results
+    else:
+        logger.info(f"@819 {LOG_ID} Failure!")
+        return json_results
 
 
 def push_boks(payload, client):
