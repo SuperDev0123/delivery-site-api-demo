@@ -181,6 +181,8 @@ def bok_quote(bok_1, packed_status):
         "b_booking_tail_lift_deliver": bok_1.b_041_b_del_tail_lift,
         "client_warehouse_code": bok_1.b_client_warehouse_code,
         "kf_client_id": bok_1.fk_client_id,
+        "pu_no_of_assists": bok_1.b_072_b_pu_no_of_assists,
+        "de_no_of_assists": bok_1.b_073_b_del_no_of_assists,
         "b_client_name": client.company_name,
         "b_booking_project": None,
     }
