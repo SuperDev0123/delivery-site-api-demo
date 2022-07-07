@@ -15,6 +15,61 @@ logger = logging.getLogger(__name__)
 
 
 def quick_pricing(payload):
+    # mocking data
+    # return [
+    #     {
+    #         "cost_id": 29323,
+    #         "client_mu_1_minimum_values": 124.68390700849164,
+    #         "cost": 124.68,
+    #         "surcharge_total": 0,
+    #         "surcharge_total_cl": 0,
+    #         "client_customer_mark_up": 0,
+    #         "eta": "2 days",
+    #         "service_name": "Standard",
+    #         "fp_name": "TOLL",
+    #         "cost_dollar": 115.67,
+    #         "fuel_levy_base_cl": 9.01092527689164,
+    #         "mu_percentage_fuel_levy": 0.0779,
+    #         "vehicle_name": "",
+    #         "packed_status": "original",
+    #         "eta_in_hour": 24.0,
+    #     },
+    #     {
+    #         "cost_id": 29324,
+    #         "client_mu_1_minimum_values": 149.62068841018996,
+    #         "cost": 149.62,
+    #         "surcharge_total": 0,
+    #         "surcharge_total_cl": 0,
+    #         "client_customer_mark_up": 0,
+    #         "eta": "1 days",
+    #         "service_name": "Express",
+    #         "fp_name": "TOLL",
+    #         "cost_dollar": 138.81,
+    #         "fuel_levy_base_cl": 10.813110332269968,
+    #         "mu_percentage_fuel_levy": 0.0779,
+    #         "vehicle_name": "",
+    #         "packed_status": "original",
+    #         "eta_in_hour": 24.0,
+    #     },
+    #     {
+    #         "cost_id": 29325,
+    #         "client_mu_1_minimum_values": 411.27261252344,
+    #         "cost": 411.27,
+    #         "surcharge_total": 0,
+    #         "surcharge_total_cl": 0,
+    #         "client_customer_mark_up": 0,
+    #         "eta": "2 days",
+    #         "service_name": "Standard",
+    #         "fp_name": "NORTHLINE",
+    #         "cost_dollar": 352.63,
+    #         "fuel_levy_base_cl": 58.64240372344,
+    #         "mu_percentage_fuel_levy": 0.1663,
+    #         "vehicle_name": "",
+    #         "packed_status": "original",
+    #         "eta_in_hour": 48.0,
+    #     },
+    # ]
+
     LOG_ID = "[PP Jason L]"
     booking = payload["booking"]
     lines = payload["booking_lines"]
@@ -73,14 +128,14 @@ def quick_pricing(payload):
             "pk_lines_id": index,
             "e_type_of_packaging": "Carton" or line["e_type_of_packaging"],
             "fk_booking_id": pk_header_id,
-            "e_qty": line["e_qty"],
+            "e_qty": int(line["e_qty"]),
             "e_item": f"item-{index}",
             "e_dimUOM": line["e_dimUOM"],
-            "e_dimLength": line["e_dimLength"],
-            "e_dimWidth": line["e_dimWidth"],
-            "e_dimHeight": line["e_dimHeight"],
+            "e_dimLength": float(line["e_dimLength"]),
+            "e_dimWidth": float(line["e_dimWidth"]),
+            "e_dimHeight": float(line["e_dimHeight"]),
             "e_weightUOM": line["e_weightUOM"],
-            "e_weightPerEach": line["e_weightPerEach"],
+            "e_weightPerEach": float(line["e_weightPerEach"]),
             "packed_status": BOK_2_lines.ORIGINAL,
         }
         booking_lines.append(booking_line)
