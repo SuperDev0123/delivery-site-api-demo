@@ -4,10 +4,12 @@ from datetime import datetime, date
 
 from django.db import transaction
 
-from api.models import Client_warehouses, BOK_2_lines
+from api.models import Client_warehouses, BOK_2_lines, Pallet
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
 from api.common import common_times as dme_time_lib, constants as dme_constants
+from api.common.build_object import Struct
+from api.common.pallet import get_palletized_by_ai
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.clients.operations.index import get_suburb_state
 
@@ -16,113 +18,45 @@ logger = logging.getLogger(__name__)
 
 def quick_pricing(payload):
     # mocking data
-    import time
+    # import time
 
-    time.sleep(3)
-    return [
-        {
-            "cost_id": 29323,
-            "client_mu_1_minimum_values": 124.68390700849164,
-            "cost": 124.68,
-            "surcharge_total": 0,
-            "surcharge_total_cl": 0,
-            "client_customer_mark_up": 0,
-            "eta": "2 days",
-            "service_name": "Standard",
-            "fp_name": "TOLL",
-            "cost_dollar": 115.67,
-            "fuel_levy_base_cl": 9.01092527689164,
-            "mu_percentage_fuel_levy": 0.0779,
-            "vehicle_name": "",
-            "packed_status": "original",
-            "eta_in_hour": 24.0,
-        },
-        {
-            "cost_id": 29324,
-            "client_mu_1_minimum_values": 149.62068841018996,
-            "cost": 149.62,
-            "surcharge_total": 0,
-            "surcharge_total_cl": 0,
-            "client_customer_mark_up": 0,
-            "eta": "1 days",
-            "service_name": "Express",
-            "fp_name": "TOLL",
-            "cost_dollar": 138.81,
-            "fuel_levy_base_cl": 10.813110332269968,
-            "mu_percentage_fuel_levy": 0.0779,
-            "vehicle_name": "",
-            "packed_status": "original",
-            "eta_in_hour": 24.0,
-        },
-        {
-            "cost_id": 29325,
-            "client_mu_1_minimum_values": 411.27261252344,
-            "cost": 411.27,
-            "surcharge_total": 0,
-            "surcharge_total_cl": 0,
-            "client_customer_mark_up": 0,
-            "eta": "2 days",
-            "service_name": "Standard",
-            "fp_name": "NORTHLINE",
-            "cost_dollar": 352.63,
-            "fuel_levy_base_cl": 58.64240372344,
-            "mu_percentage_fuel_levy": 0.1663,
-            "vehicle_name": "",
-            "packed_status": "original",
-            "eta_in_hour": 48.0,
-        },
-        {
-            "cost_id": 29323,
-            "client_mu_1_minimum_values": 124.68390700849164,
-            "cost": 124.68,
-            "surcharge_total": 0,
-            "surcharge_total_cl": 0,
-            "client_customer_mark_up": 0,
-            "eta": "2 days",
-            "service_name": "Standard",
-            "fp_name": "TOLL",
-            "cost_dollar": 115.67,
-            "fuel_levy_base_cl": 9.01092527689164,
-            "mu_percentage_fuel_levy": 0.0779,
-            "vehicle_name": "",
-            "packed_status": "auto",
-            "eta_in_hour": 24.0,
-        },
-        {
-            "cost_id": 29324,
-            "client_mu_1_minimum_values": 149.62068841018996,
-            "cost": 149.62,
-            "surcharge_total": 0,
-            "surcharge_total_cl": 0,
-            "client_customer_mark_up": 0,
-            "eta": "1 days",
-            "service_name": "Express",
-            "fp_name": "TOLL",
-            "cost_dollar": 138.81,
-            "fuel_levy_base_cl": 10.813110332269968,
-            "mu_percentage_fuel_levy": 0.0779,
-            "vehicle_name": "",
-            "packed_status": "auto",
-            "eta_in_hour": 24.0,
-        },
-        {
-            "cost_id": 29325,
-            "client_mu_1_minimum_values": 411.27261252344,
-            "cost": 411.27,
-            "surcharge_total": 0,
-            "surcharge_total_cl": 0,
-            "client_customer_mark_up": 0,
-            "eta": "2 days",
-            "service_name": "Standard",
-            "fp_name": "NORTHLINE",
-            "cost_dollar": 352.63,
-            "fuel_levy_base_cl": 58.64240372344,
-            "mu_percentage_fuel_levy": 0.1663,
-            "vehicle_name": "",
-            "packed_status": "auto",
-            "eta_in_hour": 48.0,
-        },
-    ]
+    # time.sleep(3)
+    # return [
+    #     {
+    #         "cost_id": 29325,
+    #         "client_mu_1_minimum_values": 411.27261252344,
+    #         "cost": 411.27,
+    #         "surcharge_total": 0,
+    #         "surcharge_total_cl": 0,
+    #         "client_customer_mark_up": 0,
+    #         "eta": "2 days",
+    #         "service_name": "Standard",
+    #         "fp_name": "NORTHLINE",
+    #         "cost_dollar": 352.63,
+    #         "fuel_levy_base_cl": 58.64240372344,
+    #         "mu_percentage_fuel_levy": 0.1663,
+    #         "vehicle_name": "",
+    #         "packed_status": "original",
+    #         "eta_in_hour": 48.0,
+    #     },
+    #     {
+    #         "cost_id": 29325,
+    #         "client_mu_1_minimum_values": 411.27261252344,
+    #         "cost": 411.27,
+    #         "surcharge_total": 0,
+    #         "surcharge_total_cl": 0,
+    #         "client_customer_mark_up": 0,
+    #         "eta": "2 days",
+    #         "service_name": "Standard",
+    #         "fp_name": "NORTHLINE",
+    #         "cost_dollar": 352.63,
+    #         "fuel_levy_base_cl": 58.64240372344,
+    #         "mu_percentage_fuel_levy": 0.1663,
+    #         "vehicle_name": "",
+    #         "packed_status": "auto",
+    #         "eta_in_hour": 48.0,
+    #     },
+    # ]
 
     LOG_ID = "[PP Jason L]"
     booking = payload["booking"]
@@ -136,9 +70,70 @@ def quick_pricing(payload):
         logger.info(f"@815 {LOG_ID} {message}")
         raise Exception(message)
 
+    # `auto_repack` logic
+    carton_cnt = 0
+    need_palletize = False
+    for line in lines:
+        carton_cnt += int(line["e_qty"])
+
+    if carton_cnt > 2:
+        message = "Auto repacking..."
+        logger.info(f"@8130 {LOG_ID} {message}")
+
+        # Select suitable pallet and get required pallets count
+        pallets = Pallet.objects.all()
+        booking_lines = []
+        for line in lines:
+            booking_lines.append(Struct(**line))
+        palletized, non_palletized = get_palletized_by_ai(booking_lines, pallets)
+        logger.info(
+            f"@8831 {LOG_ID} Palletized: {palletized}\nNon-Palletized: {non_palletized}"
+        )
+
+        # Create one PAL bok_2
+        for item in non_palletized:  # Non Palletized
+            line_obj = item["line_obj"]
+            line = {}
+            line["e_type_of_packaging"] = "PAL"
+            line["e_qty"] = item["quantity"]
+            line["e_dimUOM"] = line_obj.l_004_dim_UOM
+            line["e_dimLength"] = line_obj.l_005_dim_length
+            line["e_dimWidth"] = line_obj.l_006_dim_width
+            line["e_dimHeight"] = line_obj.l_007_dim_height
+            line["e_weightPerEach"] = line_obj.l_009_weight_per_each
+            line["e_weightUOM"] = line_obj.l_008_weight_UOM
+            line["is_deleted"] = line_obj.is_deleted
+            line["packed_status"] = BOK_2_lines.AUTO_PACK
+            lines.append(line)
+
+        for palletized_item in palletized:  # Palletized
+            pallet = pallets[palletized_item["pallet_index"]]
+
+            total_weight = 0
+            for _iter in palletized_item["lines"]:
+                line_in_pallet = _iter["line_obj"]
+                total_weight += (
+                    line_in_pallet.e_weightPerEach
+                    * _iter["quantity"]
+                    / palletized_item["quantity"]
+                )
+
+            new_line = {}
+            new_line["e_type_of_packaging"] = "PAL"
+            new_line["e_qty"] = palletized_item["quantity"]
+            new_line["e_item"] = "Auto repacked item"
+            new_line["e_dimUOM"] = "mm"
+            new_line["e_dimLength"] = pallet.length
+            new_line["e_dimWidth"] = pallet.width
+            new_line["e_dimHeight"] = palletized_item["packed_height"] * 1000
+            new_line["e_weightPerEach"] = round(total_weight, 2)
+            new_line["e_weightUOM"] = "KG"
+            new_line["is_deleted"] = False
+            new_line["packed_status"] = BOK_2_lines.AUTO_PACK
+            lines.append(new_line)
+
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-
     booking = {
         "kf_client_id": "461162D2-90C7-BF4E-A905-0242ac130003",  # Pricing-Only
         "client_warehouse_code": "No - Warehouse",
@@ -190,7 +185,7 @@ def quick_pricing(payload):
             "e_dimHeight": float(line["e_dimHeight"]),
             "e_weightUOM": line["e_weightUOM"],
             "e_weightPerEach": float(line["e_weightPerEach"]),
-            "packed_status": BOK_2_lines.ORIGINAL,
+            "packed_status": line.get("packed_status") or BOK_2_lines.ORIGINAL,
         }
         booking_lines.append(booking_line)
 
@@ -198,6 +193,7 @@ def quick_pricing(payload):
         body={"booking": booking, "booking_lines": booking_lines},
         booking_id=None,
         is_pricing_only=True,
+        packed_statuses=[BOK_2_lines.ORIGINAL, BOK_2_lines.AUTO_PACK],
     )
 
     logger.info(
