@@ -209,27 +209,6 @@ def quick_pricing(payload):
         # delete quotes
         quote_set.delete()
 
-    # Set Express or Standard
-    if len(json_results) == 1:
-        json_results[0]["service_name"] = "Standard"
-    elif len(json_results) > 1:
-        if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
-            json_results[0]["service_name"] = "Express"
-            json_results[1]["service_name"] = "Standard"
-
-            if json_results[0]["eta"] == json_results[1]["eta"]:
-                eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
-                json_results[1]["eta"] = eta
-
-            json_results = [json_results[1], json_results[0]]
-        else:
-            json_results[1]["service_name"] = "Express"
-            json_results[0]["service_name"] = "Standard"
-
-            if json_results[0]["eta"] == json_results[1]["eta"]:
-                eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
-                json_results[0]["eta"] = eta
-
     if json_results:
         logger.info(f"@818 {LOG_ID} Success!")
         return json_results
