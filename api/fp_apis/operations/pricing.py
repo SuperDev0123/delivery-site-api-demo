@@ -117,7 +117,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         quote_3.service_name = None
         quote_3.save()
 
-    # Plum & JasonL & BSD & Cadrys & Ariston Wire & Anchor Packagin
+    # Plum & JasonL & BSD & Cadrys & Ariston Wire & Anchor Packagin & Pricing Only
     if (
         booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
         or booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
@@ -125,6 +125,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         or booking.kf_client_id == "f821586a-d476-434d-a30b-839a04e10115"
         or booking.kf_client_id == "15732b05-d597-419b-8dc5-90e633d9a7e9"
         or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
+        or booking.kf_client_id == "461162D2-90C7-BF4E-A905-0242ac130003"
     ):
         # restrict delivery postal code
         if (
@@ -256,7 +257,7 @@ def pricing(
 
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id, is_used=False
-        )
+        ).order_by("client_mu_1_minimum_values")
 
         return booking, True, "Retrieved all Pricing info", quotes
     except Exception as e:
