@@ -23,7 +23,7 @@ def _build_query(keyword, field_name, search_type):
         q = q1 | q2
     elif search_type == "iregex":
         filter = field_name + "__" + search_type
-        keyword = keyword.replace("*", "[a-zA-Z0-9]+")
+        keyword = keyword.replace("*", "[a-zA-Z0-9-]+")
         if "|" in keyword:
             for key in keyword.split("|"):
                 q1 = Q()
