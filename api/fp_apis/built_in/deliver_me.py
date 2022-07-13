@@ -346,4 +346,5 @@ def get_pricing(booking, booking_lines):
         "inv_cost_quoted": inv_cost_quoted,
         "inv_sell_quoted": inv_sell_quoted,
         "inv_dme_quoted": inv_dme_quoted,
+        "service_name": service_name,
     }
