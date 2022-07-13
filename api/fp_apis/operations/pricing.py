@@ -155,6 +155,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
             quote_1.fee = result["price"]["inv_cost_quoted"]
             quote_1.client_mu_1_minimum_values = result["price"]["inv_sell_quoted"]
             quote_1.tax_value_5 = result["price"]["inv_dme_quoted"]
+            quote_1.service_name = result["price"]["service_name"]
             quote_1.save()
 
         quote_2 = quote_0
