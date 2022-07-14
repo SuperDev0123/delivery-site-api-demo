@@ -111,10 +111,22 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         (postal_code >= 1000 and postal_code <= 2249)
         or (postal_code >= 2760 and postal_code <= 2770)
     ):
-        quote_3 = quote_0
+        quotes = API_booking_quotes.objects.filter(
+            fk_booking_id=booking.pk_booking_id,
+            is_used=False,
+            freight_provider="Century",
+        )
+
+        quote_3 = quotes.first() if quotes else quote_0
         quote_3.pk = None
         quote_3.freight_provider = "In House Fleet"
         quote_3.service_name = None
+
+        if quotes:
+            quote_3.client_mu_1_minimum_values -= 1
+        else:
+            quote_3.client_mu_1_minimum_values = 75
+
         quote_3.save()
 
     # Plum & JasonL & BSD & Cadrys & Ariston Wire & Anchor Packagin & Pricing Only
@@ -265,7 +277,6 @@ def pricing(
             #     )
 
             # Normal Pricings
-            build_special_fp_pricings(booking, _booking_lines, packed_status)
             _loop_process(
                 booking,
                 _booking_lines,
@@ -276,6 +287,7 @@ def pricing(
                 de_zones,
                 client_fps,
             )
+            build_special_fp_pricings(booking, _booking_lines, packed_status)
 
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id, is_used=False

@@ -1287,7 +1287,7 @@ class Bookings(models.Model):
     )
     v_vehicle_Type = models.CharField(
         verbose_name=_("Vehicle Type"),
-        max_length=30,
+        max_length=64,
         blank=True,
         null=True,
         default=None,
