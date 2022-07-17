@@ -33,7 +33,11 @@ from api.common.booking_quote import set_booking_quote
 from api.common import trace_error, common_times as dme_time_lib
 from api.convertors import pdf
 from api.warehouses.libs import check_port_code, build_push_payload
-from api.warehouses.constants import SPOJIT_API_URL, SPOJIT_TOKEN
+from api.warehouses.constants import (
+    SPOJIT_API_URL,
+    SPOJIT_TOKEN,
+    SPOJIT_WAREHOUSE_MAPPINGS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +49,7 @@ def push(bok_1):
 
     try:
         headers = {"content-type": "application/json", "Authorization": SPOJIT_TOKEN}
-        url = f"{SPOJIT_API_URL}/warehouse/push/cargowise"
+        url = f"{SPOJIT_API_URL}/warehouse/push/{SPOJIT_WAREHOUSE_MAPPINGS[bok_1.b_client_warehouse_code]}"
         bok_2s = BOK_2_lines.objects.filter(
             fk_header_id=bok_1.pk_header_id, b_093_packed_status=BOK_2_lines.ORIGINAL
         )
