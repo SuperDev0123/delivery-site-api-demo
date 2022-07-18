@@ -3260,14 +3260,18 @@ class BookingStatusViewSet(viewsets.ViewSet):
 class StatusHistoryViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_all(self, request, pk=None):
-        pk_booking_id = self.request.GET.get("pk_booking_id")
-        queryset = Dme_status_history.objects.filter(
-            fk_booking_id=pk_booking_id
-        ).order_by("-id")
+        pk = self.request.GET.get("booking_id")
+        booking = Bookings.objects.filter(pk=pk).only("pk_booking_id")
+        if not booking:
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            queryset = Dme_status_history.objects.filter(
+                fk_booking_id=booking[0].pk_booking_id
+            ).order_by("-id")
 
-        return JsonResponse(
-            {"results": StatusHistorySerializer(queryset, many=True).data}
-        )
+            return JsonResponse(
+                {"results": StatusHistorySerializer(queryset, many=True).data}
+            )
 
     @action(detail=False, methods=["post"])
     def save_status_history(self, request, pk=None):
@@ -3275,102 +3279,103 @@ class StatusHistoryViewSet(viewsets.ViewSet):
         try:
             logger.info(f"{LOG_ID} Payload: {request.data}")
 
-            bookings = Bookings.objects.filter(
-                pk_booking_id=request.data["fk_booking_id"]
-            ).order_by("id")
+            booking = Bookings.objects.get(pk=request.data["booking_id"])
 
-            if bookings.count() > 1:
-                error_msg = f'{LOG_ID} Duplicated {request.data["fk_booking_id"]}'
-                logger.error(error_msg)
-                send_email_to_admins(
-                    "Duplicated pk_booking_id", request.data["fk_booking_id"]
-                )
-                booking = bookings.last()
+            # if bookings.count() > 1:
+            #     error_msg = f'{LOG_ID} Duplicated {request.data["fk_booking_id"]}'
+            #     logger.error(error_msg)
+            #     send_email_to_admins(
+            #         "Duplicated pk_booking_id", request.data["fk_booking_id"]
+            #     )
+            #     booking = bookings.last()
+            # else:
+            #     booking = bookings.first()
+
+            if not booking:
+                return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                booking = bookings.first()
+                status_last = request.data.get("status_last")
+                event_time_stamp = request.data.get("event_time_stamp")
+                dme_notes = request.data.get("dme_notes")
+                is_from_script = request.data.get("is_from_script")
 
-            status_last = request.data.get("status_last")
-            event_time_stamp = request.data.get("event_time_stamp")
-            dme_notes = request.data.get("dme_notes")
-            is_from_script = request.data.get("is_from_script")
+                if is_from_script:
+                    fp = booking.get_fp()
+                    b_status_API = request.data.get("fp_status")
+                    data = {
+                        "b_status_API": b_status_API,
+                        "status_desc": request.data.get("fp_status_description"),
+                        "event_time": event_time_stamp,
+                    }
+                    create_fp_status_history(booking, fp, data)
+                    status_last = get_dme_status_from_fp_status(
+                        fp.fp_company_name, b_status_API, booking
+                    )
 
-            if is_from_script:
-                fp = booking.get_fp()
-                b_status_API = request.data.get("fp_status")
-                data = {
-                    "b_status_API": b_status_API,
-                    "status_desc": request.data.get("fp_status_description"),
-                    "event_time": event_time_stamp,
-                }
-                create_fp_status_history(booking, fp, data)
-                status_last = get_dme_status_from_fp_status(
-                    fp.fp_company_name, b_status_API, booking
+                    if not status_last:
+                        logger.info(
+                            f"{LOG_ID} Booking: {booking}, FP: {fp}, b_status_API: {b_status_API}"
+                        )
+                        return Response(
+                            {"success": False}, status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                status_history.create(
+                    booking,
+                    status_last,
+                    request.user.username,
+                    event_time_stamp,
+                    dme_notes,
                 )
 
-                if not status_last:
-                    logger.info(
-                        f"{LOG_ID} Booking: {booking}, FP: {fp}, b_status_API: {b_status_API}"
-                    )
-                    return Response(
-                        {"success": False}, status=status.HTTP_400_BAD_REQUEST
-                    )
+                # ######################################## #
+                #    Disabled because it was for `Cope`    #
+                # ######################################## #
+                # if request.data["status_last"] == "In Transit":
+                #     calc_collect_after_status_change(
+                #         request.data["fk_booking_id"], request.data["status_last"]
+                #     )
+                # elif request.data["status_last"] == "Delivered":
+                #     booking.z_api_issue_update_flag_500 = 0
+                #     booking.delivery_booking = str(datetime.now())
+                #     booking.save()
 
-            status_history.create(
-                booking,
-                status_last,
-                request.user.username,
-                event_time_stamp,
-                dme_notes,
-            )
+                # status_category = get_status_category_from_status(
+                #     request.data["status_last"]
+                # )
 
-            # ######################################## #
-            #    Disabled because it was for `Cope`    #
-            # ######################################## #
-            # if request.data["status_last"] == "In Transit":
-            #     calc_collect_after_status_change(
-            #         request.data["fk_booking_id"], request.data["status_last"]
-            #     )
-            # elif request.data["status_last"] == "Delivered":
-            #     booking.z_api_issue_update_flag_500 = 0
-            #     booking.delivery_booking = str(datetime.now())
-            #     booking.save()
+                # if status_category == "Transit":
+                #     booking.s_20_Actual_Pickup_TimeStamp = request.data[
+                #         "event_time_stamp"
+                #     ]
 
-            # status_category = get_status_category_from_status(
-            #     request.data["status_last"]
-            # )
+                #     if booking.s_20_Actual_Pickup_TimeStamp:
+                #         z_calculated_ETA = datetime.strptime(
+                #             booking.s_20_Actual_Pickup_TimeStamp[:10], "%Y-%m-%d"
+                #         ) + timedelta(days=booking.delivery_kpi_days)
+                #     else:
+                #         z_calculated_ETA = datetime.now() + timedelta(
+                #             days=booking.delivery_kpi_days
+                #         )
 
-            # if status_category == "Transit":
-            #     booking.s_20_Actual_Pickup_TimeStamp = request.data[
-            #         "event_time_stamp"
-            #     ]
+                #     if not booking.b_given_to_transport_date_time:
+                #         booking.b_given_to_transport_date_time = datetime.now()
 
-            #     if booking.s_20_Actual_Pickup_TimeStamp:
-            #         z_calculated_ETA = datetime.strptime(
-            #             booking.s_20_Actual_Pickup_TimeStamp[:10], "%Y-%m-%d"
-            #         ) + timedelta(days=booking.delivery_kpi_days)
-            #     else:
-            #         z_calculated_ETA = datetime.now() + timedelta(
-            #             days=booking.delivery_kpi_days
-            #         )
+                #     booking.z_calculated_ETA = datetime.strftime(
+                #         z_calculated_ETA, "%Y-%m-%d"
+                #     )
+                # elif status_category == "Complete":
+                #     booking.s_21_Actual_Delivery_TimeStamp = request.data[
+                #         "event_time_stamp"
+                #     ]
+                #     booking.delivery_booking = request.data["event_time_stamp"][:10]
+                #     booking.z_api_issue_update_flag_500 = 0
 
-            #     if not booking.b_given_to_transport_date_time:
-            #         booking.b_given_to_transport_date_time = datetime.now()
+                # booking.b_status = request.data["status_last"]
+                # booking.save()
+                # serializer.save()
 
-            #     booking.z_calculated_ETA = datetime.strftime(
-            #         z_calculated_ETA, "%Y-%m-%d"
-            #     )
-            # elif status_category == "Complete":
-            #     booking.s_21_Actual_Delivery_TimeStamp = request.data[
-            #         "event_time_stamp"
-            #     ]
-            #     booking.delivery_booking = request.data["event_time_stamp"][:10]
-            #     booking.z_api_issue_update_flag_500 = 0
-
-            # booking.b_status = request.data["status_last"]
-            # booking.save()
-            # serializer.save()
-
-            return Response({"success": True})
+                return Response({"success": True})
         except Exception as e:
             trace_error.print()
             logger.error(f"@902 - save_status_history Error: {str(e)}")
@@ -3379,7 +3384,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["put"])
     def update_status_history(self, request, pk, format=None):
         status_history = Dme_status_history.objects.get(pk=pk)
-        booking = Bookings.objects.get(pk_booking_id=request.data["fk_booking_id"])
+        booking = Bookings.objects.get(pk=request.data["booking_id"])
         serializer = StatusHistorySerializer(status_history, data=request.data)
 
         try:
