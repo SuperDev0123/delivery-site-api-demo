@@ -85,7 +85,7 @@ def get_lines(bok_2s):
                 "weight": bok_2.l_009_weight_per_each,
                 # "reference": bok_2.sscc,
                 "dangerous": False,
-                "productCode": bok_2.e_item_type,
+                "productCode": bok_2.l_003_item,
             }
         )
 
@@ -110,4 +110,5 @@ def build_push_payload(bok_1, bok_2s):
         "phoneNumber": bok_1.b_064_b_del_phone_main,
         "emailAddress": bok_1.b_063_b_del_email,
         "bookingLines": get_lines(bok_2s),
+        "customerCode": bok_1.b_500_b_client_cust_job_code or "",
     }

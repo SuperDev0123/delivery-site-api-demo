@@ -230,6 +230,8 @@ def push_boks(payload, client, username, method):
         bok_1.get("b_021_b_pu_avail_from_date") or next_biz_day
     )
 
+    bok_1["b_500_b_client_cust_job_code"] = bok_1.get("b_500_b_client_cust_job_code")
+
     bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
     if not bok_1_serializer.is_valid():
