@@ -93,17 +93,15 @@ def get_lines(bok_2s):
 
 
 def build_push_payload(bok_1, bok_2s):
-    customerName = DME_clients.objects.get(
-        dme_account_num=bok_1.fk_client_id
-    ).company_name
+    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
     deliveryInstructions = f"{bok_1.b_043_b_del_instructions_contact or ''} {bok_1.b_044_b_del_instructions_address or ''}"
 
     return {
         "bookingID": bok_1.pk,
         "orderNumber": bok_1.b_client_order_num,
-        "warehouseName": "",  # TODO
-        "freightProvider": "",
-        "customerName": customerName,
+        "warehouseName": bok_1.b_028_b_pu_company,
+        "freightProvider": bok_1.quote.freight_provider,
+        "customerName": client.company_name,
         "address": get_address(bok_1),
         "deliveryInstructions": deliveryInstructions,
         "specialInstructions": bok_1.b_016_b_pu_instructions_address or "",
