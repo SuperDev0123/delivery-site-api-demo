@@ -77,6 +77,13 @@ def push_boks(payload, client, username, method):
         bok_1["b_053_b_del_address_type"] == "business"
         bok_1["shipping_type"] = "DMEM"
 
+    # Warehouse
+    warehouse_code = bok_1.get("b_client_warehouse_code")
+    bok_1["b_client_warehouse_code"] = WAREHOUSE_MAPPINGS[warehouse_code]
+    warehouse = get_warehouse(client, code=bok_1["b_client_warehouse_code"])
+    bok_1["fk_client_warehouse"] = warehouse.pk
+    bok_1["b_clientPU_Warehouse"] = warehouse.name
+
     # Temporary population
     bok_1["b_068_b_del_location"] = "Pickup at Door / Warehouse Dock"
     bok_1["b_069_b_del_floor_number"] = 0
@@ -108,13 +115,6 @@ def push_boks(payload, client, username, method):
                 old_bok_2s = BOK_2_lines.objects.filter(fk_header_id=pk_header_id)
                 old_bok_3s = BOK_3_lines_data.objects.filter(fk_header_id=pk_header_id)
                 quotes = API_booking_quotes.objects.filter(fk_booking_id=pk_header_id)
-
-                bok_1["b_client_warehouse_code"] = WAREHOUSE_MAPPINGS[
-                    bok_1.get("b_client_warehouse_code")
-                ]
-                warehouse = get_warehouse(client, code=f"{bok_1['warehouse_code']}")
-                bok_1["fk_client_warehouse_id"] = warehouse.pk
-                bok_1["b_clientPU_Warehouse"] = warehouse.name
 
                 if old_bok_1.quote:
                     old_quote = old_bok_1.quote
