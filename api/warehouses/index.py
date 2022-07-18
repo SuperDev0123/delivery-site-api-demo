@@ -77,8 +77,6 @@ def push(bok_1):
 
             if settings.ENV == "prod":
                 to_emails.append(settings.SUPPORT_CENTER_EMAIL)
-                # to_emails.append("randerson@plumproducts.com")  # Plum agent
-                # to_emails.append("aussales@plumproducts.com")  # Plum agent
 
             send_email(
                 send_to=to_emails,
@@ -90,6 +88,11 @@ def push(bok_1):
             logger.error(f"@905 {LOG_ID} Sent email notification!")
 
         return None
+
+
+def push_webhook(data):
+    logger.info(f"### Webhook data: {data}")
+    return None
 
 
 def scanned(payload):
