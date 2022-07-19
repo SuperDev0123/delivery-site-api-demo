@@ -91,9 +91,7 @@ def push(bok_1):
 
 
 def push_webhook(data):
-    json_data = json.loads(data)
-    s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
-    logger.info(f"### Response: {s0}")
+    logger.info(f"### Webhook data: {data}")
     return None
 
 
