@@ -131,6 +131,8 @@ urlpatterns += [
     url(r"^spojit/whse/reprint_label/", spojit_reprint_label),
     url(r"^spojit/whse/ready/", spojit_ready),
     url(r"^spojit/whse/manifest/", spojit_manifest),
+    # Webhooks
+    url(r"^webhook/spojit/whse/push/", spojit_push_webhook),
     # PricingOnly
     url(r"^get-quick-pricing/", quick_pricing),
     # url(r"^bulk_pricing/", bulk_pricing),

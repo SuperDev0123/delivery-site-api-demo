@@ -21,6 +21,22 @@ logger = logging.getLogger(__name__)
 
 @api_view(["POST"])
 @authentication_classes([JSONWebTokenAuthentication])
+def spojit_push_webhook(request):
+    LOG_ID = "[WEBHOOK SPOJIT PUSH]"
+    logger.info(f"{LOG_ID} Payload: {request.data}")
+
+    try:
+        res_json = warehouse.push_webhook(request.data)
+        return JsonResponse({}, status=200)
+    except Exception as e:
+        logger.error(f"{LOG_ID} Error: {str(e)}")
+        return JsonResponse(
+            {"errorCode": "failure", "errorMessage": str(e)}, status=400
+        )
+
+
+@api_view(["POST"])
+@authentication_classes([JSONWebTokenAuthentication])
 def spojit_scan(request):
     LOG_ID = "[SPOJIT SCAN]"
     logger.info(f"{LOG_ID} Payload: {request.data}")
