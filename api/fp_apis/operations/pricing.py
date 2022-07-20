@@ -294,13 +294,15 @@ def pricing(
             booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
             and booking.de_To_Address_State.upper() == "SA"
         ):
-            quote = API_booking_quotes.objects.filter(
+            quotes = API_booking_quotes.objects.filter(
                 fk_booking_id=booking.pk_booking_id,
                 is_used=False,
                 freight_provider="Allied",
             )
-            quote.is_used = True
-            quote.save()
+
+            if quotes:
+                quotes.first().is_used = True
+                quote.first().save()
 
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id, is_used=False
