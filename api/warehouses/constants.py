@@ -24,5 +24,6 @@ CARRIER_MAPPING = {
     "Deliver-ME Direct": "DIRECT",
     "DXT Transport": "DXTTRANS",
     "Cochranes": "COCHRANE",
+    "Hunter": "HUNTER",
     "Pickup": "PICKUP",
 }
