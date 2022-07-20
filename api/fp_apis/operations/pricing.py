@@ -289,6 +289,19 @@ def pricing(
             )
             build_special_fp_pricings(booking, _booking_lines, packed_status)
 
+        # JasonL + SA -> ignore Allied
+        if (
+            booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+            and booking.de_To_Address_State.upper() == "SA"
+        ):
+            quote = API_booking_quotes.objects.filter(
+                fk_booking_id=booking.pk_booking_id,
+                is_used=False,
+                freight_provider="Allied",
+            )
+            quote.is_used = True
+            quote.save()
+
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id, is_used=False
         ).order_by("client_mu_1_minimum_values")
