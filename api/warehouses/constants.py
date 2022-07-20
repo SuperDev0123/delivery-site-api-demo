@@ -7,3 +7,22 @@ SPOJIT_WAREHOUSE_MAPPINGS = {
     "CARGO_WISE_MEL_LG1": "9c617b28-eeb3-11ec-af46-96c8694102b7",
     "CARGO_WISE_MEL_AFS": "9c617b28-eeb3-11ec-af46-96c8694102b7",
 }
+
+CARRIER_MAPPING = {
+    "Allied": "ALLIED",
+    "Sadleirs": "SADLEIRS",
+    "Sendle": "SENDLE",
+    "Camerons": "CAMERONS",
+    "Northline": "NORTHLNE",
+    "Century": "CENTURY",
+    "TNT": "TNT",
+    "CNQ Freight Services": "CNQFS",
+    "Action Couriers": "ACTIONCR",
+    "ATC": "ATC",
+    "Symons Clark": "SYMONSCL",
+    "State Transport": "STATETRN",
+    "Deliver-ME Direct": "DIRECT",
+    "DXT Transport": "DXTTRANS",
+    "Cochranes": "COCHRANE",
+    "Pickup": "PICKUP",
+}

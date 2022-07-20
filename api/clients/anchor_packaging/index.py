@@ -79,10 +79,17 @@ def push_boks(payload, client, username, method):
 
     # Warehouse
     warehouse_code = bok_1.get("b_client_warehouse_code")
-    bok_1["b_client_warehouse_code"] = WAREHOUSE_MAPPINGS[warehouse_code]
-    warehouse = get_warehouse(client, code=bok_1["b_client_warehouse_code"])
-    bok_1["fk_client_warehouse"] = warehouse.pk
-    bok_1["b_clientPU_Warehouse"] = warehouse.name
+
+    if warehouse_code in WAREHOUSE_MAPPINGS:
+        bok_1["b_client_warehouse_code"] = WAREHOUSE_MAPPINGS[warehouse_code]
+        warehouse = get_warehouse(client, code=bok_1["b_client_warehouse_code"])
+        bok_1["fk_client_warehouse"] = warehouse.pk
+        bok_1["b_clientPU_Warehouse"] = warehouse.name
+    else:
+        send_email_to_admins(
+            f"Unknown warehouse - {warehouse_code}",
+            "Customer Service team,\n\nPlease check this order.\n\nRegards,\n\nFrom DME API",
+        )
 
     # Temporary population
     bok_1["b_068_b_del_location"] = "Pickup at Door / Warehouse Dock"
@@ -151,35 +158,36 @@ def push_boks(payload, client, username, method):
     # `DMEA` or `DMEM` - set `success` as 3
     bok_1["success"] = dme_constants.BOK_SUCCESS_3
 
-    if not bok_1.get("b_028_b_pu_company"):
-        bok_1["b_028_b_pu_company"] = warehouse.name
+    if warehouse_code in WAREHOUSE_MAPPINGS:
+        if not bok_1.get("b_028_b_pu_company"):
+            bok_1["b_028_b_pu_company"] = warehouse.name
 
-    if not bok_1.get("b_035_b_pu_contact_full_name"):
-        bok_1["b_035_b_pu_contact_full_name"] = warehouse.contact_name
+        if not bok_1.get("b_035_b_pu_contact_full_name"):
+            bok_1["b_035_b_pu_contact_full_name"] = warehouse.contact_name
 
-    # if not bok_1.get("b_037_b_pu_email"):
-    #     bok_1["b_037_b_pu_email"] = warehouse.contact_email
+        # if not bok_1.get("b_037_b_pu_email"):
+        #     bok_1["b_037_b_pu_email"] = warehouse.contact_email
 
-    if not bok_1.get("b_038_b_pu_phone_main"):
-        bok_1["b_038_b_pu_phone_main"] = warehouse.phone_main
+        if not bok_1.get("b_038_b_pu_phone_main"):
+            bok_1["b_038_b_pu_phone_main"] = warehouse.phone_main
 
-    if not bok_1.get("b_029_b_pu_address_street_1"):
-        bok_1["b_029_b_pu_address_street_1"] = warehouse.address1
+        if not bok_1.get("b_029_b_pu_address_street_1"):
+            bok_1["b_029_b_pu_address_street_1"] = warehouse.address1
 
-    if not bok_1.get("b_030_b_pu_address_street_2"):
-        bok_1["b_030_b_pu_address_street_2"] = warehouse.address2
+        if not bok_1.get("b_030_b_pu_address_street_2"):
+            bok_1["b_030_b_pu_address_street_2"] = warehouse.address2
 
-    if not bok_1.get("b_034_b_pu_address_country"):
-        bok_1["b_034_b_pu_address_country"] = "AU"
+        if not bok_1.get("b_034_b_pu_address_country"):
+            bok_1["b_034_b_pu_address_country"] = "AU"
 
-    if not bok_1.get("b_033_b_pu_address_postalcode"):
-        bok_1["b_033_b_pu_address_postalcode"] = warehouse.postal_code
+        if not bok_1.get("b_033_b_pu_address_postalcode"):
+            bok_1["b_033_b_pu_address_postalcode"] = warehouse.postal_code
 
-    if not bok_1.get("b_031_b_pu_address_state"):
-        bok_1["b_031_b_pu_address_state"] = warehouse.state.upper()
+        if not bok_1.get("b_031_b_pu_address_state"):
+            bok_1["b_031_b_pu_address_state"] = warehouse.state.upper()
 
-    if not bok_1.get("b_032_b_pu_address_suburb"):
-        bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
+        if not bok_1.get("b_032_b_pu_address_suburb"):
+            bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
 
     if not bok_1.get("b_027_b_pu_address_type"):
         bok_1["b_027_b_pu_address_type"] = "business"

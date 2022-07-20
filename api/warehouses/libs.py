@@ -2,6 +2,7 @@ import logging
 
 from api.models import BOK_1_headers, BOK_2_lines, Log, FPRouting, DME_clients
 from api.operations.email_senders import send_email_to_admins
+from api.warehouses.constants import CARRIER_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +102,7 @@ def build_push_payload(bok_1, bok_2s):
         "orderNumber": bok_1.b_client_order_num,
         "warehouseName": bok_1.b_028_b_pu_company,
         "warehouseCode": bok_1.b_client_warehouse_code,
-        "freightProvider": bok_1.quote.freight_provider,
+        "freightProvider": CARRIER_MAPPING[bok_1.quote.freight_provider],
         "clientName": client.company_name,
         "address": get_address(bok_1),
         "deliveryInstructions": deliveryInstructions,
