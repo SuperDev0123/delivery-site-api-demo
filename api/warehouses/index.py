@@ -285,25 +285,25 @@ def scanned(payload):
             label_url = f"{file_path}/{file_name}"
             label_urls.append(label_url)
 
-            # Plum ZPL printer requries portrait label
-            if booking.vx_freight_provider.lower() in ["hunter", "tnt"]:
-                label_url = pdf.rotate_pdf(label_url)
+            # # Plum ZPL printer requries portrait label
+            # if booking.vx_freight_provider.lower() in ["hunter", "tnt"]:
+            #     label_url = pdf.rotate_pdf(label_url)
 
-            result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
+            # result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
 
-            if not result:
-                message = (
-                    "Please contact DME support center. <bookings@deliver-me.com.au>"
-                )
-                raise Exception(message)
+            # if not result:
+            #     message = (
+            #         "Please contact DME support center. <bookings@deliver-me.com.au>"
+            #     )
+            #     raise Exception(message)
 
-            with open(label_url[:-4] + ".zpl", "rb") as zpl:
-                zpl_data = str(b64encode(zpl.read()))[2:-1]
+            # with open(label_url[:-4] + ".zpl", "rb") as zpl:
+            #     zpl_data = str(b64encode(zpl.read()))[2:-1]
 
             labels.append(
                 {
                     "sscc": sscc,
-                    "label": zpl_data,
+                    "label": pdf.pdf_to_base64(label_url),
                     "barcode": get_barcode(booking, [new_line], index + 1, item_cnt),
                 }
             )
