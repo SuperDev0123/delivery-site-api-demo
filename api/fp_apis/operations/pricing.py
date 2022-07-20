@@ -302,7 +302,7 @@ def pricing(
 
             if quotes:
                 quotes.first().is_used = True
-                quote.first().save()
+                quotes.first().save()
 
         quotes = API_booking_quotes.objects.filter(
             fk_booking_id=booking.pk_booking_id, is_used=False
