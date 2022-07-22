@@ -43,8 +43,10 @@ def spojit_scan(request):
 
     try:
         res_json = warehouse.scanned(request.data)
+        print("@1 - ", res_json)
         return JsonResponse(res_json, status=200)
     except Exception as e:
+        trace_error.print()
         logger.error(f"{LOG_ID} Error: {str(e)}")
         return JsonResponse(
             {"errorCode": "failure", "errorMessage": str(e)}, status=400

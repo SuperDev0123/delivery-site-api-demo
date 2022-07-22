@@ -303,7 +303,7 @@ def scanned(payload):
             labels.append(
                 {
                     "sscc": sscc,
-                    "label": pdf.pdf_to_base64(label_url),
+                    "label": str(pdf.pdf_to_base64(label_url)),
                     "barcode": get_barcode(booking, [new_line], index + 1, item_cnt),
                 }
             )
