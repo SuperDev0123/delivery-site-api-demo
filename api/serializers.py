@@ -910,7 +910,7 @@ class ClientEmployeesSerializer(serializers.ModelSerializer):
     def get_warehouse_name(self, instance):
         if instance.warehouse_id:
             warehouse = Client_warehouses.objects.get(
-                pk_id_client_warehouses=instance.warehouse_id + 1
+                pk_id_client_warehouses=instance.warehouse_id
             )
             return warehouse.name
 
