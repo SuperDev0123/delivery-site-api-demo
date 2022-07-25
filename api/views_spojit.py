@@ -15,6 +15,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from api.warehouses import index as warehouse
+from api.common import trace_error
 
 logger = logging.getLogger(__name__)
 

@@ -41,7 +41,7 @@ from api.fp_apis.utils import (
 
 # from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
-from api.operations.email_senders import send_email_to_admins, send_email_missing_dims
+from api.operations.email_senders import send_email_to_admins
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.booking_line import index as line_oper
 from api.clients.operations.index import get_warehouse, get_suburb_state
