@@ -795,7 +795,7 @@ class Bookings(models.Model):
         Client_warehouses, on_delete=models.CASCADE, default="1"
     )
     b_clientPU_Warehouse = models.CharField(
-        verbose_name=_("warehouse"), max_length=32, blank=True, null=True, default=None
+        verbose_name=_("warehouse"), max_length=64, blank=True, null=True, default=None
     )
     is_printed = models.BooleanField(
         verbose_name=_("Is printed"), default=False, blank=True, null=True
@@ -2683,7 +2683,7 @@ class BOK_1_headers(models.Model):
         Client_warehouses, on_delete=models.CASCADE, default="1"
     )
     b_clientPU_Warehouse = models.CharField(
-        verbose_name=_("warehouse"), max_length=32, blank=True, null=True
+        verbose_name=_("warehouse"), max_length=64, blank=True, null=True
     )
     fk_client_id = models.CharField(
         verbose_name=_("fk_client_id"), max_length=64, blank=True, null=True
