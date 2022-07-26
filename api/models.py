@@ -1840,6 +1840,7 @@ class Bookings(models.Model):
         max_length=32, blank=True, null=True, default=None
     )
     inv_billing_status_note = models.TextField(blank=True, null=True, default=None)
+    dme_client_notes = models.TextField(blank=True, null=True, default=None)
     check_pod = models.BooleanField(default=False, blank=True, null=True)
     vx_freight_provider_carrier = models.CharField(
         max_length=32, blank=True, null=True, default=None
