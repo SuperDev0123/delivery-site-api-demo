@@ -1334,6 +1334,7 @@ class BookingsViewSet(viewsets.ViewSet):
             # "gap_ras",
             "s_05_LatestPickUpDateTimeFinal",
             "b_booking_Notes",
+            "dme_client_notes",
             "z_CreatedTimestamp",
             "de_to_Pick_Up_Instructions_Contact",
             "de_to_PickUp_Instructions_Address",
