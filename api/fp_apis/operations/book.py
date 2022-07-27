@@ -253,7 +253,10 @@ def book(fp_name, booking, booker):
         logger.error(f"[BOOK] - {str(res_content)}")
 
         if "errors" in json_data:
-            error_msg = json_data["errors"]
+            if "errorMessage" in json_data["errors"]:
+                error_msg = json_data["errors"]["errorMessage"]
+            else:
+                error_msg = json_data["errors"]
         elif "errorMessage" in json_data:  # Sendle, TNT Error
             error_msg = json_data["errorMessage"]
         elif "errorMessage" in json_data[0]:

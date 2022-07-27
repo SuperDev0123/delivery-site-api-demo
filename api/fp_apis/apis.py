@@ -209,7 +209,9 @@ def book(request, fp_name):
         if success:
             return JsonResponse(res_json)
         else:
-            logger.info(f"{LOG_ID} Failed. BookingId: {booking.b_bookingID_Visual}")
+            logger.info(
+                f"{LOG_ID} Failed. BookingId: {booking.b_bookingID_Visual} Error: {message}"
+            )
             return JsonResponse(res_json, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         trace_error.print()
