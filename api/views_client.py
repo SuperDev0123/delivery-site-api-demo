@@ -732,6 +732,7 @@ def scanned(request):
     user = request.user
     logger.info(f"@830 {LOG_ID} Requester: {user.username}")
     logger.info(f"@831 {LOG_ID} Payload: {request.data}")
+    time1 = t.time()
 
     try:
         client = get_client(user)
@@ -744,10 +745,14 @@ def scanned(request):
 
         message = f"Successfully scanned."
         logger.info(f"#838 {LOG_ID} {message}")
+        time2 = t.time()
+        logger.info(f"\n#838 {LOG_ID} Requester: {user.username}\nPayload: {request.data}\nSpent time: {str(int(round(time2 - time1)))}s\n")
         return JsonResponse(result, status=HTTP_200_OK)
     except Exception as e:
         logger.info(f"@839 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
+        time2 = t.time()
+        logger.info(f"\n#838 {LOG_ID} Requester: {user.username}\nPayload: {request.data}\nSpent time: {str(int(round(time2 - time1)))}s\n")
         res_json = {"success": False, "message": str(e)}
         return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
