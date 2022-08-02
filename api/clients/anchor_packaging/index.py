@@ -492,15 +492,6 @@ def push_boks(payload, client, username, method):
                 freight_provider=selected_quote.freight_provider,
                 service_name=selected_quote.service_name,
             )
-        # All JasonL bookings to State SA are to book with TNT if DMEA no matter what the price
-        elif (
-            bok_1.get("shipping_type") == "DMEA"
-            and bok_1.get("b_057_b_del_address_state")
-            and bok_1.get("b_057_b_del_address_state").upper() == "SA"
-        ):
-            quote_set = quote_set.filter(freight_provider="TNT")
-        else:
-            quote_set = quote_set.exclude(freight_provider__in=["Sendle", "Hunter"])
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
