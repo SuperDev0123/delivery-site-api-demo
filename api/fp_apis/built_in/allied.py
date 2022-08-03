@@ -237,8 +237,9 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
         logger.info(message)
         raise Exception(message)
 
-    cost = rules.first().cost
-    message = f"@835 {LOG_ID} RuleID: {rules.first()}, CostID: {cost}"
+    rule = rules.first()
+    cost = rule.cost
+    message = f"@835 {LOG_ID} RuleID: {rule}, CostID: {cost}"
     logger.info(message)
 
     m3_to_kg_factor = 250

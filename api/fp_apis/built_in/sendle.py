@@ -48,18 +48,24 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
         raise Exception(
             f"Not supported postal_code. [PU: {booking.pu_Address_PostalCode}({pu_zone}), DE: {booking.de_To_Address_PostalCode}({de_zone})]"
         )
-
+    fp_rules = FP_pricing_rules.objects.filter(freight_provider_id=fp.id,pu_zone=pu_zone,de_zone=de_zone).order_by("id")
+    if not fp_rules: 
+        return pricies
     for service_type in service_types:
         logger.info(f"@830 {LOG_ID} {service_type.upper()}")
 
-        rules = FP_pricing_rules.objects.filter(
-            freight_provider_id=fp.id,
-            service_type=service_type,
-            pu_zone=pu_zone,
-            de_zone=de_zone,
-        ).order_by("id")
+        # rules = FP_pricing_rules.objects.filter(
+        #     freight_provider_id=fp.id,
+        #     service_type=service_type,
+        #     pu_zone=pu_zone,
+        #     de_zone=de_zone,
+        # ).order_by("id")
+        rules = []
+        for fp_rule in fp_rules:
+            if (fp_rule.service_type.lower() == service_type.lower()):
+                rules.append(fp_rule)
         logger.info(
-            f"{LOG_ID} Address filtered: {rules.count()}, PU, DE zone: {pu_zone}, {de_zone}"
+            f"{LOG_ID} Address filtered: {len(rules)}, PU, DE zone: {pu_zone}, {de_zone}"
         )
 
         if not rules:
@@ -67,14 +73,14 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
             continue
 
         rules = weight_filter(booking_lines, rules, fp)
-        logger.info(f"{LOG_ID} Weight filtered: {rules.count()}")
+        logger.info(f"{LOG_ID} Weight filtered: {len(rules)}")
 
         if not rules:
             logger.info(f"{LOG_ID} {fp_name.upper()} - weight exceeded")
             continue
 
         rules = volume_filter(booking_lines, rules, fp)
-        logger.info(f"{LOG_ID} Volume filtered: {rules.count()}")
+        logger.info(f"{LOG_ID} Volume filtered: {len(rules)}")
 
         if not rules:
             logger.info(f"{LOG_ID} {fp_name.upper()} - volumn exceeded")

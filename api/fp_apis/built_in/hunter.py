@@ -21,23 +21,29 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
     pu_zone = get_zone_code(booking.pu_Address_PostalCode, fp, pu_zones)
     de_zone = get_zone_code(booking.de_To_Address_PostalCode, fp, de_zones)
-
     if not pu_zone or not de_zone:
         raise Exception(
             f"Not supported postal_code. [PU: {booking.pu_Address_PostalCode}({pu_zone}), DE: {booking.de_To_Address_PostalCode}({de_zone})]"
         )
+    fp_rules = FP_pricing_rules.objects.filter(freight_provider_id=fp.id,pu_zone=pu_zone,de_zone=de_zone).order_by("id")
+    if not fp_rules: 
+        return pricies
 
     for service_type in service_types:
         logger.info(f"@830 {LOG_ID} {service_type.upper()}")
 
-        rules = FP_pricing_rules.objects.filter(
-            freight_provider_id=fp.id,
-            service_type=service_type,
-            pu_zone=pu_zone,
-            de_zone=de_zone,
-        ).order_by("id")
+        # rules = FP_pricing_rules.objects.filter(
+        #     freight_provider_id=fp.id,
+        #     service_type=service_type,
+        #     pu_zone=pu_zone,
+        #     de_zone=de_zone,
+        # ).order_by("id")
+        rules = []
+        for fp_rule in fp_rules:
+            if (fp_rule.service_type.lower() == service_type.lower()):
+                rules.append(fp_rule)
         logger.info(
-            f"@830 {LOG_ID} Filtered Addresses: {rules.count()}, PU, DE zone: {pu_zone}, {de_zone}"
+            f"@830 {LOG_ID} Filtered Addresses: {len(rules)}, PU, DE zone: {pu_zone}, {de_zone}"
         )
 
         kg_price = 0
@@ -53,14 +59,14 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
         if kg_lines:  # For KG lines
             # Weight Filter
             logger.info(
-                f"{LOG_ID} Applying weight filter... rules cnt: {rules.count()}"
+                f"{LOG_ID} Applying weight filter... rules cnt: {len(rules)}"
             )
             rules = weight_filter(kg_lines, rules, fp)
             logger.info(f"{LOG_ID} Filtered rules - {rules}")
             if not rules:
                 continue
 
-            cost = rules.first().cost
+            cost = rules[0].cost
             logger.info(f"{LOG_ID} Final cost - {cost}")
             net_price = cost.basic_charge or 0
             m3_to_kg_factor = 250
@@ -159,7 +165,9 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
             pallet_price = net_price
 
         logger.info(f"{LOG_ID} KG price: {kg_price}, Pallet price: {pallet_price}")
-        rule = rules.get(cost_id=cost.id)
+        rule = list(filter(lambda rule: rule.cost_id == cost.id, rules))[0]
+        if not rule.etd:
+            continue
         price = {
             "netPrice": kg_price + pallet_price,
             "totalTaxes": 0,

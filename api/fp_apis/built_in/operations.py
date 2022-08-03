@@ -141,7 +141,7 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
     ):
         return []
 
-    filtered_rule_ids = []
+    filtered_rules = []
     for rule in rules:
         if rule.pu_suburb and rule.pu_suburb.lower() != pu_suburb:
             # logger.info(f"@850 {LOG_ID} PU Suburb does not match")
@@ -189,7 +189,7 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
 
         found_pu_zone = rule.pu_zone
         found_de_zone = rule.de_zone
-        filtered_rule_ids.append(rule.id)
+        filtered_rules.append(rule)
 
     for rule in rules:
         if rule.both_way:
@@ -223,9 +223,9 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
                 ):
                     continue
 
-            filtered_rule_ids.append(rule.id)
+            filtered_rules.append(rule)
 
-    return rules.filter(pk__in=filtered_rule_ids)
+    return filtered_rules
 
 
 def lines_to_vehicle(lines_dict, vehicles_dict):
@@ -415,7 +415,7 @@ def find_rule_ids_by_dim(booking_lines, rules, fp):
 
 
 def find_rule_ids_by_volume(booking_lines, rules, fp):
-    rule_ids = []
+    filtered_rules = []
 
     total_volume = 0
     for item in booking_lines:
@@ -431,9 +431,9 @@ def find_rule_ids_by_volume(booking_lines, rules, fp):
         if total_volume and (total_volume > cost.max_volume):
             continue
 
-        rule_ids.append(rule.id)
+        filtered_rules.append(rule)
 
-    return rule_ids
+    return filtered_rules
 
 
 def find_rule_ids_by_weight(booking_lines, rules, fp):
@@ -543,14 +543,15 @@ def dim_filter(booking, booking_lines, rules, fp):
         logger.info(f"#820 DIM FILTER vehicles: {vehicle_ids}")
 
         if vehicle_ids:
-            rules = rules.filter(vehicle_id__in=vehicle_ids)
+            filtered_rules = list(filter(lambda rule: rule.vehicle_id in vehicle_ids, rules))
+            # rules = rules.filter(vehicle_id__in=vehicle_ids)
 
-            filtered_rules = rules
     elif fp.rule_type.rule_type_code in ["rule_type_02"]:  # Over size & Normal size
-        rule_ids = find_rule_ids_by_dim(booking_lines, rules, fp)
-
+        # rule_ids = find_rule_ids_by_dim(booking_lines, rules, fp)
+        rule_ids = [rule.pk for rule in rules]
         if rule_ids:
-            filtered_rules = rules.filter(pk__in=rule_ids)
+            filtered_rules = list(filter(lambda rule: rule.pk in rule_ids, rules))
+            # filtered_rules = rules.filter(pk__in=rule_ids)
 
     return filtered_rules
 
@@ -560,15 +561,16 @@ def weight_filter(booking_lines, rules, fp):
 
     if fp.rule_type.rule_type_code in ["rule_type_02"]:  # Over weight & Normal weight
         rule_ids = find_rule_ids_by_weight(booking_lines, rules, fp)
-        filtered_rules = rules.filter(pk__in=rule_ids)
+        # filtered_rules = rules.filter(pk__in=rule_ids)
+        filtered_rules = list(filter(lambda rule: rule.pk in rule_ids, rules))
 
     return filtered_rules
 
 
 def volume_filter(booking_lines, rules, fp):
     filtered_rules = []
-    rule_ids = find_rule_ids_by_volume(booking_lines, rules, fp)
-    return rules.filter(pk__in=rule_ids)
+    filtered_rules = find_rule_ids_by_volume(booking_lines, rules, fp)
+    return filtered_rules
 
 
 def find_cost(booking_lines, rules, fp):
