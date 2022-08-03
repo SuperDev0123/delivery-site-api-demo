@@ -230,8 +230,6 @@ def scanned(payload):
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,
                 )
-            else:
-                quotes = quotes.exclude(freight_provider__in=["Sendle", "Hunter"])
 
             best_quotes = select_best_options(pricings=quotes)
             logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
