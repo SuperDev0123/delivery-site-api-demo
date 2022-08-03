@@ -317,6 +317,10 @@ def scanned(payload):
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
         )
+
+        if not booking.b_dateBookedDate and booking.b_status != "Picked":
+            status_history.create(booking, "Picked", client_name)
+
         return {
             "success": True,
             "message": "Successfully updated picked info.",
