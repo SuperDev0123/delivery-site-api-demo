@@ -186,7 +186,6 @@ class BookingSerializer(serializers.ModelSerializer):
     is_auto_augmented = serializers.SerializerMethodField(read_only=True)
     customer_cost = serializers.SerializerMethodField(read_only=True)
     quote_packed_status = serializers.SerializerMethodField(read_only=True)
-    inv_cost_quoted = serializers.FloatField(read_only=True)
     qtys_in_stock = serializers.SerializerMethodField(read_only=True)
     children = serializers.SerializerMethodField(read_only=True)
     cs_notes_cnt = serializers.SerializerMethodField(read_only=True)

@@ -4415,6 +4415,7 @@ def get_manifest(request):
                 if (
                     "bsd" in request.user.username
                     or "jason" in request.user.username
+                    or "anchor_packaging" in request.user.username
                     or clientname == "dme"
                 ) and not booking.b_dateBookedDate:
                     if booking.vx_freight_provider in SPECIAL_FPS:

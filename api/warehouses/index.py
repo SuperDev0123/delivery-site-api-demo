@@ -30,7 +30,12 @@ from api.operations.labels.index import build_label as build_label_oper
 from api.operations.manifests.index import build_manifest as build_manifest_oper
 from api.operations.labels.index import get_barcode
 from api.common.booking_quote import set_booking_quote
-from api.common import trace_error, common_times as dme_time_lib
+from api.common import (
+    common_times as dme_time_lib,
+    constants as dme_constants,
+    status_history,
+    trace_error,
+)
 from api.convertors import pdf
 from api.warehouses.libs import check_port_code, build_push_payload
 from api.warehouses.constants import (
@@ -230,8 +235,6 @@ def scanned(payload):
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,
                 )
-            else:
-                quotes = quotes.exclude(freight_provider__in=["Sendle", "Hunter"])
 
             best_quotes = select_best_options(pricings=quotes)
             logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
@@ -317,6 +320,10 @@ def scanned(payload):
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
         )
+
+        if not booking.b_dateBookedDate and booking.b_status != "Picked":
+            status_history.create(booking, "Picked", client_name)
+
         return {
             "success": True,
             "message": "Successfully updated picked info.",
