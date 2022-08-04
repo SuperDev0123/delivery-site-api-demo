@@ -48,6 +48,11 @@ def get_lines(bok_2s):
     _lines = []
 
     for bok_2 in bok_2s:
+        product_code = bok_2.l_003_item
+
+        if "ZERO Dims -" in product_code:
+            product_code = product_code[: product_code.index("ZERO Dims -") - 2]
+
         _lines.append(
             {
                 "lineID": bok_2.pk_lines_id,
@@ -59,7 +64,7 @@ def get_lines(bok_2s):
                 "weight": bok_2.l_009_weight_per_each,
                 # "reference": bok_2.sscc,
                 "dangerous": False,
-                "productCode": bok_2.l_003_item,
+                "productCode": product_code,
             }
         )
 
