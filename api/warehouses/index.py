@@ -37,7 +37,7 @@ from api.common import (
     trace_error,
 )
 from api.convertors import pdf
-from api.warehouses.libs import check_port_code, build_push_payload
+from api.warehouses.libs import build_push_payload
 from api.warehouses.constants import (
     SPOJIT_API_URL,
     SPOJIT_TOKEN,
@@ -49,8 +49,6 @@ logger = logging.getLogger(__name__)
 
 def push(bok_1):
     LOG_ID = "[PUSH TO WHSE]"
-
-    # check_port_code(bok_1)
 
     try:
         headers = {"content-type": "application/json", "Authorization": SPOJIT_TOKEN}
