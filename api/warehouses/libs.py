@@ -27,11 +27,11 @@ def check_port_code(bok_1):
         message = f"No port_code.\n\n"
         message += f"Order Num: {bok_1.b_client_order_num}\n"
         message += f"State: {de_state}\nPostal Code: {de_postcode}\nSuburb: {de_suburb}"
-        logger.error(f"[PAPERLESS] {message}")
+        logger.error(f"{message}")
         send_email_to_admins("Failed to send order to ACR due to port_code", message)
         raise Exception(message)
 
-    logger.info("[PAPERLESS] `port_code` is fine")
+    logger.info("`port_code` is fine")
 
 
 def get_address(bok_1):
