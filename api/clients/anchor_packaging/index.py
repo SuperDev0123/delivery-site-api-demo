@@ -44,10 +44,11 @@ from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations.email_senders import send_email_to_admins
 from api.operations.labels.index import build_label, get_barcode
 from api.operations.booking_line import index as line_oper
-from api.clients.operations.index import get_warehouse, get_suburb_state
+from api.clients.operations.index import get_warehouse, check_port_code
 from api.helpers.cubic import get_cubic_meter
 from api.convertors.pdf import pdf_merge
 from api.clients.anchor_packaging.constants import WAREHOUSE_MAPPINGS
+from api.warehouses.index import push as push_to_warehouse
 
 
 logger = logging.getLogger(__name__)
@@ -76,6 +77,41 @@ def push_boks(payload, client, username, method):
     if not bok_1["b_053_b_del_address_type"] in ["business", "residential"]:
         bok_1["b_053_b_del_address_type"] == "business"
         bok_1["shipping_type"] = "DMEM"
+
+    # Validate
+    error_msg = None
+    de_company = bok_1.get("b_054_b_del_company")
+    de_street_1 = bok_1.get("b_055_b_del_address_street_1")
+    de_street_2 = bok_1.get("b_056_b_del_address_street_2")
+    de_state = bok_1.get("b_057_b_del_address_state")
+    de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
+    de_suburb = bok_1.get("b_058_b_del_address_suburb")
+    de_contact = bok_1.get("b_061_b_del_contact_full_name")
+    b_client_order_num = bok_1.get("b_client_order_num")
+
+    if not b_client_order_num:
+        error_msg = "b_client_order_num is required"
+    if not de_company:
+        error_msg = "b_054_b_del_company is required"
+    if de_company and not de_contact:
+        bok_1["b_061_b_del_contact_full_name"] = de_company
+    if not de_street_1 and not de_street_2:
+        error_msg = "Delivery street info is required"
+    if de_street_2 and not de_street_1:
+        bok_1["b_055_b_del_address_street_1"] = de_street_2
+        bok_1["b_056_b_del_address_street_2"] = ""
+    if not de_state:
+        error_msg = "b_057_b_del_address_state is required"
+    if not de_postal_code:
+        error_msg = "b_059_b_del_address_postalcode is required"
+    if not de_suburb:
+        error_msg = "b_058_b_del_address_suburb is required"
+
+    if error_msg:
+        raise Exception(error_msg)
+
+    # Postal Code check
+    check_port_code(de_suburb, de_postal_code, de_state)
 
     # Warehouse
     warehouse_code = bok_1.get("b_client_warehouse_code")
@@ -528,16 +564,6 @@ def push_boks(payload, client, username, method):
             fc_log.new_quote = best_quotes[0]
             fc_log.save()
 
-            # Send quote info back to Pronto
-            # result = send_info_back(bok_1_obj, best_quote)
-    else:
-        b_client_order_num = bok_1.get("b_client_order_num")
-
-        if b_client_order_num:
-            message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
-            logger.error(message)
-            send_email_to_admins("No FC result", message)
-
     # Set Express or Standard
     if len(json_results) == 1:
         json_results[0]["service_name"] = "Standard"
@@ -561,12 +587,18 @@ def push_boks(payload, client, username, method):
 
     # Response
     if json_results:
+        push_to_warehouse(bok_1_obj)
         logger.info(f"@8838 {LOG_ID} success: True, 201_created")
         result = {"success": True, "results": json_results}
         url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
         result["pricePageUrl"] = url
         return result
     else:
+        # Inform to admins
+        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
+        logger.error(message)
+        send_email_to_admins("No FC result", message)
+
         message = (
             "Pricing cannot be returned due to incorrect address/lines information."
         )

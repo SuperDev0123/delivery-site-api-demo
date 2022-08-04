@@ -4,7 +4,7 @@ from datetime import datetime, date
 
 from django.db import transaction
 
-from api.models import Client_warehouses, BOK_2_lines, Pallet
+from api.models import Client_warehouses, BOK_2_lines, Pallet, DME_clients
 from api.serializers import SimpleQuoteSerializer
 from api.serializers_client import *
 from api.common import common_times as dme_time_lib, constants as dme_constants
@@ -61,8 +61,12 @@ def quick_pricing(payload):
     LOG_ID = "[PP Jason L]"
     booking = payload["booking"]
     lines = payload["booking_lines"]
+    client_pk = payload["clientId"]
     pk_header_id = str(uuid.uuid4())
     json_results = []
+
+    # Get Client
+    client = DME_clients.objects.get(pk=client_pk)
 
     # Check if has lines
     if lines and len(lines) == 0:
@@ -147,7 +151,7 @@ def quick_pricing(payload):
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
     booking = {
-        "kf_client_id": "461162D2-90C7-BF4E-A905-0242ac130003",  # Pricing-Only
+        "kf_client_id": client.dme_account_num,
         "client_warehouse_code": "No - Warehouse",
         "b_client_name": "Pricing-Only",
         "pk_booking_id": pk_header_id,
@@ -214,7 +218,7 @@ def quick_pricing(payload):
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
-        context = {"client_customer_mark_up": 0}
+        context = {"client_customer_mark_up": client.client_mark_up_percent}
         json_results = SimpleQuoteSerializer(quote_set, many=True, context=context).data
         json_results = dme_time_lib.beautify_eta(json_results, quote_set, None)
 

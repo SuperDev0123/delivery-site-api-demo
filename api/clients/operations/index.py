@@ -9,6 +9,7 @@ from api.models import (
     FC_Log,
     BOK_1_headers,
     BOK_2_lines,
+    FPRouting,
 )
 from api.helpers.string import similarity
 from api.fp_apis.utils import (
@@ -283,3 +284,24 @@ def bok_quote(bok_1, packed_status):
     else:
         message = "Pricing cannot be returned due to incorrect address information."
         logger.info(f"@8889 {LOG_ID} {message}")
+
+
+def check_port_code(de_suburb, de_postcode, de_state):
+    logger.info("Checking port_code...")
+
+    # head_port and port_code
+    fp_routings = FPRouting.objects.filter(
+        freight_provider=13,
+        dest_suburb__iexact=de_suburb,
+        dest_postcode=de_postcode,
+        dest_state__iexact=de_state,
+    )
+    head_port = fp_routings[0].gateway if fp_routings and fp_routings[0].gateway else ""
+    port_code = fp_routings[0].onfwd if fp_routings and fp_routings[0].onfwd else ""
+
+    if not head_port or not port_code:
+        message = f"Invalid address: Suburb: {de_suburb}, Postal Code: {de_postcode}, State: {de_state}"
+        logger.error(f"{message}")
+        raise Exception(message)
+
+    logger.info("`port_code` is fine")

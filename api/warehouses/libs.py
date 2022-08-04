@@ -7,33 +7,6 @@ from api.warehouses.constants import CARRIER_MAPPING
 logger = logging.getLogger(__name__)
 
 
-def check_port_code(bok_1):
-    logger.info("Checking port_code...")
-    de_suburb = bok_1.b_032_b_pu_address_suburb
-    de_postcode = bok_1.b_033_b_pu_address_postalcode
-    de_state = bok_1.b_031_b_pu_address_state
-
-    # head_port and port_code
-    fp_routings = FPRouting.objects.filter(
-        freight_provider=13,
-        dest_suburb__iexact=de_suburb,
-        dest_postcode=de_postcode,
-        dest_state__iexact=de_state,
-    )
-    head_port = fp_routings[0].gateway if fp_routings and fp_routings[0].gateway else ""
-    port_code = fp_routings[0].onfwd if fp_routings and fp_routings[0].onfwd else ""
-
-    if not head_port or not port_code:
-        message = f"No port_code.\n\n"
-        message += f"Order Num: {bok_1.b_client_order_num}\n"
-        message += f"State: {de_state}\nPostal Code: {de_postcode}\nSuburb: {de_suburb}"
-        logger.error(f"[PAPERLESS] {message}")
-        send_email_to_admins("Failed to send order to ACR due to port_code", message)
-        raise Exception(message)
-
-    logger.info("[PAPERLESS] `port_code` is fine")
-
-
 def get_address(bok_1):
     # Validations
     message = None
@@ -75,6 +48,11 @@ def get_lines(bok_2s):
     _lines = []
 
     for bok_2 in bok_2s:
+        product_code = bok_2.l_003_item
+
+        if "ZERO Dims -" in product_code:
+            product_code = product_code[: product_code.index("ZERO Dims -") - 2]
+
         _lines.append(
             {
                 "lineID": bok_2.pk_lines_id,
@@ -86,7 +64,7 @@ def get_lines(bok_2s):
                 "weight": bok_2.l_009_weight_per_each,
                 # "reference": bok_2.sscc,
                 "dangerous": False,
-                "productCode": bok_2.l_003_item,
+                "productCode": product_code,
             }
         )
 
