@@ -48,6 +48,7 @@ from api.clients.operations.index import get_warehouse, check_port_code
 from api.helpers.cubic import get_cubic_meter
 from api.convertors.pdf import pdf_merge
 from api.clients.anchor_packaging.constants import WAREHOUSE_MAPPINGS
+from api.warehouses.index import push as push_to_warehouse
 
 
 logger = logging.getLogger(__name__)
@@ -86,7 +87,10 @@ def push_boks(payload, client, username, method):
     de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
     de_suburb = bok_1.get("b_058_b_del_address_suburb")
     de_contact = bok_1.get("b_061_b_del_contact_full_name")
+    b_client_order_num = bok_1.get("b_client_order_num")
 
+    if not b_client_order_num:
+        error_msg = "b_client_order_num is required"
     if not de_company:
         error_msg = "b_054_b_del_company is required"
     if de_company and not de_contact:
@@ -560,16 +564,6 @@ def push_boks(payload, client, username, method):
             fc_log.new_quote = best_quotes[0]
             fc_log.save()
 
-            # Send quote info back to Pronto
-            # result = send_info_back(bok_1_obj, best_quote)
-    else:
-        b_client_order_num = bok_1.get("b_client_order_num")
-
-        if b_client_order_num:
-            message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
-            logger.error(message)
-            send_email_to_admins("No FC result", message)
-
     # Set Express or Standard
     if len(json_results) == 1:
         json_results[0]["service_name"] = "Standard"
@@ -593,12 +587,18 @@ def push_boks(payload, client, username, method):
 
     # Response
     if json_results:
+        push_to_warehouse(bok_1_obj)
         logger.info(f"@8838 {LOG_ID} success: True, 201_created")
         result = {"success": True, "results": json_results}
         url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
         result["pricePageUrl"] = url
         return result
     else:
+        # Inform to admins
+        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
+        logger.error(message)
+        send_email_to_admins("No FC result", message)
+
         message = (
             "Pricing cannot be returned due to incorrect address/lines information."
         )
