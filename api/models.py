@@ -2294,6 +2294,15 @@ class Booking_lines(models.Model):
     zbl_102_text_2 = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )  # JasonL - ProductCode
+    e_util_height = models.FloatField(
+        verbose_name=_("Utilised Height"), blank=True, null=True
+    )
+    e_util_cbm = models.FloatField(
+        verbose_name=_("Utilised Cubic Meter"), blank=True, null=True
+    )
+    e_util_kg = models.FloatField(
+        verbose_name=_("Utilised Cubic KG"), blank=True, null=True
+    )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
