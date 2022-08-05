@@ -75,20 +75,45 @@ def get_percentage(vehicle_name):
         return 1
 
 
+def _is_4_cbm(is_pallet, length, width, height):
+    """
+    Use CBM rate when:
+    - If UOM not Pallet or Skid
+    - UOM is pallet or Skid where Length and width both less than 1.2m
+    - Height is greater than 1.4m no matter what the length or width is
+    - Length and Width is > 1.2m on both sides
+    - Length or Width is > 1.85m on one side
+    """
+
+    if not is_pallet:
+        return True
+    if length < 1.2 and width < 1.2:
+        return True
+    if height > 1.4:
+        return True
+    if length > 1.2 and width > 1.2:
+        return True
+    if length > 1.85 or height > 1.85:
+        return True
+    return False
+
+
 def get_pricing(booking, booking_lines):
     service_name = None
     postal_code = int(booking.de_To_Address_PostalCode or 0)
     inv_cost_quoted, inv_sell_quoted, inv_dme_quoted = 0, 0, 0
+    has_big_item = False
 
     for line in booking_lines:
         is_pallet = line.e_type_of_packaging.upper() in PALLETS
-        length = line.e_dimLength * _get_dim_amount(line.e_dimUOM)
-        width = line.e_dimWidth * _get_dim_amount(line.e_dimUOM)
-        height = line.e_dimHeight * _get_dim_amount(line.e_dimUOM)
+        dim_ratio = _get_dim_amount(line.e_dimUOM)
+        length = line.e_dimLength * dim_ratio
+        width = line.e_dimWidth * dim_ratio
+        height = line.e_util_height or (line.e_dimHeight * dim_ratio)
         cubic_meter = get_cubic_meter(
             line.e_dimLength,
             line.e_dimWidth,
-            line.e_dimHeight,
+            ine.e_util_height or line.e_dimHeight,
             line.e_dimUOM,
             1,
         )
@@ -99,247 +124,307 @@ def get_pricing(booking, booking_lines):
             length = width
             width = temp
 
+        has_big_item = has_big_item or length > 1.2 or width > 1.2 or height > 1.2
+        is_4_cbm = _is_4_cbm(is_pallet, length, width, height)
+
         # JasonL
         if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+            # Final Mile Delivery Fee
+            fm_fee_cost = 50
+            fm_fee_sell = 60
+
+            if booking.de_To_Address_Street_1.lower() in [
+                "Best Assembly",
+                "JL Fitouts",
+                "Steadfast logistics",
+            ]:
+                # The reason is the linehaul delivers to them and we don't deliver to any customer from there.
+                # They are the end customer.
+                fm_fee_cost = 0
+                fm_fee_sell = 0
+
             if (postal_code >= 3000 and postal_code <= 3207) or (
                 postal_code >= 8000 and postal_code <= 8499
             ):  # Melbourne
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
-                if is_pallet and length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 167.86 * line.e_qty
-                    inv_sell_quoted += 198.89 * line.e_qty
-                    inv_dme_quoted += (
-                        (198.89 - 60) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 60
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 224.29 * line.e_qty
-                    inv_sell_quoted += 268.33 * line.e_qty
-                    inv_dme_quoted += (
-                        (268.33 - 60) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 60
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 224.29 * line.e_qty
-                    inv_sell_quoted += 268.33 * line.e_qty
-                    inv_dme_quoted += (
-                        (268.33 - 60) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 60
-                    ) * line.e_qty
-                else:
-                    inv_cost_quoted += (
-                        26.45 * cubic_meter * line.e_qty + 55 * line.e_qty
-                    )
-                    one_inv_sell_quoted = 77.50 * cubic_meter + 60
+                if is_4_cbm:
+                    inv_cost_quoted += (62.98 * cubic_meter + fm_fee_cost) * line.e_qty
+                    _value = 18 if 77.50 * cubic_meter < 18 else 77.50 * cubic_meter
+                    one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
-                        (one_inv_sell_quoted - 60)
+                        (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
-                        + 60
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.2:
+                    inv_cost_quoted += 112.86 * line.e_qty
+                    inv_sell_quoted += 138.89 * line.e_qty
+                    inv_dme_quoted += (
+                        (138.89 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.6:
+                    inv_cost_quoted += 169.29 * line.e_qty
+                    inv_sell_quoted += 208.33 * line.e_qty
+                    inv_dme_quoted += (
+                        (208.33 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.85:
+                    inv_cost_quoted += 169.29 * line.e_qty
+                    inv_sell_quoted += 208.33 * line.e_qty
+                    inv_dme_quoted += (
+                        (208.33 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
                     ) * line.e_qty
             elif (postal_code >= 4000 and postal_code <= 4207) or (
                 postal_code >= 9000 and postal_code <= 9499
             ):  # Brisbane
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
-                if is_pallet and length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 234.25 * line.e_qty
-                    inv_sell_quoted += 265.56 * line.e_qty
-                    inv_dme_quoted += (
-                        (265.56 - 60) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 60
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 323.88 * line.e_qty
-                    inv_sell_quoted += 471.11 * line.e_qty
-                    inv_dme_quoted += (
-                        (471.11 - 60) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 60
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 323.88 * line.e_qty
-                    inv_sell_quoted += 471.11 * line.e_qty
-                    inv_dme_quoted += (
-                        (471.11 - 60) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 60
-                    ) * line.e_qty
-                else:
+                if is_4_cbm:
                     inv_cost_quoted += (
-                        100.03 * cubic_meter * line.e_qty + 55 * line.e_qty
+                        100.03 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
-                    one_inv_sell_quoted = 152.94 * cubic_meter + 60
+                    _value = 18 if 152.94 * cubic_meter < 18 else 152.94 * cubic_meter
+                    one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
-                        (one_inv_sell_quoted - 60)
+                        (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
-                        + 60
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.2:
+                    inv_cost_quoted += 179.25 * line.e_qty
+                    inv_sell_quoted += 205.56 * line.e_qty
+                    inv_dme_quoted += (
+                        (205.56 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.6:
+                    inv_cost_quoted += 268.88 * line.e_qty
+                    inv_sell_quoted += 411.11 * line.e_qty
+                    inv_dme_quoted += (
+                        (411.11 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.85:
+                    inv_cost_quoted += 268.88 * line.e_qty
+                    inv_sell_quoted += 411.11 * line.e_qty
+                    inv_dme_quoted += (
+                        (411.11 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
                     ) * line.e_qty
             elif (postal_code >= 5000 and postal_code <= 5199) or (
                 postal_code >= 5900 and postal_code <= 5999
             ):  # Adelaide
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
-                if is_pallet and length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 287.36 * line.e_qty
-                    inv_sell_quoted += 321.11 * line.e_qty
-                    inv_dme_quoted += (
-                        (321.11 - 60) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 60
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 403.54 * line.e_qty
-                    inv_sell_quoted += 582.22 * line.e_qty
-                    inv_dme_quoted += (
-                        (582.22 - 60) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 60
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 403.54 * line.e_qty
-                    inv_sell_quoted += 582.22 * line.e_qty
-                    inv_dme_quoted += (
-                        (582.22 - 60) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 60
-                    ) * line.e_qty
-                else:
+                if is_4_cbm:
                     inv_cost_quoted += (
-                        129.67 * cubic_meter * line.e_qty + 55 * line.e_qty
+                        129.67 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
-                    one_inv_sell_quoted = 194.28 * cubic_meter + 60
+                    _value = 18 if 194.28 * cubic_meter < 18 else 194.28 * cubic_meter
+                    one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
-                        (one_inv_sell_quoted - 60)
+                        (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
-                        + 60
+                        + fm_fee_sell
                     ) * line.e_qty
+                elif length <= 1.2 and width <= 1.2:
+                    inv_cost_quoted += 232.36 * line.e_qty
+                    inv_sell_quoted += 261.11 * line.e_qty
+                    inv_dme_quoted += (
+                        (261.11 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.6:
+                    inv_cost_quoted += 348.54 * line.e_qty
+                    inv_sell_quoted += 522.22 * line.e_qty
+                    inv_dme_quoted += (
+                        (522.22 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.85:
+                    inv_cost_quoted += 348.54 * line.e_qty
+                    inv_sell_quoted += 522.22 * line.e_qty
+                    inv_dme_quoted += (
+                        (522.22 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+
         # BSD
         elif booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8":
+            # Final Mile Delivery Fee
+            fm_fee_cost = 55
+            fm_fee_sell = 65
+
             if (postal_code >= 3000 and postal_code <= 3207) or (
                 postal_code >= 8000 and postal_code <= 8499
             ):  # Melbourne
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
-                if is_pallet and length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 167.86 * line.e_qty
-                    inv_sell_quoted += 206.06 * line.e_qty
-                    inv_dme_quoted += (
-                        (206.06 - 65) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 65
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 224.29 * line.e_qty
-                    inv_sell_quoted += 279.08 * line.e_qty
-                    inv_dme_quoted += (
-                        (279.08 - 65) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 65
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 224.29 * line.e_qty
-                    inv_sell_quoted += 279.08 * line.e_qty
-                    inv_dme_quoted += (
-                        (279.08 - 65) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 65
-                    ) * line.e_qty
-                else:
+                if is_4_cbm:
                     inv_cost_quoted += (
-                        26.45 * cubic_meter * line.e_qty + 55 * line.e_qty
+                        65.88 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
-                    one_inv_sell_quoted = 81.50 * cubic_meter + 65
+                    _value = 18 if 85.26 * cubic_meter < 18 else 85.26 * cubic_meter
+                    one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
-                        (one_inv_sell_quoted - 65)
+                        (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
-                        + 65
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.2:
+                    inv_cost_quoted += 118.06 * line.e_qty
+                    inv_sell_quoted += 152.78 * line.e_qty
+                    inv_dme_quoted += (
+                        (206.06 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.6:
+                    inv_cost_quoted += 177.08 * line.e_qty
+                    inv_sell_quoted += 229.17 * line.e_qty
+                    inv_dme_quoted += (
+                        (229.17 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.85:
+                    inv_cost_quoted += 177.08 * line.e_qty
+                    inv_sell_quoted += 229.17 * line.e_qty
+                    inv_dme_quoted += (
+                        (229.17 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
                     ) * line.e_qty
             elif (postal_code >= 4000 and postal_code <= 4207) or (
                 postal_code >= 9000 and postal_code <= 9499
             ):  # Brisbane
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
-                if is_pallet and length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 234.25 * line.e_qty
-                    inv_sell_quoted += 272.44 * line.e_qty
-                    inv_dme_quoted += (
-                        (272.44 - 65) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 65
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 323.88 * line.e_qty
-                    inv_sell_quoted += 484.89 * line.e_qty
-                    inv_dme_quoted += (
-                        (484.89 - 65) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 65
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 323.88 * line.e_qty
-                    inv_sell_quoted += 484.89 * line.e_qty
-                    inv_dme_quoted += (
-                        (484.89 - 65) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 65
-                    ) * line.e_qty
-                else:
+                if is_4_cbm:
                     inv_cost_quoted += (
-                        100.03 * cubic_meter * line.e_qty + 55 * line.e_qty
+                        100.03 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
-                    one_inv_sell_quoted = 158.07 * cubic_meter + 65
+                    _value = 18 if 165.34 * cubic_meter < 18 else 165.34 * cubic_meter
+                    one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
-                        (one_inv_sell_quoted - 65)
+                        (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
-                        + 65
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.2:
+                    inv_cost_quoted += 179.25 * line.e_qty
+                    inv_sell_quoted += 222.22 * line.e_qty
+                    inv_dme_quoted += (
+                        (222.22 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.6:
+                    inv_cost_quoted += 268.88 * line.e_qty
+                    inv_sell_quoted += 444.44 * line.e_qty
+                    inv_dme_quoted += (
+                        (444.44 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.85:
+                    inv_cost_quoted += 268.88 * line.e_qty
+                    inv_sell_quoted += 444.44 * line.e_qty
+                    inv_dme_quoted += (
+                        (444.44 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
                     ) * line.e_qty
             elif (postal_code >= 5000 and postal_code <= 5199) or (
                 postal_code >= 5900 and postal_code <= 5999
             ):  # Adelaide
                 service_name = "Deliver-ME Direct (Into Premises) (50%)"
 
-                if is_pallet and length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 287.36 * line.e_qty
-                    inv_sell_quoted += 325.56 * line.e_qty
-                    inv_dme_quoted += (
-                        (325.56 - 65) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 65
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 403.54 * line.e_qty
-                    inv_sell_quoted += 591.11 * line.e_qty
-                    inv_dme_quoted += (
-                        (591.11 - 65) * 0.5 / get_percentage(booking.b_booking_project)
-                        + 65
-                    ) * line.e_qty
-                elif is_pallet and length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 403.54 * line.e_qty
-                    inv_sell_quoted += 591.11 * line.e_qty
-                    inv_dme_quoted += (
-                        (inv_sell_quoted - 65)
-                        * 0.5
-                        / get_percentage(booking.b_booking_project)
-                        + 65
-                    ) * line.e_qty
-                else:
+                if is_4_cbm:
                     inv_cost_quoted += (
-                        129.67 * cubic_meter * line.e_qty + 55 * line.e_qty
+                        129.67 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
-                    one_inv_sell_quoted = 197.59 * cubic_meter + 65
+                    _value = 18 if 206.68 * cubic_meter < 18 else 206.68 * cubic_meter
+                    one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
-                        (one_inv_sell_quoted - 65)
+                        (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
-                        + 65
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.2:
+                    inv_cost_quoted += 232.36 * line.e_qty
+                    inv_sell_quoted += 277.78 * line.e_qty
+                    inv_dme_quoted += (
+                        (277.78 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.6:
+                    inv_cost_quoted += 348.54 * line.e_qty
+                    inv_sell_quoted += 555.56 * line.e_qty
+                    inv_dme_quoted += (
+                        (555.56 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width <= 1.85:
+                    inv_cost_quoted += 348.54 * line.e_qty
+                    inv_sell_quoted += 555.56 * line.e_qty
+                    inv_dme_quoted += (
+                        (555.56 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
                     ) * line.e_qty
 
-    if booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1:
-        inv_cost_quoted += 30
+    if has_big_item or (booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1):
+        inv_cost_quoted += 25
         inv_sell_quoted += 30
 
-    if booking.de_no_of_assists and int(booking.de_no_of_assists) > 1:
-        inv_cost_quoted += 30
+    if has_big_item or (booking.de_no_of_assists and int(booking.de_no_of_assists) > 1):
+        inv_cost_quoted += 25
         inv_sell_quoted += 30
 
     return {
