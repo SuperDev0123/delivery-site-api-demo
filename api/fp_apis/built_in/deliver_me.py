@@ -113,7 +113,7 @@ def get_pricing(booking, booking_lines):
         cubic_meter = get_cubic_meter(
             line.e_dimLength,
             line.e_dimWidth,
-            ine.e_util_height or line.e_dimHeight,
+            line.e_util_height or line.e_dimHeight,
             line.e_dimUOM,
             1,
         )
