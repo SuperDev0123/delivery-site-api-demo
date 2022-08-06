@@ -108,6 +108,7 @@ def get_pricing(booking, booking_lines):
     service_name = None
     postal_code = int(booking.de_To_Address_PostalCode or 0)
     inv_cost_quoted, inv_sell_quoted, inv_dme_quoted = 0, 0, 0
+    old_inv_cost_quoted, old_inv_sell_quoted, old_inv_dme_quoted = 0, 0, 0
     has_big_item = False
 
     for index, line in enumerate(booking_lines):
@@ -425,10 +426,16 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
 
+        # Logs
+        net_inv_cost_quoted = inv_cost_quoted - old_inv_cost_quoted
+        net_inv_sell_quoted = inv_sell_quoted - old_inv_sell_quoted
         logger.info(f"{LOG_ID} {booking.b_bookingID_Visual} ({booking.b_client_name})")
+        logger.info(f"{LOG_ID} {length} {width} {height} {cubic_meter}")
         logger.info(
-            f"{LOG_ID} index: {index} cost: {inv_cost_quoted} sell: {inv_sell_quoted}"
+            f"{LOG_ID} index: {index} cost: {net_inv_cost_quoted} sell: {net_inv_sell_quoted}"
         )
+        old_inv_cost_quoted = inv_cost_quoted
+        old_inv_sell_quoted = inv_sell_quoted
 
     if has_big_item or (booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1):
         inv_cost_quoted += 25
