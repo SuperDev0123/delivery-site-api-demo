@@ -430,6 +430,7 @@ def get_pricing(booking, booking_lines):
         net_inv_cost_quoted = inv_cost_quoted - old_inv_cost_quoted
         net_inv_sell_quoted = inv_sell_quoted - old_inv_sell_quoted
         logger.info(f"{LOG_ID} {booking.b_bookingID_Visual} ({booking.b_client_name})")
+        logger.info(f"{LOG_ID} Final mile fee: {fm_fee_sell}")
         logger.info(f"{LOG_ID} {length} {width} {height} {cubic_meter}")
         logger.info(
             f"{LOG_ID} index: {index} cost: {net_inv_cost_quoted} sell: {net_inv_sell_quoted}"
@@ -437,6 +438,7 @@ def get_pricing(booking, booking_lines):
         old_inv_cost_quoted = inv_cost_quoted
         old_inv_sell_quoted = inv_sell_quoted
 
+    logger.info(f"{LOG_ID} Has Big Item: {has_big_item}")
     if has_big_item or (booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1):
         inv_cost_quoted += 25
         inv_sell_quoted += 30
