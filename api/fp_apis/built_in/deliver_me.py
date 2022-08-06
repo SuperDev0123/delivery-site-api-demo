@@ -140,9 +140,9 @@ def get_pricing(booking, booking_lines):
             fm_fee_sell = 60
 
             if booking.de_To_Address_Street_1.lower() in [
-                "Best Assembly",
-                "JL Fitouts",
-                "Steadfast logistics",
+                "best assembly",
+                "jl fitouts",
+                "steadfast logistics",
             ]:
                 # The reason is the linehaul delivers to them and we don't deliver to any customer from there.
                 # They are the end customer.
