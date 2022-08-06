@@ -160,8 +160,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 112.86 * line.e_qty
-                    inv_sell_quoted += 138.89 * line.e_qty
+                    inv_cost_quoted += (112.86 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (138.89 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (138.89 - fm_fee_sell)
                         * 0.5
@@ -169,8 +169,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 169.29 * line.e_qty
-                    inv_sell_quoted += 208.33 * line.e_qty
+                    inv_cost_quoted += (169.29 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (208.33 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (208.33 - fm_fee_sell)
                         * 0.5
@@ -178,8 +178,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 169.29 * line.e_qty
-                    inv_sell_quoted += 208.33 * line.e_qty
+                    inv_cost_quoted += (169.29 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (208.33 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (208.33 - fm_fee_sell)
                         * 0.5
@@ -205,8 +205,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 179.25 * line.e_qty
-                    inv_sell_quoted += 205.56 * line.e_qty
+                    inv_cost_quoted += (179.25 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (205.56 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (205.56 - fm_fee_sell)
                         * 0.5
@@ -214,8 +214,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 268.88 * line.e_qty
-                    inv_sell_quoted += 411.11 * line.e_qty
+                    inv_cost_quoted += (268.88 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (411.11 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (411.11 - fm_fee_sell)
                         * 0.5
@@ -223,8 +223,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 268.88 * line.e_qty
-                    inv_sell_quoted += 411.11 * line.e_qty
+                    inv_cost_quoted += (268.88 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (411.11 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (411.11 - fm_fee_sell)
                         * 0.5
@@ -250,8 +250,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 232.36 * line.e_qty
-                    inv_sell_quoted += 261.11 * line.e_qty
+                    inv_cost_quoted += (232.36 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (261.11 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (261.11 - fm_fee_sell)
                         * 0.5
@@ -259,8 +259,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 348.54 * line.e_qty
-                    inv_sell_quoted += 522.22 * line.e_qty
+                    inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (522.22 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (522.22 - fm_fee_sell)
                         * 0.5
@@ -268,8 +268,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 348.54 * line.e_qty
-                    inv_sell_quoted += 522.22 * line.e_qty
+                    inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (522.22 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (522.22 - fm_fee_sell)
                         * 0.5
@@ -302,8 +302,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 118.06 * line.e_qty
-                    inv_sell_quoted += 152.78 * line.e_qty
+                    inv_cost_quoted += (118.06 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (152.78 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (206.06 - fm_fee_sell)
                         * 0.5
@@ -311,8 +311,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 177.08 * line.e_qty
-                    inv_sell_quoted += 229.17 * line.e_qty
+                    inv_cost_quoted += (177.08 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (229.17 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (229.17 - fm_fee_sell)
                         * 0.5
@@ -320,8 +320,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 177.08 * line.e_qty
-                    inv_sell_quoted += 229.17 * line.e_qty
+                    inv_cost_quoted += (177.08 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (229.17 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (229.17 - fm_fee_sell)
                         * 0.5
@@ -347,8 +347,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 179.25 * line.e_qty
-                    inv_sell_quoted += 222.22 * line.e_qty
+                    inv_cost_quoted += (179.25 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (222.22 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (222.22 - fm_fee_sell)
                         * 0.5
@@ -356,8 +356,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 268.88 * line.e_qty
-                    inv_sell_quoted += 444.44 * line.e_qty
+                    inv_cost_quoted += (268.88 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (444.44 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (444.44 - fm_fee_sell)
                         * 0.5
@@ -365,8 +365,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 268.88 * line.e_qty
-                    inv_sell_quoted += 444.44 * line.e_qty
+                    inv_cost_quoted += (268.88 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (444.44 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (444.44 - fm_fee_sell)
                         * 0.5
@@ -392,8 +392,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.2:
-                    inv_cost_quoted += 232.36 * line.e_qty
-                    inv_sell_quoted += 277.78 * line.e_qty
+                    inv_cost_quoted += (232.36 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (277.78 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (277.78 - fm_fee_sell)
                         * 0.5
@@ -401,8 +401,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.6:
-                    inv_cost_quoted += 348.54 * line.e_qty
-                    inv_sell_quoted += 555.56 * line.e_qty
+                    inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (555.56 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (555.56 - fm_fee_sell)
                         * 0.5
@@ -410,8 +410,8 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width <= 1.85:
-                    inv_cost_quoted += 348.54 * line.e_qty
-                    inv_sell_quoted += 555.56 * line.e_qty
+                    inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (555.56 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (555.56 - fm_fee_sell)
                         * 0.5
