@@ -439,11 +439,11 @@ def get_pricing(booking, booking_lines):
         old_inv_sell_quoted = inv_sell_quoted
 
     logger.info(f"{LOG_ID} Has Big Item: {has_big_item}")
-    if has_big_item or (booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1):
+    if has_big_item or (booking.de_no_of_assists and int(booking.de_no_of_assists) > 1):
         inv_cost_quoted += 25
         inv_sell_quoted += 30
 
-    if has_big_item or (booking.de_no_of_assists and int(booking.de_no_of_assists) > 1):
+    if booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1:
         inv_cost_quoted += 25
         inv_sell_quoted += 30
 
