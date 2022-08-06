@@ -92,7 +92,7 @@ def _is_4_cbm(is_pallet, length, width, height):
 
     if not is_pallet:
         return True
-    if length < 1.2 and width < 1.2:
+    if length < 0.8 and width < 0.8:
         return True
     if height > 1.4:
         return True
@@ -430,7 +430,7 @@ def get_pricing(booking, booking_lines):
         net_inv_cost_quoted = inv_cost_quoted - old_inv_cost_quoted
         net_inv_sell_quoted = inv_sell_quoted - old_inv_sell_quoted
         logger.info(f"{LOG_ID} {booking.b_bookingID_Visual} ({booking.b_client_name})")
-        logger.info(f"{LOG_ID} Final mile fee: {fm_fee_sell}")
+        logger.info(f"{LOG_ID} for_CBM: {is_4_cbm}, Final mile fee: {fm_fee_sell}")
         logger.info(f"{LOG_ID} {length} {width} {height} {cubic_meter}")
         logger.info(
             f"{LOG_ID} index: {index} cost: {net_inv_cost_quoted} sell: {net_inv_sell_quoted}"
