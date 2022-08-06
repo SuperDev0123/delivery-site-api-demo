@@ -110,6 +110,7 @@ def get_pricing(booking, booking_lines):
     inv_cost_quoted, inv_sell_quoted, inv_dme_quoted = 0, 0, 0
     old_inv_cost_quoted, old_inv_sell_quoted, old_inv_dme_quoted = 0, 0, 0
     has_big_item = False
+    has_no_fm = False
 
     for index, line in enumerate(booking_lines):
         is_pallet = (
@@ -143,15 +144,16 @@ def get_pricing(booking, booking_lines):
             fm_fee_cost = 50
             fm_fee_sell = 60
 
-            if booking.deToCompanyName.lower() in [
-                "best assembly",
-                "jl fitouts",
-                "steadfast logistics",
-            ]:
+            if (
+                "best assembly" in booking.deToCompanyName.lower()
+                or "jl fitouts" in booking.deToCompanyName.lower()
+                or "steadfast logistics" in booking.deToCompanyName.lower()
+            ):
                 # The reason is the linehaul delivers to them and we don't deliver to any customer from there.
                 # They are the end customer.
                 fm_fee_cost = 0
                 fm_fee_sell = 0
+                has_no_fm = True
 
             if (postal_code >= 3000 and postal_code <= 3207) or (
                 postal_code >= 8000 and postal_code <= 8499
@@ -478,7 +480,11 @@ def get_pricing(booking, booking_lines):
         old_inv_sell_quoted = inv_sell_quoted
 
     logger.info(f"{LOG_ID} Has Big Item: {has_big_item}")
-    if has_big_item or (booking.de_no_of_assists and int(booking.de_no_of_assists) > 1):
+    if (
+        not has_no_fm
+        and has_big_item
+        or (booking.de_no_of_assists and int(booking.de_no_of_assists) > 1)
+    ):
         inv_cost_quoted += 25
         inv_sell_quoted += 30
 
