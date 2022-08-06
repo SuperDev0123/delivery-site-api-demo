@@ -1,7 +1,12 @@
+import logging
+import traceback
+
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import get_m3_to_kg_factor
 from api.common.constants import PALLETS, SKIDS
+
+logger = logging.getLogger(__name__)
 
 
 def get_percentage(vehicle_name):
@@ -99,12 +104,13 @@ def _is_4_cbm(is_pallet, length, width, height):
 
 
 def get_pricing(booking, booking_lines):
+    LOG_ID = "[Linehaul Pricing]"
     service_name = None
     postal_code = int(booking.de_To_Address_PostalCode or 0)
     inv_cost_quoted, inv_sell_quoted, inv_dme_quoted = 0, 0, 0
     has_big_item = False
 
-    for line in booking_lines:
+    for index, line in enumerate(booking_lines):
         is_pallet = line.e_type_of_packaging.upper() in PALLETS
         dim_ratio = _get_dim_amount(line.e_dimUOM)
         length = line.e_dimLength * dim_ratio
@@ -419,6 +425,11 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
 
+        logger.info(f"{LOG_ID} {booking.b_bookingID_Visual} ({booking.b_client_name})")
+        logger.info(
+            f"{LOG_ID} index: {index} cost: {inv_cost_quoted} sell: {inv_sell_quoted}"
+        )
+
     if has_big_item or (booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1):
         inv_cost_quoted += 25
         inv_sell_quoted += 30
@@ -426,6 +437,8 @@ def get_pricing(booking, booking_lines):
     if has_big_item or (booking.de_no_of_assists and int(booking.de_no_of_assists) > 1):
         inv_cost_quoted += 25
         inv_sell_quoted += 30
+
+    logger.info(f"{LOG_ID} Total cost: {inv_cost_quoted} Total sell: {inv_sell_quoted}")
 
     return {
         "inv_cost_quoted": inv_cost_quoted,
