@@ -467,9 +467,8 @@ def get_pricing(booking, booking_lines):
                     ) * line.e_qty
 
         logger.info(f"{LOG_ID} Is Big Item: {is_big_item}")
-        if (
-            not has_no_fm
-            and is_big_item
+        if not has_no_fm and (
+            is_big_item
             or (booking.de_no_of_assists and int(booking.de_no_of_assists) > 1)
         ):
             inv_cost_quoted += 25
