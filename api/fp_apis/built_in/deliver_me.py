@@ -134,7 +134,7 @@ def get_pricing(booking, booking_lines):
             length = width
             width = temp
 
-        has_big_item = has_big_item or length > 1.2 or width > 1.2 or height > 1.2
+        has_big_item = has_big_item or length > 1.2 or width > 1.2 or height > 1.4
         is_4_cbm = _is_4_cbm(is_pallet, length, width, height)
 
         # JasonL
