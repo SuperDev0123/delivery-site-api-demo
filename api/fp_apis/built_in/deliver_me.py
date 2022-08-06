@@ -139,7 +139,7 @@ def get_pricing(booking, booking_lines):
             fm_fee_cost = 50
             fm_fee_sell = 60
 
-            if booking.de_To_Address_Street_1.lower() in [
+            if booking.deToCompanyName.lower() in [
                 "best assembly",
                 "jl fitouts",
                 "steadfast logistics",
