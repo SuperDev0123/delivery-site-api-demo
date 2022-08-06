@@ -109,7 +109,6 @@ def get_pricing(booking, booking_lines):
     postal_code = int(booking.de_To_Address_PostalCode or 0)
     inv_cost_quoted, inv_sell_quoted, inv_dme_quoted = 0, 0, 0
     old_inv_cost_quoted, old_inv_sell_quoted, old_inv_dme_quoted = 0, 0, 0
-    has_no_fm = False
 
     for index, line in enumerate(booking_lines):
         is_pallet = (
@@ -152,7 +151,6 @@ def get_pricing(booking, booking_lines):
                 # They are the end customer.
                 fm_fee_cost = 0
                 fm_fee_sell = 0
-                has_no_fm = True
 
             if (postal_code >= 3000 and postal_code <= 3207) or (
                 postal_code >= 8000 and postal_code <= 8499
@@ -467,16 +465,16 @@ def get_pricing(booking, booking_lines):
                     ) * line.e_qty
 
         logger.info(f"{LOG_ID} Is Big Item: {is_big_item}")
-        if not has_no_fm and (
+        if fm_fee_cost > 0 and (
             is_big_item
             or (booking.de_no_of_assists and int(booking.de_no_of_assists) > 1)
         ):
-            inv_cost_quoted += 25
-            inv_sell_quoted += 30
+            inv_cost_quoted += 25 * line.e_qty
+            inv_sell_quoted += 30 * line.e_qty
 
         if booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1:
-            inv_cost_quoted += 25
-            inv_sell_quoted += 30
+            inv_cost_quoted += 25 * line.e_qty
+            inv_sell_quoted += 30 * line.e_qty
 
         # Logs
         net_inv_cost_quoted = inv_cost_quoted - old_inv_cost_quoted
@@ -485,7 +483,7 @@ def get_pricing(booking, booking_lines):
         logger.info(f"{LOG_ID} for_CBM: {is_4_cbm}, Final mile fee: {fm_fee_sell}")
         logger.info(f"{LOG_ID} {length} {width} {height} {cubic_meter}")
         logger.info(
-            f"{LOG_ID} index: {index} cost: {net_inv_cost_quoted} sell: {net_inv_sell_quoted}"
+            f"{LOG_ID} index: {index + 1}/{len(booking_lines)} cost: {net_inv_cost_quoted} sell: {net_inv_sell_quoted}"
         )
         old_inv_cost_quoted = inv_cost_quoted
         old_inv_sell_quoted = inv_sell_quoted
