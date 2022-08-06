@@ -109,7 +109,6 @@ def get_pricing(booking, booking_lines):
     postal_code = int(booking.de_To_Address_PostalCode or 0)
     inv_cost_quoted, inv_sell_quoted, inv_dme_quoted = 0, 0, 0
     old_inv_cost_quoted, old_inv_sell_quoted, old_inv_dme_quoted = 0, 0, 0
-    has_big_item = False
     has_no_fm = False
 
     for index, line in enumerate(booking_lines):
@@ -135,7 +134,7 @@ def get_pricing(booking, booking_lines):
             length = width
             width = temp
 
-        has_big_item = has_big_item or length > 1.2 or width > 1.2 or height > 1.4
+        is_big_item = length > 1.2 or width > 1.2 or height > 1.4
         is_4_cbm = _is_4_cbm(is_pallet, length, width, height)
 
         # JasonL
@@ -467,6 +466,19 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
 
+        logger.info(f"{LOG_ID} Is Big Item: {is_big_item}")
+        if (
+            not has_no_fm
+            and is_big_item
+            or (booking.de_no_of_assists and int(booking.de_no_of_assists) > 1)
+        ):
+            inv_cost_quoted += 25
+            inv_sell_quoted += 30
+
+        if booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1:
+            inv_cost_quoted += 25
+            inv_sell_quoted += 30
+
         # Logs
         net_inv_cost_quoted = inv_cost_quoted - old_inv_cost_quoted
         net_inv_sell_quoted = inv_sell_quoted - old_inv_sell_quoted
@@ -479,21 +491,7 @@ def get_pricing(booking, booking_lines):
         old_inv_cost_quoted = inv_cost_quoted
         old_inv_sell_quoted = inv_sell_quoted
 
-    logger.info(f"{LOG_ID} Has Big Item: {has_big_item}")
-    if (
-        not has_no_fm
-        and has_big_item
-        or (booking.de_no_of_assists and int(booking.de_no_of_assists) > 1)
-    ):
-        inv_cost_quoted += 25
-        inv_sell_quoted += 30
-
-    if booking.pu_no_of_assists and int(booking.pu_no_of_assists) > 1:
-        inv_cost_quoted += 25
-        inv_sell_quoted += 30
-
     logger.info(f"{LOG_ID} Total cost: {inv_cost_quoted} Total sell: {inv_sell_quoted}")
-
     return {
         "inv_cost_quoted": inv_cost_quoted,
         "inv_sell_quoted": inv_sell_quoted,
