@@ -112,7 +112,10 @@ def get_pricing(booking, booking_lines):
     has_big_item = False
 
     for index, line in enumerate(booking_lines):
-        is_pallet = line.e_type_of_packaging.upper() in PALLETS
+        is_pallet = (
+            line.e_type_of_packaging.upper() in PALLETS
+            or line.e_type_of_packaging.upper() in SKIDS
+        )
         dim_ratio = _get_dim_amount(line.e_dimUOM)
         length = line.e_dimLength * dim_ratio
         width = line.e_dimWidth * dim_ratio
@@ -166,7 +169,13 @@ def get_pricing(booking, booking_lines):
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
-                elif length <= 1.2 and width <= 1.2:
+                elif (
+                    is_pallet
+                    and length >= 0.8
+                    and length <= 1.2
+                    and width >= 0.8
+                    and width <= 1.2
+                ):
                     inv_cost_quoted += (112.86 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (138.89 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -211,7 +220,13 @@ def get_pricing(booking, booking_lines):
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
-                elif length <= 1.2 and width <= 1.2:
+                elif (
+                    is_pallet
+                    and length >= 0.8
+                    and length <= 1.2
+                    and width >= 0.8
+                    and width <= 1.2
+                ):
                     inv_cost_quoted += (179.25 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (205.56 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -256,7 +271,13 @@ def get_pricing(booking, booking_lines):
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
-                elif length <= 1.2 and width <= 1.2:
+                elif (
+                    is_pallet
+                    and length >= 0.8
+                    and length <= 1.2
+                    and width >= 0.8
+                    and width <= 1.2
+                ):
                     inv_cost_quoted += (232.36 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (261.11 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -308,7 +329,13 @@ def get_pricing(booking, booking_lines):
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
-                elif length <= 1.2 and width <= 1.2:
+                elif (
+                    is_pallet
+                    and length >= 0.8
+                    and length <= 1.2
+                    and width >= 0.8
+                    and width <= 1.2
+                ):
                     inv_cost_quoted += (118.06 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (152.78 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -353,7 +380,13 @@ def get_pricing(booking, booking_lines):
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
-                elif length <= 1.2 and width <= 1.2:
+                elif (
+                    is_pallet
+                    and length >= 0.8
+                    and length <= 1.2
+                    and width >= 0.8
+                    and width <= 1.2
+                ):
                     inv_cost_quoted += (179.25 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (222.22 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -398,7 +431,13 @@ def get_pricing(booking, booking_lines):
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
-                elif length <= 1.2 and width <= 1.2:
+                elif (
+                    is_pallet
+                    and length >= 0.8
+                    and length <= 1.2
+                    and width >= 0.8
+                    and width <= 1.2
+                ):
                     inv_cost_quoted += (232.36 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (277.78 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
