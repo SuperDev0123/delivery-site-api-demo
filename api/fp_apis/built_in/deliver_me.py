@@ -138,6 +138,7 @@ def get_pricing(booking, booking_lines):
                     and width >= 0.8
                     and width <= 1.2
                 ):
+                    case = "Pallet Type #1"
                     inv_cost_quoted += (112.86 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (138.89 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -147,6 +148,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6:
+                    case = "Pallet Type #2"
                     inv_cost_quoted += (169.29 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (208.33 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -156,6 +158,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85:
+                    case = "Pallet Type #3"
                     inv_cost_quoted += (169.29 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (208.33 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -165,6 +168,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
+                    case = "CBM type"
                     inv_cost_quoted += (62.98 * cubic_meter + fm_fee_cost) * line.e_qty
                     _value = 18 if 77.50 * cubic_meter < 18 else 77.50 * cubic_meter
                     one_inv_sell_quoted = _value + fm_fee_sell
@@ -187,6 +191,7 @@ def get_pricing(booking, booking_lines):
                     and width >= 0.8
                     and width <= 1.2
                 ):
+                    case = "Pallet Type #1"
                     inv_cost_quoted += (179.25 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (205.56 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -196,6 +201,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6:
+                    case = "Pallet Type #2"
                     inv_cost_quoted += (268.88 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (411.11 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -205,6 +211,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85:
+                    case = "Pallet Type #3"
                     inv_cost_quoted += (268.88 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (411.11 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -214,6 +221,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
+                    case = "CBM type"
                     inv_cost_quoted += (
                         100.03 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
@@ -238,6 +246,7 @@ def get_pricing(booking, booking_lines):
                     and width >= 0.8
                     and width <= 1.2
                 ):
+                    case = "Pallet Type #1"
                     inv_cost_quoted += (232.36 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (261.11 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -247,6 +256,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6:
+                    case = "Pallet Type #2"
                     inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (522.22 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -256,6 +266,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85:
+                    case = "Pallet Type #3"
                     inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (522.22 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -265,6 +276,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
+                    case = "CBM type"
                     inv_cost_quoted += (
                         129.67 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
@@ -296,6 +308,7 @@ def get_pricing(booking, booking_lines):
                     and width >= 0.8
                     and width <= 1.2
                 ):
+                    case = "Pallet Type #1"
                     inv_cost_quoted += (118.06 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (152.78 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -305,6 +318,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6:
+                    case = "Pallet Type #2"
                     inv_cost_quoted += (177.08 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (229.17 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -314,6 +328,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85:
+                    case = "Pallet Type #3"
                     inv_cost_quoted += (177.08 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (229.17 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -323,6 +338,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
+                    case = "CBM type"
                     inv_cost_quoted += (
                         65.88 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
@@ -347,6 +363,7 @@ def get_pricing(booking, booking_lines):
                     and width >= 0.8
                     and width <= 1.2
                 ):
+                    case = "Pallet Type #1"
                     inv_cost_quoted += (179.25 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (222.22 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -356,6 +373,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6:
+                    case = "Pallet Type #2"
                     inv_cost_quoted += (268.88 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (444.44 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -365,6 +383,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85:
+                    case = "Pallet Type #3"
                     inv_cost_quoted += (268.88 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (444.44 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -374,6 +393,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
+                    case = "CBM type"
                     inv_cost_quoted += (
                         100.03 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
@@ -398,6 +418,7 @@ def get_pricing(booking, booking_lines):
                     and width >= 0.8
                     and width <= 1.2
                 ):
+                    case = "Pallet Type #1"
                     inv_cost_quoted += (232.36 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (277.78 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -407,6 +428,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6:
+                    case = "Pallet Type #2"
                     inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (555.56 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -416,6 +438,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85:
+                    case = "Pallet Type #3"
                     inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
                     inv_sell_quoted += (555.56 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
@@ -425,6 +448,7 @@ def get_pricing(booking, booking_lines):
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
+                    case = "CBM type"
                     inv_cost_quoted += (
                         129.67 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
@@ -455,7 +479,7 @@ def get_pricing(booking, booking_lines):
         net_inv_cost_quoted = inv_cost_quoted - old_inv_cost_quoted
         net_inv_sell_quoted = inv_sell_quoted - old_inv_sell_quoted
         logger.info(f"{LOG_ID} {booking.b_bookingID_Visual} ({booking.b_client_name})")
-        logger.info(f"{LOG_ID} for_CBM: {is_4_cbm}, Final mile fee: {fm_fee_sell}")
+        logger.info(f"{LOG_ID} Case: {case}, Final mile fee: {fm_fee_sell}")
         logger.info(f"{LOG_ID} {length} {width} {height} {cubic_meter}")
         logger.info(
             f"{LOG_ID} index: {index + 1}/{len(booking_lines)} cost: {net_inv_cost_quoted} sell: {net_inv_sell_quoted}"
