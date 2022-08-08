@@ -112,8 +112,8 @@ def post_save_handler(instance, created, update_fields):
             for quote in quotes:
                 quote.is_used = True
                 quote.save()
-        elif booking.booking_type == "DMEA":
-            get_quote_again(booking)
+        # elif booking.booking_type == "DMEA":
+        #     get_quote_again(booking)
 
 
 def post_delete_handler(instance):
