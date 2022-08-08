@@ -62,6 +62,8 @@ def gen_consignment_num(fp_name, uid, kf_client_id=None):
 
 
 def get_m3_to_kg_factor(fp_name, data=None):
+    if not fp_name:
+        return 250
     if fp_name.lower() == "northline":
         return 333
     elif (
