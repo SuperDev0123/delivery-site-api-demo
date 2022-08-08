@@ -35,6 +35,9 @@ def pre_save_handler(instance):
 
     booking = instance.booking()
 
+    if not booking:
+        return
+
     # Check if `Pallet` or `Skid`
     is_pallet = (
         instance.e_type_of_packaging.upper() in PALLETS
