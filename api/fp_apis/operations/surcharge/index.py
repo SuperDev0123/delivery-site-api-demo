@@ -321,7 +321,8 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
                         logger.info(
                             f'[SURCHARGE] quantity: {line["quantity"]}, value: {result["value"]}'
                         )
-                        total += line["quantity"] * result["value"]
+                        if result["value"]:
+                            total += line["quantity"] * result["value"]
 
                 if line_surcharges:
                     surcharges.append(
