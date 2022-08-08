@@ -2453,11 +2453,11 @@ class Booking_lines(models.Model):
         db_table = "dme_booking_lines"
 
 
-# @receiver(pre_save, sender=Booking_lines)
-# def pre_save_booking(sender, instance, **kwargs):
-#     from api.signal_handlers.booking_line import pre_save_handler
+@receiver(pre_save, sender=Booking_lines)
+def pre_save_booking(sender, instance, **kwargs):
+    from api.signal_handlers.booking_line import pre_save_handler
 
-#     pre_save_handler(instance)
+    pre_save_handler(instance)
 
 
 @receiver(post_save, sender=Booking_lines)

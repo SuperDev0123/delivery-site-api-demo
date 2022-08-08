@@ -13,6 +13,10 @@ from api.operations.booking.quote import get_quote_again
 from api.operations.genesis.index import create_shared_lines
 from api.common.booking_quote import set_booking_quote
 from api.helpers.list import *
+from api.helpers.cubic import get_cubic_meter
+from api.fp_apis.utils import get_m3_to_kg_factor
+from api.common.constants import PALLETS, SKIDS
+from api.common.ratio import _get_dim_amount, _get_weight_amount
 
 logger = logging.getLogger(__name__)
 IMPORTANT_FIELDS = [
@@ -28,6 +32,53 @@ IMPORTANT_FIELDS = [
 
 def pre_save_handler(instance):
     LOG_ID = "[LINE PRE SAVE]"
+
+    booking = instance.booking()
+
+    # Check if `Pallet` or `Skid`
+    is_pallet = (
+        instance.e_type_of_packaging.upper() in PALLETS
+        or instance.e_type_of_packaging.upper() in SKIDS
+    )
+    need_update = True
+    if not is_pallet:
+        need_update = False
+    # Check if height is less than 1.4m
+    dim_ratio = _get_dim_amount(instance.e_dimUOM)
+    height = instance.e_dimHeight * dim_ratio
+    if height > 1.4:
+        need_update = False
+
+    instance.e_dimLength = instance.e_dimLength * dim_ratio
+    instance.e_dimWidth = instance.e_dimWidth * dim_ratio
+    instance.e_dimHeight = instance.e_dimHeight * dim_ratio
+    instance.e_util_height = 1.4 if need_update else instance.e_dimHeight
+    instance.e_dimUOM = "m"
+    # Calc cubic mass factor
+    item_dead_weight = instance.e_weightPerEach * _get_weight_amount(
+        instance.e_weightUOM
+    )
+    e_cubic_2_mass_factor = get_m3_to_kg_factor(
+        booking.vx_freight_provider,
+        {
+            "is_pallet": is_pallet,
+            "item_length": instance.e_dimLength,
+            "item_width": instance.e_dimWidth,
+            "item_height": instance.e_util_height,
+            "item_dead_weight": item_dead_weight,
+        },
+    )
+    # Calc
+    instance.e_util_cbm = get_cubic_meter(
+        instance.e_dimLength,
+        instance.e_dimWidth,
+        instance.e_util_height,
+        instance.e_dimUOM,
+        1,
+    )
+    instance.e_util_cbm = round(instance.e_util_cbm * instance.e_qty, 3)
+    instance.e_util_kg = instance.e_util_cbm * e_cubic_2_mass_factor
+    instance.e_util_kg = round(instance.e_util_kg * instance.e_qty, 3)
 
 
 def post_save_handler(instance, created, update_fields):
