@@ -49,7 +49,7 @@ def pre_save_handler(instance):
     # Check if height is less than 1.4m
     dim_ratio = _get_dim_amount(instance.e_dimUOM)
     height = instance.e_dimHeight * dim_ratio
-    if height > 1.4:
+    if height < 1.4:
         need_update = False
 
     height = instance.e_dimHeight * dim_ratio
