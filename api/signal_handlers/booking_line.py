@@ -52,22 +52,19 @@ def pre_save_handler(instance):
     if height > 1.4:
         need_update = False
 
-    instance.e_dimLength = instance.e_dimLength * dim_ratio
-    instance.e_dimWidth = instance.e_dimWidth * dim_ratio
-    instance.e_dimHeight = instance.e_dimHeight * dim_ratio
-    instance.e_util_height = 1.4 if need_update else instance.e_dimHeight
-    instance.e_dimUOM = "m"
+    height = instance.e_dimHeight * dim_ratio
+    instance.e_util_height = 1.4 if need_update else height
+    instance.e_util_height = instance.e_util_height / dim_ratio
     # Calc cubic mass factor
-    item_dead_weight = instance.e_weightPerEach * _get_weight_amount(
-        instance.e_weightUOM
-    )
+    weight_ratio = _get_weight_amount(instance.e_weightUOM)
+    item_dead_weight = instance.e_weightPerEach * weight_ratio
     e_cubic_2_mass_factor = get_m3_to_kg_factor(
         booking.vx_freight_provider,
         {
             "is_pallet": is_pallet,
-            "item_length": instance.e_dimLength,
-            "item_width": instance.e_dimWidth,
-            "item_height": instance.e_util_height,
+            "item_length": instance.e_dimLength * dim_ratio,
+            "item_width": instance.e_dimWidth * dim_ratio,
+            "item_height": instance.e_util_height * dim_ratio,
             "item_dead_weight": item_dead_weight,
         },
     )
