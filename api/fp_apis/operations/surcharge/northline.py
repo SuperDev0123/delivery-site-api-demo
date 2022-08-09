@@ -21,8 +21,8 @@
 
 
 def dg(param):
-    if param['has_dangerous_item'] :
-        if param['max_weight'] < 1000:
+    if param["has_dangerous_item"]:
+        if param["max_weight"] < 1000:
             return {
                 "name": "Dangerous Goods",
                 "description": "Goods identified/declarable under the Commonwealth, states and territories. Explosives Regulations and the Australian Dangerous Goods Code.",
@@ -92,7 +92,10 @@ def dg(param):
 
 
 def hd(param):
-    if param['pu_address_type'].lower() == 'residential' or param['de_to_address_type'] == 'residential':
+    if (
+        param["pu_address_type"].lower() == "residential"
+        or param["de_to_address_type"] == "residential"
+    ):
         return {
             "name": "Home Delivery/Residential",
             "description": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
@@ -114,7 +117,7 @@ def hd(param):
 
 
 def ol(param):
-    if param['max_dimension'] > 3 and param['max_dimension'] <= 6:
+    if param["max_dimension"] > 3 and param["max_dimension"] <= 6:
         return {
             "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
@@ -125,13 +128,13 @@ def ol(param):
             "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
             "value": 315,
-        }  
+        }
     elif param["max_dimension"] > 9:
         return {
             "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
-            "value": "POA",
-        }       
+            "value": 1000,
+        }
     else:
         return None
 
@@ -142,7 +145,7 @@ def ol(param):
 #             "name": "Oversize Pallets/Un-Packed Goods",
 #             "description": "Oversized and/or unpacked goods that have been accepted by Northline will be charged by the equivalent pallet space/s area taken up on the load. Measurements will be taken to the trailer height and width and not the product height and width.",
 #             "value": "POA",
-#         }      
+#         }
 #     else:
 #         return None
 
@@ -153,7 +156,7 @@ def ol(param):
 #             "name": "Redirection Fee/Incorrect Address",
 #             "description": "It is the responsibility of the Customer to provide the correct pickup and delivery address. Where an incorrect address is supplied a re-direction fee will be applicable to have the consignment re-delivered. This applies when redirected whilst in transit or when futile delivery has occurred, and the redelivery is to a new destination.",
 #             "value": "POA",
-#         }      
+#         }
 #     else:
 #         return None
 
@@ -164,7 +167,7 @@ def ol(param):
 #             "name": "Regionals and Remote Locations",
 #             "description": "Regional pricing is to the nominated township area and immediate surrounds only (it does not refer to the area governed i.e. shire or city of). Whilst every effort is made to provide accurate pricing, on occasion Northline may be charged “extra” by our Agents for locations outside of this area or for difficult to access sites. When this occurs, Northline reserves the right to charge an additional fee or the Receiver may be given the option of collecting the freight from the Agent’s depot.",
 #             "value": "POA",
-#         }      
+#         }
 #     else:
 #         return None
 
@@ -175,7 +178,7 @@ def ol(param):
 #             "name": "Remote Sites, Islands, Barge or Ferry Services",
 #             "description": "Goods to these sites may incur additional charges. Please discuss these with a Sales Representative prior to booking.",
 #             "value": "POA",
-#         }      
+#         }
 #     else:
 #         return None
 
@@ -186,7 +189,7 @@ def ol(param):
 #             "name": "Reporting: Non-Standard",
 #             "description": "Where Northline are required to provide non-standard or tailored performance reports, a format will be agreed on before the customer will be charged for this service.",
 #             "value": "$45 per hour",
-#         }      
+#         }
 #     else:
 #         return None
 
@@ -231,7 +234,7 @@ def ol(param):
 
 
 def tgp_tgd(param):
-    if param['is_tail_lift']:
+    if param["is_tail_lift"]:
         return {
             "name": "Tailgate",
             "description": "Pickups and/or deliveries requiring the use of a Tailgate vehicle.",
@@ -254,7 +257,7 @@ def tgp_tgd(param):
 
 # def wt(param):
 #     if ():
-#         if () and ():    
+#         if () and ():
 #             return {
 #                 "name": "Waiting Time",
 #                 "description": "Charge applies where allocated loading and/or unloading time is exceeded and will be calculated in 15-minute increments.",
@@ -273,7 +276,7 @@ def tgp_tgd(param):
 
 
 # def wht(param):
-#     if ():   
+#     if ():
 #         return {
 #             "name": "Wharf Terminal",
 #             "description": "Timeslot booking fees and infrastructure fees charged by wharf terminal providers for containers picked up or dropped off at the wharf will be passed onto the Customer.",
