@@ -42,6 +42,7 @@ from api.warehouses.constants import (
     SPOJIT_API_URL,
     SPOJIT_TOKEN,
     SPOJIT_WAREHOUSE_MAPPINGS,
+    CARRIER_MAPPING,
 )
 
 logger = logging.getLogger(__name__)
@@ -343,6 +344,7 @@ def scanned(payload):
             pdf.pdf_merge(label_urls, entire_label_url)
             booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
             booking.save()
+            entire_label_b64 = str(pdf.pdf_to_base64(entire_label_url))
 
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
@@ -360,6 +362,8 @@ def scanned(payload):
                 booking.kf_client_id,
             ),
             "labels": labels,
+            "label": entire_label_b64,
+            "freightProvider": CARRIER_MAPPING[booking.vx_freight_provider],
         }
     except Exception as e:
         trace_error.print()
