@@ -334,7 +334,7 @@ def scanned(payload):
             labels.append(
                 {
                     "sscc": sscc,
-                    "label": str(pdf.pdf_to_base64(label_url)),
+                    "label": str(pdf.pdf_to_base64(label_url))[2:-1],
                     "barcode": get_barcode(booking, [new_line], index + 1, item_cnt),
                 }
             )
@@ -344,7 +344,7 @@ def scanned(payload):
             pdf.pdf_merge(label_urls, entire_label_url)
             booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
             booking.save()
-            entire_label_b64 = str(pdf.pdf_to_base64(entire_label_url))
+            entire_label_b64 = str(pdf.pdf_to_base64(entire_label_url))[2:-1]
 
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
@@ -356,7 +356,7 @@ def scanned(payload):
         return {
             "success": True,
             "message": "Successfully updated picked info.",
-            "consignment_number": gen_consignment_num(
+            "consignmentNumber": gen_consignment_num(
                 booking.vx_freight_provider,
                 booking.b_bookingID_Visual,
                 booking.kf_client_id,
