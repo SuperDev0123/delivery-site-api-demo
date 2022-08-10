@@ -14,7 +14,6 @@ from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from api.helpers.cubic import get_cubic_meter, getM3ToKgFactor
-
 from api.common import trace_error, constants as dme_constants
 
 
@@ -2403,6 +2402,10 @@ class Booking_lines(models.Model):
             "vx_freight_provider"
         )
         if bookings:
+            from api.fp_apis.utils import get_m3_to_kg_factor
+            from api.common.constants import PALLETS, SKIDS
+            from api.common.ratio import _get_dim_amount, _get_weight_amount
+
             m3ToKgFactor = getM3ToKgFactor(
                 bookings[0].vx_freight_provider,
                 self.e_dimLength,
@@ -2416,6 +2419,49 @@ class Booking_lines(models.Model):
             self.total_2_cubic_mass_factor_calc = math.ceil(
                 self.e_1_Total_dimCubicMeter * m3ToKgFactor
             )
+
+            # Check if `Pallet` or `Skid`
+            is_pallet = (
+                self.e_type_of_packaging.upper() in PALLETS
+                or self.e_type_of_packaging.upper() in SKIDS
+            )
+
+            need_update = True
+            if not is_pallet:
+                need_update = False
+            # Check if height is less than 1.4m
+            dim_ratio = _get_dim_amount(self.e_dimUOM)
+            height = self.e_dimHeight * dim_ratio
+            if height > 1.4:
+                need_update = False
+
+            self.e_util_height = 1.4 if need_update else height
+            self.e_util_height = self.e_util_height / dim_ratio
+
+            # Calc cubic mass factor
+            weight_ratio = _get_weight_amount(self.e_weightUOM)
+            item_dead_weight = self.e_weightPerEach * weight_ratio
+            e_cubic_2_mass_factor = get_m3_to_kg_factor(
+                bookings[0].vx_freight_provider,
+                {
+                    "is_pallet": is_pallet,
+                    "item_length": self.e_dimLength * dim_ratio,
+                    "item_width": self.e_dimWidth * dim_ratio,
+                    "item_height": self.e_util_height * dim_ratio,
+                    "item_dead_weight": item_dead_weight,
+                },
+            )
+            # Calc
+            self.e_util_cbm = get_cubic_meter(
+                self.e_dimLength,
+                self.e_dimWidth,
+                self.e_util_height,
+                self.e_dimUOM,
+                1,
+            )
+            self.e_util_cbm = round(self.e_util_cbm * self.e_qty, 3)
+            self.e_util_kg = self.e_util_cbm * e_cubic_2_mass_factor
+            self.e_util_kg = round(self.e_util_kg * self.e_qty, 3)
 
         if self.pk:
             cls = self.__class__
@@ -2453,11 +2499,11 @@ class Booking_lines(models.Model):
         db_table = "dme_booking_lines"
 
 
-@receiver(pre_save, sender=Booking_lines)
-def pre_save_booking(sender, instance, **kwargs):
-    from api.signal_handlers.booking_line import pre_save_handler
+# @receiver(pre_save, sender=Booking_lines)
+# def pre_save_booking_line(sender, instance, **kwargs):
+#     from api.signal_handlers.booking_line import pre_save_handler
 
-    pre_save_handler(instance)
+#     pre_save_handler(instance)
 
 
 @receiver(post_save, sender=Booking_lines)

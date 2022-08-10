@@ -95,11 +95,19 @@ def get_pricing(booking, booking_lines):
         dim_ratio = _get_dim_amount(line.e_dimUOM)
         length = line.e_dimLength * dim_ratio
         width = line.e_dimWidth * dim_ratio
-        height = line.e_util_height or (line.e_dimHeight * dim_ratio)
+
+        need_update = True
+        if not is_pallet:
+            need_update = False
+        height = line.e_dimHeight * dim_ratio
+        if height > 1.4:
+            need_update = False
+        height = 1.4 if need_update else height
+
         cubic_meter = get_cubic_meter(
             line.e_dimLength,
             line.e_dimWidth,
-            line.e_util_height or line.e_dimHeight,
+            height / dim_ratio,
             line.e_dimUOM,
             1,
         )
