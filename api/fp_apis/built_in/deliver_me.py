@@ -499,7 +499,7 @@ def get_pricing(booking, booking_lines):
                 f"{LOG_ID} {booking.b_bookingID_Visual} ({booking.b_client_name})"
             )
         except:
-            logger.info(f"{LOG_ID} {booking.b_client_order_num}")
+            logger.info(f"{LOG_ID} {booking.pk_booking_id}")
 
             logger.info(f"{LOG_ID} Case: {case}, Final mile fee: {fm_fee_sell}")
             logger.info(f"{LOG_ID} {length} {width} {height} {cubic_meter}")
