@@ -149,38 +149,38 @@ def get_pricing(booking, booking_lines):
                     and height <= 1.4
                 ):
                     case = "Pallet Type #1"
-                    inv_cost_quoted += (118.06 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (145.83 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (96.59 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (119.32 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (145.83 - fm_fee_sell)
+                        (119.32 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
                     case = "Pallet Type #2"
-                    inv_cost_quoted += (177.08 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (218.75 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (144.89 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (178.98 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (218.75 - fm_fee_sell)
+                        (178.98 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
                     case = "Pallet Type #3"
-                    inv_cost_quoted += (177.08 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (218.75 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (144.89 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (178.98 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (218.75 - fm_fee_sell)
+                        (178.98 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
                     case = "CBM type"
-                    inv_cost_quoted += (65.88 * cubic_meter + fm_fee_cost) * line.e_qty
-                    _value = 18 if 81.38 * cubic_meter < 18 else 81.38 * cubic_meter
+                    inv_cost_quoted += (53.90 * cubic_meter + fm_fee_cost) * line.e_qty
+                    _value = 18 if 66.58 * cubic_meter < 18 else 66.58 * cubic_meter
                     one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
@@ -203,30 +203,30 @@ def get_pricing(booking, booking_lines):
                     and height <= 1.4
                 ):
                     case = "Pallet Type #1"
-                    inv_cost_quoted += (187.50 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (222.22 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (153.41 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (182.82 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (222.22 - fm_fee_sell)
+                        (182.82 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
                     case = "Pallet Type #2"
-                    inv_cost_quoted += (281.25 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (444.44 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (230.11 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (272.73 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (444.44 - fm_fee_sell)
+                        (272.73 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
                     case = "Pallet Type #3"
-                    inv_cost_quoted += (281.25 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (444.44 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (230.11 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (272.73 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (444.44 - fm_fee_sell)
+                        (272.73 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
@@ -234,9 +234,9 @@ def get_pricing(booking, booking_lines):
                 else:
                     case = "CBM type"
                     inv_cost_quoted += (
-                        104.68 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
+                        86.61 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
-                    _value = 18 if 165.34 * cubic_meter < 18 else 165.34 * cubic_meter
+                    _value = 18 if 101.46 * cubic_meter < 18 else 101.46 * cubic_meter
                     one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
@@ -259,30 +259,30 @@ def get_pricing(booking, booking_lines):
                     and height <= 1.4
                 ):
                     case = "Pallet Type #1"
-                    inv_cost_quoted += (232.36 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (261.11 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (190.11 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (213.64 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (261.11 - fm_fee_sell)
+                        (213.64 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
                     case = "Pallet Type #2"
-                    inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (522.22 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (285.17 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (320.45 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (522.22 - fm_fee_sell)
+                        (320.45 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
                     case = "Pallet Type #3"
-                    inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (522.22 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (285.17 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (320.45 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (522.22 - fm_fee_sell)
+                        (320.45 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
@@ -290,9 +290,9 @@ def get_pricing(booking, booking_lines):
                 else:
                     case = "CBM type"
                     inv_cost_quoted += (
-                        129.67 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
+                        106.09 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
-                    _value = 18 if 194.28 * cubic_meter < 18 else 194.28 * cubic_meter
+                    _value = 18 if 119.22 * cubic_meter < 18 else 119.22 * cubic_meter
                     one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
@@ -322,30 +322,30 @@ def get_pricing(booking, booking_lines):
                     and height <= 1.4
                 ):
                     case = "Pallet Type #1"
-                    inv_cost_quoted += (118.06 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (152.78 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (96.59 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (125 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (152.78 - fm_fee_sell)
+                        (125 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
                     case = "Pallet Type #2"
-                    inv_cost_quoted += (177.08 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (229.17 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (144.89 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (187.50 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (229.17 - fm_fee_sell)
+                        (187.50 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
                     case = "Pallet Type #3"
-                    inv_cost_quoted += (177.08 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (229.17 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (144.89 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (187.50 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (229.17 - fm_fee_sell)
+                        (187.50 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
@@ -353,9 +353,9 @@ def get_pricing(booking, booking_lines):
                 else:
                     case = "CBM type"
                     inv_cost_quoted += (
-                        65.88 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
+                        53.90 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
-                    _value = 18 if 85.26 * cubic_meter < 18 else 85.26 * cubic_meter
+                    _value = 18 if 69.75 * cubic_meter < 18 else 69.75 * cubic_meter
                     one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
@@ -378,30 +378,30 @@ def get_pricing(booking, booking_lines):
                     and height <= 1.4
                 ):
                     case = "Pallet Type #1"
-                    inv_cost_quoted += (177.08 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (222.22 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (144.89 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (181.82 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (222.22 - fm_fee_sell)
+                        (181.82 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
                     case = "Pallet Type #2"
-                    inv_cost_quoted += (265.63 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (444.44 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (217.33 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (272.73 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (444.44 - fm_fee_sell)
+                        (272.73 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
                     case = "Pallet Type #3"
-                    inv_cost_quoted += (265.63 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (444.44 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (217.33 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (272.73 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (444.44 - fm_fee_sell)
+                        (272.73 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
@@ -409,9 +409,9 @@ def get_pricing(booking, booking_lines):
                 else:
                     case = "CBM type"
                     inv_cost_quoted += (
-                        98.32 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
+                        80.85 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
-                    _value = 18 if 165.34 * cubic_meter < 18 else 165.34 * cubic_meter
+                    _value = 18 if 101.46 * cubic_meter < 18 else 101.46 * cubic_meter
                     one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
@@ -434,30 +434,30 @@ def get_pricing(booking, booking_lines):
                     and height <= 1.4
                 ):
                     case = "Pallet Type #1"
-                    inv_cost_quoted += (232.36 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (265.56 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (190.11 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (217.27 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (265.56 - fm_fee_sell)
+                        (217.27 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
                     case = "Pallet Type #2"
-                    inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (531.11 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (285.17 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (325.91 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (531.11 - fm_fee_sell)
+                        (325.91 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
                     case = "Pallet Type #3"
-                    inv_cost_quoted += (348.54 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (531.11 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (285.17 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (325.91 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
-                        (531.11 - fm_fee_sell)
+                        (325.91 - fm_fee_sell)
                         * 0.5
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
@@ -465,9 +465,9 @@ def get_pricing(booking, booking_lines):
                 else:
                     case = "CBM type"
                     inv_cost_quoted += (
-                        129.67 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
+                        106.09 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
-                    _value = 18 if 197.59 * cubic_meter < 18 else 197.59 * cubic_meter
+                    _value = 18 if 121.25 * cubic_meter < 18 else 121.25 * cubic_meter
                     one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (
