@@ -96,6 +96,7 @@ def get_pricing(booking, booking_lines):
         length = line.e_dimLength * dim_ratio
         width = line.e_dimWidth * dim_ratio
 
+        # Get Utilised height
         need_update = True
         if not is_pallet:
             need_update = False
@@ -492,12 +493,19 @@ def get_pricing(booking, booking_lines):
         # Logs
         net_inv_cost_quoted = inv_cost_quoted - old_inv_cost_quoted
         net_inv_sell_quoted = inv_sell_quoted - old_inv_sell_quoted
-        logger.info(f"{LOG_ID} {booking.b_bookingID_Visual} ({booking.b_client_name})")
-        logger.info(f"{LOG_ID} Case: {case}, Final mile fee: {fm_fee_sell}")
-        logger.info(f"{LOG_ID} {length} {width} {height} {cubic_meter}")
-        logger.info(
-            f"{LOG_ID} index: {index + 1}/{len(booking_lines)} cost: {net_inv_cost_quoted} sell: {net_inv_sell_quoted}"
-        )
+
+        try:
+            logger.info(
+                f"{LOG_ID} {booking.b_bookingID_Visual} ({booking.b_client_name})"
+            )
+        except:
+            logger.info(f"{LOG_ID} {booking.b_client_order_num}")
+
+            logger.info(f"{LOG_ID} Case: {case}, Final mile fee: {fm_fee_sell}")
+            logger.info(f"{LOG_ID} {length} {width} {height} {cubic_meter}")
+            logger.info(
+                f"{LOG_ID} index: {index + 1}/{len(booking_lines)} cost: {net_inv_cost_quoted} sell: {net_inv_sell_quoted}"
+            )
         old_inv_cost_quoted = inv_cost_quoted
         old_inv_sell_quoted = inv_sell_quoted
 
