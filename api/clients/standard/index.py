@@ -267,6 +267,7 @@ def push_boks(payload, client):
             _bok_2["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
             _bok_2["pk_booking_lines_id"] = str(uuid.uuid1())
             _bok_2["success"] = bok_1["success"]
+            _bok_2["packed_status"] = BOK_2_lines.ORIGINAL
             l_001 = "Carton" or _bok_2.get("l_001_type_of_packaging")
             _bok_2["l_001_type_of_packaging"] = l_001
 
