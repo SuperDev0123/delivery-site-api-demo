@@ -921,9 +921,11 @@ class BookingsViewSet(viewsets.ViewSet):
         bookings = queryset.only(*BOOKING_FIELDS_4_ALLBOOKING_TABLE)
 
         filtered_booking_ids = []
+        filtered_booking_visual_ids = []
         filtered_consignments = []
         for booking in queryset:
             filtered_booking_ids.append(booking.id)
+            filtered_booking_visual_ids.append(booking.b_bookingID_Visual)
             filtered_consignments.append(booking.v_FPBookingNumber)
 
         # Count
@@ -1066,6 +1068,7 @@ class BookingsViewSet(viewsets.ViewSet):
             {
                 "bookings": result,
                 "filtered_booking_ids": filtered_booking_ids,
+                "filtered_booking_visual_ids": filtered_booking_visual_ids,
                 "filtered_consignments": filtered_consignments,
                 "count": bookings_cnt,
                 "page_cnt": page_cnt,
