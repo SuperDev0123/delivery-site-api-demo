@@ -218,7 +218,7 @@ class Client_employees(models.Model):
     email = models.EmailField(
         verbose_name=_("email address"), max_length=64, unique=True, null=True
     )
-    phone = models.IntegerField(verbose_name=_("phone number"), blank=True, null=True)
+    phone = models.CharField(max_length=16, blank=True, null=True, default=None)
     warehouse_id = models.IntegerField(
         verbose_name=_("Warehouse ID"), default=1, blank=True, null=True
     )
