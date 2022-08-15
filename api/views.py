@@ -5100,7 +5100,7 @@ class SurchargeViewSet(viewsets.ModelViewSet):
         queryset = Surcharge.objects.all()
 
         if booking_id:
-            queryset = queryset.filter(booking_id=booking_id)
+            queryset = queryset.filter(booking_id=booking_id, fp_id__isnull=False)
 
         return queryset.order_by("id")
 
