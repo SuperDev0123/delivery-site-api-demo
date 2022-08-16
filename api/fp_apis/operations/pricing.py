@@ -35,6 +35,7 @@ from api.fp_apis.constants import (
     BUILT_IN_PRICINGS,
     DME_LEVEL_API_URL,
     AVAILABLE_FPS_4_FC,
+    HEADER_FOR_NODE,
 )
 from api.fp_apis.utils import _convert_UOM
 
@@ -548,7 +549,7 @@ async def _api_pricing_worker_builder(
     logger.info(f"### [PRICING] ({_fp_name.upper()}) Payload: {payload}")
 
     try:
-        response = await requests_async.post(url, params={}, json=payload)
+        response = await requests_async.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
         logger.info(
             f"### [PRICING] Response ({_fp_name.upper()}): {response.status_code}"
         )
