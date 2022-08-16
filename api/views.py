@@ -3312,9 +3312,7 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 )
 
                 if not status_last:
-                    logger.error(
-                        f"{LOG_ID} New FP status! Booking: {booking}, FP: {fp}, b_status_API: {b_status_API}"
-                    )
+                    error_msg = f"{LOG_ID} New FP status! Booking: {booking}, FP: {fp}, b_status_API: {b_status_API}"
                     logger.error(error_msg)
                     send_email_to_admins("New FP status", error_msg)
                     return Response(
