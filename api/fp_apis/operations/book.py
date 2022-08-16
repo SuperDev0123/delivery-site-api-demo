@@ -19,6 +19,7 @@ from api.fp_apis.operations.common import _set_error
 from api.fp_apis.constants import (
     DME_LEVEL_API_URL,
     S3_URL,
+    HEADER_FOR_NODE,
 )
 
 
@@ -72,7 +73,7 @@ def book(fp_name, booking, booker):
 
     logger.info(f"### Payload ({fp_name} book): {payload}")
     url = DME_LEVEL_API_URL + "/booking/bookconsignment"
-    response = requests.post(url, params={}, json=payload)
+    response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
     res_content = (
         response.content.decode("utf8").replace("'t", " not").replace("'", '"')
     )
@@ -97,7 +98,7 @@ def book(fp_name, booking, booker):
             t.sleep(180)
             logger.info(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
-            response = requests.post(url, params={}, json=payload)
+            response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
             s0 = json.dumps(

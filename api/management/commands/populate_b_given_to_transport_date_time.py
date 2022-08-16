@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 
 from api.models import Bookings, Dme_status_history
 from api.fp_apis.payload_builder import get_tracking_payload
-from api.fp_apis.constants import S3_URL, DME_LEVEL_API_URL
+from api.fp_apis.constants import S3_URL, DME_LEVEL_API_URL, HEADER_FOR_NODE
 from api.fp_apis.operations.tracking import _extract as extract_status
 
 logger = logging.getLogger(__name__)
@@ -207,7 +207,7 @@ def get_tracking_info_from_FP(booking):
     logger.info(f"### Payload ({fp_name} tracking): {payload}")
     url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
 
-    response = requests.post(url, params={}, json=payload)
+    response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
 
     if fp_name.lower() in ["tnt"]:
         res_content = response.content.decode("utf8")
