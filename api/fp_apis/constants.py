@@ -313,3 +313,6 @@ SPECIAL_FPS = [
     "Customer Collect",
     "In House Fleet",
 ]
+
+# security header for DME_NODE
+HEADER_FOR_NODE = {'X-SECURITY-TOKEN': 'DELIVER-ME-API'}
