@@ -110,6 +110,7 @@ from api.operations.booking.refs import (
 )
 from api.operations.genesis.index import update_shared_booking
 from api.operations.email_senders import send_email_to_admins
+from django.contrib.auth.hashers import make_password
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -190,27 +191,39 @@ class UserViewSet(viewsets.ViewSet):
 
         try:
             resultObjects = []
+
+            users = User.objects.filter(username=request.data["user_name"])
+
+            if users.count() > 0:
+                error_msg = f'User name "{request.data["user_name"]}" already exist.'
+                logger.error(error_msg)
+                return Response({"error": error_msg}, status=status.HTTP_400_BAD_REQUEST)
+
             resultObjects = User.objects.create(
-                fk_idEmailParent=request.data["fk_idEmailParent"],
-                emailName=request.data["emailName"],
-                emailBody=request.data["emailBody"],
-                sectionName=request.data["sectionName"],
-                emailBodyRepeatEven=request.data["emailBodyRepeatEven"],
-                emailBodyRepeatOdd=request.data["emailBodyRepeatOdd"],
-                whenAttachmentUnavailable=request.data["whenAttachmentUnavailable"],
+                first_name=request.data["first_name"],
+                last_name=request.data["last_name"],
+                username=request.data["user_name"],
+                email=request.data["user_email"],
+                password=make_password(request.data["user_password"]),
+                is_superuser=0,
+                is_staff=0,
+                is_active=1,
             )
 
-            return JsonResponse({"results": resultObjects})
-        except Exception as e:
-            # print('@Exception', e)
             return JsonResponse({"results": ""})
+        except Exception as e:
+            print('@Exception', e)
+            return Response({"error": 'Request failed!'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
     def edit(self, request, pk, format=None):
         user = User.objects.get(pk=pk)
 
         try:
-            User.objects.filter(pk=pk).update(is_active=request.data["is_active"])
+            if 'is_active' in request.data:
+                User.objects.filter(pk=pk).update(is_active=request.data["is_active"])
+            else:
+                User.objects.filter(pk=pk).update(first_name=request.data["first_name"], last_name=request.data["last_name"], email=request.data["user_email"])
             dme_employee = DME_employees.objects.filter(fk_id_user=user.id).first()
             client_employee = Client_employees.objects.filter(
                 fk_id_user=user.id
@@ -243,8 +256,8 @@ class UserViewSet(viewsets.ViewSet):
         user = User.objects.get(pk=pk)
 
         try:
-            # user.delete()
-            return JsonResponse({"results": fp_freight_providers})
+            user.delete()
+            return JsonResponse({"results": user_id})
         except Exception as e:
             # print('@Exception', e)
             return JsonResponse({"results": ""})
