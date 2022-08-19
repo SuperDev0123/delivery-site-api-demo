@@ -564,18 +564,13 @@ class API_booking_quotes(models.Model):
     tax_value_3 = models.FloatField(
         verbose_name=_("Tax Value 3"), blank=True, null=True
     )
-    tax_id_4 = models.CharField(
-        verbose_name=_("Tax ID 4"), max_length=10, blank=True, null=True
-    )
-    tax_value_4 = models.FloatField(
-        verbose_name=_("Tax Value 4"), blank=True, null=True
-    )
     tax_id_5 = models.CharField(
         verbose_name=_("Tax ID 5"), max_length=10, blank=True, null=True
     )
     tax_value_5 = models.FloatField(
         verbose_name=_("Tax Value 5"), blank=True, null=True
     )
+    lowest_quote_flag = models.BooleanField(blank=True, null=True, default=None)
     b_client_markup2_percentage = models.FloatField(
         verbose_name=_("Client Markup2 Percent"), blank=True, null=True
     )
