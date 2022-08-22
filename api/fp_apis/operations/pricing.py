@@ -262,38 +262,38 @@ def pricing(
                 continue
 
             # Special Pricings
-            # try:
-            #     if (
-            #         not is_pricing_only
-            #         and booking.b_dateBookedDate
-            #         and booking.vx_freight_provider == "Deliver-ME"
-            #     ):
-            #         build_special_fp_pricings(booking, _booking_lines, packed_status)
-            # except:
-            #     build_special_fp_pricings(booking, _booking_lines, packed_status)
-            #     _loop_process(
-            #         booking,
-            #         _booking_lines,
-            #         is_pricing_only,
-            #         packed_status,
-            #         client,
-            #         pu_zones,
-            #         de_zones,
-            #         client_fps,
-            #     )
+            try:
+                if (
+                    not is_pricing_only
+                    and booking.b_dateBookedDate
+                    and booking.vx_freight_provider == "Deliver-ME"
+                ):
+                    build_special_fp_pricings(booking, _booking_lines, packed_status)
+            except:
+                build_special_fp_pricings(booking, _booking_lines, packed_status)
+                _loop_process(
+                    booking,
+                    _booking_lines,
+                    is_pricing_only,
+                    packed_status,
+                    client,
+                    pu_zones,
+                    de_zones,
+                    client_fps,
+                )
 
             # Normal Pricings
-            _loop_process(
-                booking,
-                _booking_lines,
-                is_pricing_only,
-                packed_status,
-                client,
-                pu_zones,
-                de_zones,
-                client_fps,
-            )
-            build_special_fp_pricings(booking, _booking_lines, packed_status)
+            # _loop_process(
+            #     booking,
+            #     _booking_lines,
+            #     is_pricing_only,
+            #     packed_status,
+            #     client,
+            #     pu_zones,
+            #     de_zones,
+            #     client_fps,
+            # )
+            # build_special_fp_pricings(booking, _booking_lines, packed_status)
 
         # JasonL + SA -> ignore Allied
         if (
@@ -554,7 +554,9 @@ async def _api_pricing_worker_builder(
     logger.info(f"### [PRICING] ({_fp_name.upper()}) Payload: {payload}")
 
     try:
-        response = await requests_async.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
+        response = await requests_async.post(
+            url, params={}, json=payload, headers=HEADER_FOR_NODE
+        )
         logger.info(
             f"### [PRICING] Response ({_fp_name.upper()}): {response.status_code}"
         )
