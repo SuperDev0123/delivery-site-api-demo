@@ -212,7 +212,7 @@ class UserViewSet(viewsets.ViewSet):
 
             return JsonResponse({"results": ""})
         except Exception as e:
-            print('@Exception', e)
+            # print('@Exception', e)
             return Response({"error": 'Request failed!'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["put"])
