@@ -166,7 +166,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
             quote_1.service_name = result["price"]["service_name"]
             quote_1.save()
 
-    # Plum & JasonL & BSD & Cadrys & Ariston Wire & Anchor Packagin & Pricing Only
+    # Plum & JasonL & BSD & Cadrys & Ariston Wire & Anchor Packaging & Pricing Only
     if (
         booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
         or booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"

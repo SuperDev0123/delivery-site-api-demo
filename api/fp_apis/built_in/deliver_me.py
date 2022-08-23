@@ -119,8 +119,11 @@ def get_pricing(booking, booking_lines):
             length = width
             width = temp
 
-        # JasonL
-        if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        # JasonL | Anchor Packaging
+        if (
+            booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+            or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
+        ):
             # Final Mile Delivery Fee
             fm_fee_cost = 50
             fm_fee_sell = 60
