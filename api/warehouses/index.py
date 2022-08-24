@@ -289,9 +289,6 @@ def scanned(payload):
 
         # Build built-in label with SSCC - one sscc should have one page label
         label_urls = []
-        item_cnt = 0
-        for item in original_items:
-            item_cnt += item.e_qty
 
         for index, sscc in enumerate(sscc_list):
             file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
@@ -303,9 +300,9 @@ def scanned(payload):
                 booking=booking,
                 file_path=file_path,
                 lines=sscc_lines[sscc],
-                label_index=scanned_items.count() + index,
+                label_index=index,
                 sscc=sscc,
-                sscc_cnt=item_cnt,
+                sscc_cnt=len(sscc_list),
                 one_page_label=False,
             )
 
@@ -335,7 +332,9 @@ def scanned(payload):
                 {
                     "sscc": sscc,
                     "label": str(pdf.pdf_to_base64(label_url))[2:-1],
-                    "barcode": get_barcode(booking, [new_line], index + 1, item_cnt),
+                    "barcode": get_barcode(
+                        booking, [new_line], index + 1, len(sscc_list)
+                    ),
                 }
             )
 
