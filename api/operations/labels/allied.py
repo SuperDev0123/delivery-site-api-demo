@@ -585,11 +585,24 @@ def build_label(
             to_del_data.append(
                 [
                     Paragraph(
-                        "<font size=%s>To: <b>%s %s</b> <br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s %s</b> <br/> </font>"
+                        "<font size=%s>To: <b>%s %s</b> <br/> </font>"
                         % (
                             label_settings[font_size],
                             booking.deToCompanyName or "",
                             "" if booking.deToCompanyName == booking.de_to_Contact_F_LName else (booking.de_to_Contact_F_LName or ""),
+                        ),
+                        style_left,
+                    ),
+                    d,
+                ]
+            )
+
+            to_del_data.append(
+                [
+                    Paragraph(
+                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s %s</b> <br/> </font>"
+                        % (
+                            label_settings[font_size],
                             booking.de_To_Address_Street_1 or "",
                             booking.de_To_Address_Street_2 or "",
                         ),
