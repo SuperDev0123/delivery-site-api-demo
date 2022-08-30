@@ -306,7 +306,7 @@ def push_boks(payload, client, username, method):
             line["l_008_weight_UOM"] = _item["l_008_weight_UOM"].upper()
             line["b_093_packed_status"] = BOK_2_lines.ORIGINAL
 
-            line = line_oper.handle_zero(line)
+            line = line_oper.handle_zero(line, client)
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()

@@ -9,6 +9,7 @@ from api.common.booking_quote import set_booking_quote
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM, SPECIAL_FPS
 from api.operations.email_senders import send_email_to_admins
 from api.helpers.etd import get_etd
+from api.fps.startrack import gen_consignment as gen_consignment_num_st
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ def _convert_UOM(value, uom, type, fp_name):
         raise Exception(message)
 
 
-def gen_consignment_num(fp_name, uid, kf_client_id=None):
+def gen_consignment_num(fp_name, uid, kf_client_id=None, booking=None):
     """
     generate consignment
 
@@ -57,6 +58,8 @@ def gen_consignment_num(fp_name, uid, kf_client_id=None):
         kf_client_id == "461162D2-90C7-BF4E-A905-000000000004" and _fp_name == "hunter"
     ):
         return f"PLX{str(uid)}"
+    elif _fp_name == "startrack":
+        return gen_consignment_num_st(booking)
     else:
         return f"DME{str(uid)}"
 

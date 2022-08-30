@@ -281,6 +281,8 @@ def get_book_payload(booking, fp_name):
     maxHeight = 0
     maxWidth = 0
     maxLength = 0
+    if booking.b_client_warehouse_code in ["BIO - HTW", "BIO - FDM"]:
+        consignment_id = gen_consignment_num("startrack", None, None, booking)
     for line in booking_lines:
         width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
         height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
@@ -305,6 +307,16 @@ def get_book_payload(booking, fp_name):
                 item["packagingType"] = (
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )
+
+                if booking.b_client_warehouse_code in ["BIO - HTW", "BIO - FDM"]:
+                    sequence_no = str(i + 1).zfill(5)
+                    article_id = f"{consignment_id}{item['itemId']}{sequence_no}"
+                    barcode_id = article_id
+                    item["trackingDetails"] = {
+                        "consignment_id": consignment_id,
+                        "article_id": article_id,
+                        "barcode_id": barcode_id,
+                    }
             elif fp_name == "auspost":
                 item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
             elif fp_name == "hunter":
@@ -574,8 +586,8 @@ def get_getlabel_payload(booking, fp_name):
             "instruction"
         ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
-    de_street_1 = "" or de_To_Address_Street_1 or de_To_Address_Street_2
-    de_street_2 = "" or de_To_Address_Street_2
+    de_street_1 = de_To_Address_Street_1 or de_To_Address_Street_2 or ""
+    de_street_2 = de_To_Address_Street_2 or ""
 
     if not de_street_1 and not de_street_2:
         message = f"DE street info is required. BookingId: {booking.b_bookingID_Visual}"
