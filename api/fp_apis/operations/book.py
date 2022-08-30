@@ -98,7 +98,9 @@ def book(fp_name, booking, booker):
             t.sleep(180)
             logger.info(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
-            response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
+            response = requests.post(
+                url, params={}, json=payload, headers=HEADER_FOR_NODE
+            )
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
             s0 = json.dumps(
@@ -118,9 +120,9 @@ def book(fp_name, booking, booker):
             request_payload["trackingId"] = json_data["consignmentNumber"]
 
             if booking.vx_freight_provider.lower() in ["startrack", "auspost"]:
-                booking.v_FPBookingNumber = json_data["items"][0]["tracking_details"][
-                    "consignment_id"
-                ]
+                tracking_details = json_data["items"][0]["tracking_details"]
+                booking.v_FPBookingNumber = tracking_details["consignment_id"]
+                booking.jobNumber = json_data["shipment_id"]
             elif booking.vx_freight_provider.lower() == "hunter":
                 booking.v_FPBookingNumber = json_data["consignmentNumber"]
                 booking.jobNumber = json_data["jobNumber"]
