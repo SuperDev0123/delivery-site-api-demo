@@ -35,7 +35,7 @@ def build_json(booking):
         "status": booking.b_status,
         "warehouse_code": booking.fk_client_warehouse.client_warehouse_code,
         "freight_provider": booking.vx_freight_provider,
-        "shipment_id": booking.jobNumber,
+        # "shipment_id": booking.jobNumber,
     }
 
     return json.dumps(json_content)
