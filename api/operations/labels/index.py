@@ -11,6 +11,7 @@ from api.operations.labels import (
     hunter_thermal,
     tnt,
     allied,
+    startrack,
     default,
 )
 
@@ -45,18 +46,23 @@ def build_label(
             file_path, file_name = allied.build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )
+        elif fp_name == "startrack":
+            file_path, file_name = startrack.build_label(
+                booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
+            )
         else:  # "Century", "ATC", "JasonL In house"
             file_path, file_name = default.build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )
 
         # Set consignment number
-        booking.v_FPBookingNumber = gen_consignment_num(
-            booking.vx_freight_provider,
-            booking.b_bookingID_Visual,
-            booking.kf_client_id,
-        )
-        booking.save()
+        if fp_name != "startrack":
+            booking.v_FPBookingNumber = gen_consignment_num(
+                booking.vx_freight_provider,
+                booking.b_bookingID_Visual,
+                booking.kf_client_id,
+            )
+            booking.save()
 
         return file_path, file_name
     except Exception as e:
