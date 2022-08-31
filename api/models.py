@@ -192,6 +192,7 @@ class Client_warehouses(models.Model):
         default=None,
     )
     main_warehouse = models.BooleanField(default=False)
+    connote_number = models.IntegerField(default=0)
 
     class Meta:
         db_table = "dme_client_warehouses"

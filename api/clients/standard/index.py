@@ -141,7 +141,7 @@ def quick_pricing(payload):
     booking = {
         "kf_client_id": client.dme_account_num,
         "client_warehouse_code": "No - Warehouse",
-        "b_client_name": "Pricing-Only",
+        "b_client_name": client.company_name,
         "pk_booking_id": pk_header_id,
         "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "initial_RA_num",
