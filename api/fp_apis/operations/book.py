@@ -122,7 +122,6 @@ def book(fp_name, booking, booker):
             if booking.vx_freight_provider.lower() in ["startrack", "auspost"]:
                 tracking_details = json_data["items"][0]["tracking_details"]
                 booking.v_FPBookingNumber = tracking_details["consignment_id"]
-                # booking.jobNumber = json_data["shipment_id"]
             elif booking.vx_freight_provider.lower() == "hunter":
                 booking.v_FPBookingNumber = json_data["consignmentNumber"]
                 booking.jobNumber = json_data["jobNumber"]
