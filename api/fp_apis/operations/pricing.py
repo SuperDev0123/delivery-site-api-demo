@@ -37,6 +37,7 @@ from api.fp_apis.constants import (
     AVAILABLE_FPS_4_FC,
     HEADER_FOR_NODE,
 )
+from api.clients.jason_l.operations import get_total_sales, get_value_by_formula
 from api.fp_apis.utils import _convert_UOM
 
 
@@ -112,21 +113,21 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         (postal_code >= 1000 and postal_code <= 2249)
         or (postal_code >= 2760 and postal_code <= 2770)
     ):
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=booking.pk_booking_id,
-            is_used=False,
-            freight_provider="Century",
-        )
-
-        quote_3 = quotes.first() if quotes else quote_0
+        quote_3 = quote_0
         quote_3.pk = None
         quote_3.freight_provider = "In House Fleet"
         quote_3.service_name = None
 
-        if quotes:
-            quote_3.client_mu_1_minimum_values -= 1
+        total_sales = get_total_sales(booking)
+        value_by_formula = get_value_by_formula(booking_lines)
+
+        logger.info(
+            f"[In House Fleet] total_sales: {total_sales}, value_by_formula: {value_by_formula}"
+        )
+        if total_sales * 0.05 > value_by_formula:
+            quote_3.client_mu_1_minimum_values = total_sales * 0.05
         else:
-            quote_3.client_mu_1_minimum_values = 75
+            quote_3.client_mu_1_minimum_values = value_by_formula
 
         quote_3.save()
 

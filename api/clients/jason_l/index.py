@@ -118,6 +118,7 @@ def partial_pricing(payload, client, warehouse):
         "pu_no_of_assists": bok_1.get("b_072_b_pu_no_of_assists") or 0,
         "de_no_of_assists": bok_1.get("b_073_b_del_no_of_assists") or 0,
         "b_booking_project": None,
+        "b_client_order_num": bok_1["b_client_order_num"],
     }
 
     # Product & Child items
@@ -750,6 +751,7 @@ def push_boks(payload, client, username, method):
         "pu_no_of_assists": bok_1.get("b_072_b_pu_no_of_assists") or 0,
         "de_no_of_assists": bok_1.get("b_073_b_del_no_of_assists") or 0,
         "b_booking_project": None,
+        "b_client_order_num": bok_1["b_client_order_num"],
     }
 
     booking_lines = []
