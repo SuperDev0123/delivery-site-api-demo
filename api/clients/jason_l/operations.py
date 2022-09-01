@@ -962,9 +962,8 @@ def isGood4Linehaul(postal_code, booking_lines):
     return False
 
 
-def get_total_sales(booking):
+def get_total_sales(order_num):
     LOG_ID = "[FETCH BOK BY TALEND]"
-    order_num = booking.b_client_order_num
 
     # - Split `order_num` and `suffix` -
     _order_num, suffix = order_num, ""

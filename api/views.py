@@ -2640,6 +2640,7 @@ class BookingViewSet(viewsets.ViewSet):
                 "x_manual_booked_flag",
                 "api_booking_quote",
                 "b_dateBookedDate",
+                "client_sales_total",
             )
             .order_by("id")
             .last()
@@ -2856,6 +2857,7 @@ class BookingViewSet(viewsets.ViewSet):
             "x_manual_booked_flag": booking.x_manual_booked_flag,
             "api_booking_quote_id": booking.api_booking_quote_id,
             "b_dateBookedDate": booking.b_dateBookedDate,
+            "client_sales_total": booking.client_sales_total,
             "no_of_sscc": len(result_with_sscc),
             "url": booking.z_label_url,
             "pdf": pdf_data,

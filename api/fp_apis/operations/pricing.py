@@ -117,18 +117,9 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         quote_3.pk = None
         quote_3.freight_provider = "In House Fleet"
         quote_3.service_name = None
-
-        total_sales = get_total_sales(booking)
         value_by_formula = get_value_by_formula(booking_lines)
-
-        logger.info(
-            f"[In House Fleet] total_sales: {total_sales}, value_by_formula: {value_by_formula}"
-        )
-        if total_sales * 0.05 > value_by_formula:
-            quote_3.client_mu_1_minimum_values = total_sales * 0.05
-        else:
-            quote_3.client_mu_1_minimum_values = value_by_formula
-
+        logger.info(f"[In House Fleet] value_by_formula: {value_by_formula}")
+        quote_3.client_mu_1_minimum_values = value_by_formula
         quote_3.save()
 
     # JasonL & BSD
@@ -344,6 +335,15 @@ def _loop_process(
         )
     finally:
         loop.close()
+
+    # JasonL: update `client sales total`
+    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        try:
+            booking.client_sales_total = get_total_sales(booking.b_client_order_num)
+            booking.save()
+        except Exception as e:
+            logger.error(f"Client sales total: {str(e)}")
+            pass
 
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status

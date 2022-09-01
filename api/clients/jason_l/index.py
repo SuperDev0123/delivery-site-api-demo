@@ -56,6 +56,7 @@ from api.clients.jason_l.operations import (
     get_address,
     parse_sku_string,
     isGood4Linehaul,
+    get_total_sales,
 )
 from api.clients.jason_l.constants import NEED_PALLET_GROUP_CODES, SERVICE_GROUP_CODES
 from api.helpers.cubic import get_cubic_meter
@@ -496,6 +497,7 @@ def push_boks(payload, client, username, method):
         bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
 
     bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
+    bok_1["b_094_client_sales_total"] = get_total_sales(bok_1["b_client_order_num"])
 
     bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
@@ -752,6 +754,7 @@ def push_boks(payload, client, username, method):
         "de_no_of_assists": bok_1.get("b_073_b_del_no_of_assists") or 0,
         "b_booking_project": None,
         "b_client_order_num": bok_1["b_client_order_num"],
+        "b_094_client_sales_total": bok_1["b_094_client_sales_total"],
     }
 
     booking_lines = []
@@ -1134,6 +1137,7 @@ def scanned(payload, client):
         # Should get pricing again
         next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
         booking.puPickUpAvailFrom_Date = next_biz_day
+        booking.client_sales_total = get_total_sales(booking.b_client_order_num)
         booking.save()
 
         new_fc_log = FC_Log.objects.create(

@@ -357,6 +357,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "qtys_in_stock",  # Child booking related field
             "children",  # Child booking related field
             "cs_notes_cnt",
+            "client_sales_total",  # JasonL client_sales_total
         )
         fields = read_only_fields + (
             "id",
