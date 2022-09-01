@@ -1009,6 +1009,7 @@ def get_total_sales(booking):
         return None, None
 
     value = first_line.split("|")[24]
+    value = value.replace("\n", "") if value else value
     logger.info(f"@311 {LOG_ID} first_line: {first_line}\nTotal Sales: {value}")
     return 0 if not value else int(value)
 
