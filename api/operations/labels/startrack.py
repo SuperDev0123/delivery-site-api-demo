@@ -131,10 +131,10 @@ def myLaterPages(canvas, doc):
 def gen_ReceiverBarcode(booking, location_info):
     service_name = str(booking.vx_serviceName)
     postal_code = str(booking.de_To_Address_PostalCode)
-    nearest_depot = str(location_info['nearest_depot'] or "")
+    depote_code = str(location_info['R1'] or "")
 
     label_code = (
-        f"{service_name}{postal_code}{nearest_depot}"
+        f"{service_name}{postal_code}{depote_code}"
     )
     # api_bcl.create(booking, [{"label_code": label_code}])
 
@@ -152,11 +152,11 @@ def gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, to
     consignment_quantity = str(booking_line.e_qty).ljust(4)
     consignment_weight = str(math.ceil(booking_line.e_Total_KG_weight)).ljust(5)
     consignment_cube = str(round(totalCubic, 3)).ljust(5)
-    despatch_date = booking.b_dateBookedDate.strftime("%Y%m%d")
+    despatch_date = booking.b_dateBookedDate.strftime("%Y%m%d") if booking.b_dateBookedDate else booking.puPickUpAvailFrom_Date.strftime("%Y%m%d"),
     receiver_name1 = str(booking.de_to_Contact_F_LName or "").ljust(40)
     receiver_name2 = str("" if booking.deToCompanyName == booking.de_to_Contact_F_LName else (booking.deToCompanyName or "")).ljust(40)
     unit_type = str("CTN" if len(booking_line.e_type_of_packaging or "") != 3 else booking_line.e_type_of_packaging)
-    destination_depot = str(location_info['nearest_depot'] or "").ljust(4)
+    destination_depot = str(location_info['R2'] or "").ljust(4)
     receiver_address1 = str(booking.de_To_Address_Street_1).ljust(40)
     receiver_address2 = str("").ljust(40)
     receiver_phone = str(booking.de_to_Phone_Main).ljust(14)
@@ -362,11 +362,16 @@ def build_label(
             location_info = {}
             for index in range(len(locations)):
                 if(str(locations['Postcode'][index]) == str(booking.de_To_Address_PostalCode) and str(locations['Suburb'][index].lower() == str(booking.de_To_Address_Suburb or "").lower())):
-                    location_info = {
-                        'nearest_depot': locations['Nearest Depot'][index],
-                        'primary_port': locations['Primary Port'][index],
-                        'secondary_port': locations['Seconday Port'][index],
-                    }
+                    if booking.vx_serviceName == 'EXP':
+                        location_info = {
+                            'R1': locations['Primary Port'][index],
+                            'R2': locations['Nearest Depot'][index],                            
+                        }
+                    else:
+                        location_info = {
+                            'R1': locations['Primary Port'][index],
+                            'R2': locations['Seconday Port'][index],
+                        }
 
             prd_data = Table(
                 [
@@ -490,8 +495,8 @@ def build_label(
             tbl_data = [
                 [
                     Paragraph("<b>%s</b>" %("AU"), style_extra_large),
-                    Paragraph("<b></b>", style_extra_large),
-                    Paragraph("<b>%s</b>" %(location_info['nearest_depot'] or ""), style_extra_large),
+                    Paragraph("<b>%s</b>" %('' if booking.vx_serviceName == 'EXP' else (location_info['R1'] or "")), style_extra_large),
+                    Paragraph("<b>%s</b>" %(location_info['R2'] or ""), style_extra_large),
                     Paragraph("<b></b>", style_extra_large),
                 ],
             ]
@@ -600,7 +605,7 @@ def build_label(
                                             [
                                                 Paragraph('DATE: %s'
                                                 %(
-                                                    booking.b_dateBookedDate.strftime("%d/%m/%Y"),
+                                                    booking.b_dateBookedDate.strftime("%d/%m/%Y") if booking.b_dateBookedDate else booking.puPickUpAvailFrom_Date.strftime("%d/%m/%Y"),
                                                 ), style_left_small),
                                                 Paragraph('UNIT: %s'
                                                 %(
