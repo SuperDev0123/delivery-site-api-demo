@@ -21,7 +21,7 @@ CARRIER_MAPPING = {
     "ATC": "DME-ATC",
     "Symons Clark": "SYMONSCL",
     "State Transport": "STATETRN",
-    "Deliver-ME Direct": "DME-DIRECT",
+    "Deliver-ME": "DME-DIRECT",
     "DXT Transport": "DXTTRANS",
     "Cochranes": "COCHRANE",
     "Hunter": "HUNTER",
