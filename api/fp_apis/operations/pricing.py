@@ -122,10 +122,11 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         quote_3.client_mu_1_minimum_values = value_by_formula
         quote_3.save()
 
-    # JasonL & BSD
+    # JasonL & BSD & Anchor Packaging
     if (
         booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
         or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+        or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
     ):
         # restrict delivery postal code
         if (
