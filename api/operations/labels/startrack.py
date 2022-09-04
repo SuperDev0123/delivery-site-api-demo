@@ -73,7 +73,8 @@ style_center = ParagraphStyle(
     name="center",
     parent=styles["Normal"],
     alignment=TA_CENTER,
-    leading=10,
+    leading=12,
+    fontSize=8,
 )
 style_center_bg = ParagraphStyle(
     name="right",
@@ -102,8 +103,8 @@ style_PRD = ParagraphStyle(
     name="PRD",
     parent=styles["Normal"],
     alignment=TA_CENTER,
-    fontSize=18,
-    leading=20,
+    fontSize=22,
+    leading=24,
 )
 
 tableStyle = [
@@ -129,7 +130,7 @@ def myLaterPages(canvas, doc):
     canvas.restoreState()
 
 def gen_ReceiverBarcode(booking, location_info):
-    service_name = str(booking.vx_serviceName)
+    service_name = str(get_serviceName(booking.vx_serviceName))
     postal_code = str(booking.de_To_Address_PostalCode)
     depote_code = str(location_info['R1'] or "")
 
@@ -145,14 +146,17 @@ def gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, to
     receiver_suburb = str(booking.de_To_Address_Suburb).ljust(30)
     postal_code = str(booking.de_To_Address_PostalCode).ljust(4)
     consignment_num = str(v_FPBookingNumber).ljust(12)
-    product_code = str(booking.vx_serviceName)
+    product_code = str(get_serviceName(booking.vx_serviceName))
     freight_item_id = consignment_num + product_code + item_index
     payer_account = str('').ljust(8)
     sender_account = (FP_CREDENTIALS['startrack'][booking.b_client_name.lower()][booking.b_client_warehouse_code]['accountCode']).ljust(8)
     consignment_quantity = str(booking_line.e_qty).ljust(4)
     consignment_weight = str(math.ceil(booking_line.e_Total_KG_weight)).ljust(5)
-    consignment_cube = str(round(totalCubic, 3)).ljust(5)
-    despatch_date = booking.b_dateBookedDate.strftime("%Y%m%d") if booking.b_dateBookedDate else booking.puPickUpAvailFrom_Date.strftime("%Y%m%d"),
+    consignment_cube = str(number_format(round(totalCubic, 3))).ljust(5)
+    if booking.b_dateBookedDate:
+        despatch_date = booking.b_dateBookedDate.strftime("%Y%m%d")
+    else:
+        despatch_date = booking.puPickUpAvailFrom_Date.strftime("%Y%m%d")
     receiver_name1 = str(booking.de_to_Contact_F_LName or "").ljust(40)
     receiver_name2 = str("" if booking.deToCompanyName == booking.de_to_Contact_F_LName else (booking.deToCompanyName or "")).ljust(40)
     unit_type = str("CTN" if len(booking_line.e_type_of_packaging or "") != 3 else booking_line.e_type_of_packaging)
@@ -164,22 +168,20 @@ def gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, to
     movement_type_indicator = 'N'
     not_before_date = str('').ljust(12)
     not_after_date = str('').ljust(12)
-    atl_number = str('').ljust(10)
+    atl_number = str(get_ATL_number(booking)).ljust(10)
     rl_number = str('').ljust(10)
-
-    secondary_port = str(booking.vx_serviceName)
 
     label_code = (
         f"{receiver_suburb}{postal_code}{consignment_num}{freight_item_id}{product_code}{payer_account}{sender_account}{consignment_quantity}{consignment_weight}{consignment_cube}{despatch_date}{receiver_name1}{receiver_name2}{unit_type}{destination_depot}{receiver_address1}{receiver_address2}{receiver_phone}{dangerous_goods_indicator}{movement_type_indicator}{not_before_date}{not_after_date}{atl_number}{rl_number}"
     )
+    logger.info(label_code)
     return label_code
 
 def number_format(num):
-    return str(num).strip("0").replace('.', ' ')
-    
+    return str(num * 1000).rjust(5).replace(".", "").strip("0")
 
 def gen_ArticleBarcode(booking, v_FPBookingNumber, item_no=0):
-    service_name = str(booking.vx_serviceName)
+    service_name = str(get_serviceName(booking.vx_serviceName))
     item_index = str(item_no).zfill(5)
 
     label_code = (
@@ -188,18 +190,11 @@ def gen_ArticleBarcode(booking, v_FPBookingNumber, item_no=0):
 
     return label_code
 
-def gen_barcode(booking, item_no=0):
-    item_index = str(item_no).zfill(3)
-    visual_id = str(booking.b_bookingID_Visual)
+def get_serviceName(temp):
+    return 'PRM' if temp == 'FPP' else temp
 
-    label_code = (
-        f"DME{visual_id}{item_index}"
-        if not booking.v_FPBookingNumber
-        else f"{booking.v_FPBookingNumber}{item_index}"
-    )
-
-    return label_code
-
+def get_ATL_number(booking):
+    return f"C0{str(booking.v_FPBookingNumber)[4:]}"
 
 def build_label(
     booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
@@ -313,7 +308,7 @@ def build_label(
     dme_img = Image(dme_logo, 28 * mm, 7.7 * mm)
 
     fp_logo = "./static/assets/logos/startrack.png"
-    fp_img = Image(fp_logo, float(label_settings["label_image_size_width"]) * (3 / 10) * mm, 5 * mm)
+    fp_img = Image(fp_logo, float(label_settings["label_image_size_width"]) * (2.5 / 10) * mm, 6 * mm)
 
     fp_color_code = (
         Fp_freight_providers.objects.get(
@@ -377,14 +372,17 @@ def build_label(
                 [
                     [
                         Paragraph(
-                            "<b>%s</b>" %(booking.vx_serviceName),
+                            "<font color='%s'><b>%s</b></font>" %(colors.black if booking.vx_serviceName == 'EXP' else colors.white, booking.vx_serviceName),
                             style_PRD,
                         ),
                     ],
                 ],
-                colWidths=[t1_w * 3],
+                colWidths=[t1_w * 2.5],
                 rowHeights=[11 * mm],
-                style=tableStyle,
+                style=[
+                    *tableStyle,
+                    *([] if booking.vx_serviceName == 'EXP' else [('BACKGROUND', (0, 0), (-1, -1), "black")]),
+                ],
             )
             data = [
                 [
@@ -417,7 +415,23 @@ def build_label(
                             ],
                         )
                     ],                    
-                    Paragraph("", style_center),
+                    [
+                        Paragraph(
+                            "<b>AUTHORITY TO LEAVE</b>",
+                            style_center,
+                        ),
+                        code128.Code128(
+                            get_ATL_number(booking),
+                            barHeight= 9* mm,
+                            barWidth=0.9,
+                            humanReadable=False,
+                        ),
+                        Paragraph(
+                            "<font size=%s> <b>%s</b> </font>"                            
+                            % (label_settings["font_size_medium"], get_ATL_number(booking)),
+                            style_center,
+                        ),
+                    ],
                 ],
                 [
                     [
@@ -478,8 +492,8 @@ def build_label(
             header_length = float(label_settings["header_length"]) * mm
             header = Table(
                 data,
-                colWidths=[t1_w * 3, t1_w * 3, t1_w * 4],
-                rowHeights=[16 * mm, 19 * mm, 8 * mm],
+                colWidths=[t1_w * 2.5, t1_w * 3, t1_w * 4.5],
+                rowHeights=[17 * mm, 19 * mm, 8 * mm],
                 style=[
                     *tableStyle,
                     ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
@@ -487,7 +501,7 @@ def build_label(
                     ('SPAN',(0,1),(-1,1)),
                     ('SPAN',(0,2),(-1,2)),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ],
             )
             Story.append(header)
