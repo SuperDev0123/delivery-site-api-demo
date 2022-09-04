@@ -344,6 +344,8 @@ def _loop_process(
             booking.save()
         except Exception as e:
             logger.error(f"Client sales total: {str(e)}")
+            booking.client_sales_total = None
+            booking.save()
             pass
 
     quotes = API_booking_quotes.objects.filter(
