@@ -531,7 +531,7 @@ def build_label(
                     Paragraph(
                         '<font size=%s color="white"><b>%s</b> </font>'
                         % (
-                            label_settings["font_size_large"],
+                            label_settings["font_size_large"] if len(vx_serviceName) < 23 else label_settings["font_size_medium"],
                             booking.vx_serviceName or "",
                         ),
                         style_back_black,
