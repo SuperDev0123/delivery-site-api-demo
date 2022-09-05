@@ -27,6 +27,7 @@ from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.operations.api_booking_confirmation_lines import index as api_bcl
+from api.clients.operations.index import extract_product_code
 
 logger = logging.getLogger(__name__)
 
@@ -640,7 +641,7 @@ def build_label(
                         "<font size=%s>Description:&nbsp;%s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking_line.e_item or "",
+                            extract_product_code(booking_line.e_item),
                         ),
                         style_left,
                     ),
