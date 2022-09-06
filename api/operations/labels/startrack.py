@@ -137,7 +137,7 @@ def gen_ReceiverBarcode(booking, location_info):
     label_code = (
         f"{service_name}{postal_code}{depote_code}"
     )
-    # api_bcl.create(booking, [{"label_code": label_code}])
+    api_bcl.create(booking, [{"item_id": label_code}])
 
     return label_code
 
