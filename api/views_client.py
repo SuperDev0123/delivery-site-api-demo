@@ -51,6 +51,7 @@ from api.clients.plum import index as plum
 from api.clients.tempo import index as tempo
 from api.clients.bsd import index as bsd
 from api.clients.jason_l import index as jason_l
+from api.clients.biopak import index as biopak
 from api.clients.anchor_packaging import index as anchor_packaging
 from api.clients.jason_l.operations import (
     create_or_update_product as jasonL_create_or_update_product,
@@ -746,13 +747,17 @@ def scanned(request):
         message = f"Successfully scanned."
         logger.info(f"#838 {LOG_ID} {message}")
         time2 = t.time()
-        logger.info(f"\n#838 {LOG_ID} Requester: {user.username}\nPayload: {request.data}\nSpent time: {str(int(round(time2 - time1)))}s\n")
+        logger.info(
+            f"\n#838 {LOG_ID} Requester: {user.username}\nPayload: {request.data}\nSpent time: {str(int(round(time2 - time1)))}s\n"
+        )
         return JsonResponse(result, status=HTTP_200_OK)
     except Exception as e:
         logger.info(f"@839 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
         time2 = t.time()
-        logger.info(f"\n#838 {LOG_ID} Requester: {user.username}\nPayload: {request.data}\nSpent time: {str(int(round(time2 - time1)))}s\n")
+        logger.info(
+            f"\n#838 {LOG_ID} Requester: {user.username}\nPayload: {request.data}\nSpent time: {str(int(round(time2 - time1)))}s\n"
+        )
         res_json = {"success": False, "message": str(e)}
         return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
@@ -803,6 +808,8 @@ def reprint_label(request):
             result = plum.reprint_label(params=request.GET, client=client)
         # elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
         #     result = jason_l.reprint_label(params=request.GET, client=client)
+        elif dme_account_num == "7EAA4B16-484B-3944-902E-BC936BFEF535":  # BioPak
+            result = biopak.reprint_label(params=request.GET, client=client)
 
         logger.info(f"#858 {LOG_ID} {json.dumps(result, indent=4)[:64]}")
         return Response(result)

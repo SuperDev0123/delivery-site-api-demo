@@ -352,7 +352,7 @@ def auto_select_pricing_4_bok(
         auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
 
         if send_as_is_quotes.count() > 3:
-            _quotes = send_as_is_quote_cnt
+            _quotes = send_as_is_quotes
         elif auto_pack_quotes.count() > 0:
             _quotes = auto_pack_quotes
         else:
