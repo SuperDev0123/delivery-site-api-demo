@@ -366,6 +366,7 @@ class Fp_freight_providers(models.Model):
     hex_color_code = models.CharField(max_length=6, blank=True, null=True)
     category = models.CharField(max_length=64, blank=True, null=True, default=None)
     last_vehicle_number = models.IntegerField(default=0, blank=True, null=True)
+    last_atl_number = models.IntegerField(default=0, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )

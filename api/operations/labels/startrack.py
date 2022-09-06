@@ -130,7 +130,7 @@ def myLaterPages(canvas, doc):
     canvas.restoreState()
 
 def gen_ReceiverBarcode(booking, location_info):
-    service_name = str(get_serviceName(booking.vx_serviceName))
+    service_name = str(booking.vx_serviceName)
     postal_code = str(booking.de_To_Address_PostalCode)
     depote_code = str(location_info['R1'] or "")
 
@@ -141,12 +141,12 @@ def gen_ReceiverBarcode(booking, location_info):
 
     return label_code
 
-def gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, totalCubic, item_no=0):
+def gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, totalCubic, atl_number, item_no=0):
     item_index = str(item_no).zfill(5)
     receiver_suburb = str(booking.de_To_Address_Suburb).ljust(30)
     postal_code = str(booking.de_To_Address_PostalCode).ljust(4)
     consignment_num = str(v_FPBookingNumber).ljust(12)
-    product_code = str(get_serviceName(booking.vx_serviceName))
+    product_code = str(booking.vx_serviceName)
     freight_item_id = consignment_num + product_code + item_index
     payer_account = str('').ljust(8)
     sender_account = (FP_CREDENTIALS['startrack'][booking.b_client_name.lower()][booking.b_client_warehouse_code]['accountCode']).ljust(8)
@@ -168,7 +168,7 @@ def gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, to
     movement_type_indicator = 'N'
     not_before_date = str('').ljust(12)
     not_after_date = str('').ljust(12)
-    atl_number = str(get_ATL_number(booking)).ljust(10)
+    atl_number = str(atl_number).ljust(10)
     rl_number = str('').ljust(10)
 
     label_code = (
@@ -178,10 +178,10 @@ def gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, to
     return label_code
 
 def number_format(num):
-    return str(num * 1000).rjust(5).replace(".", "").strip("0")
+    return str(round(num * 1000))
 
 def gen_ArticleBarcode(booking, v_FPBookingNumber, item_no=0):
-    service_name = str(get_serviceName(booking.vx_serviceName))
+    service_name = str(booking.vx_serviceName)
     item_index = str(item_no).zfill(5)
 
     label_code = (
@@ -194,7 +194,12 @@ def get_serviceName(temp):
     return 'PRM' if temp == 'FPP' else temp
 
 def get_ATL_number(booking):
-    return f"C0{str(booking.v_FPBookingNumber)[4:]}"
+    freight_provider = Fp_freight_providers.objects.filter(
+        fp_company_name=booking.vx_freight_provider
+    )
+    last_atl_number = freight_provider.first().last_atl_number
+    freight_provider.update(last_atl_number=last_atl_number + 1)
+    return f"C{str(freight_provider.first().last_atl_number).zfill(9)}"
 
 def build_label(
     booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
@@ -350,6 +355,8 @@ def build_label(
 
     for booking_line in lines:
         for k in range(booking_line.e_qty):
+            atl_number = get_ATL_number(booking)
+            logger.info(f"#gees ges {atl_number}")
             if one_page_label and k > 0:
                 continue
             t1_w = float(label_settings["label_image_size_width"]) / 10 * mm
@@ -372,7 +379,7 @@ def build_label(
                 [
                     [
                         Paragraph(
-                            "<font color='%s'><b>%s</b></font>" %(colors.black if booking.vx_serviceName == 'EXP' else colors.white, booking.vx_serviceName),
+                            "<font color='%s'><b>%s</b></font>" %(colors.black if booking.vx_serviceName == 'EXP' else colors.white, get_serviceName(booking.vx_serviceName)),
                             style_PRD,
                         ),
                     ],
@@ -421,14 +428,14 @@ def build_label(
                             style_center,
                         ),
                         code128.Code128(
-                            get_ATL_number(booking),
+                            atl_number,
                             barHeight= 9* mm,
                             barWidth=0.9,
                             humanReadable=False,
                         ),
                         Paragraph(
                             "<font size=%s> <b>%s</b> </font>"                            
-                            % (label_settings["font_size_medium"], get_ATL_number(booking)),
+                            % (label_settings["font_size_medium"], atl_number),
                             style_center,
                         ),
                     ],
@@ -531,7 +538,7 @@ def build_label(
 
             barcode = gen_ReceiverBarcode(booking, location_info)
 
-            qrCodeString = gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, totalCubic, j)
+            qrCodeString = gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, totalCubic, atl_number, j)
             d = Drawing(36 * mm, 34 * mm)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
             d.add(QrCodeWidget(value=qrCodeString, barWidth=36 * mm, barHeight=36 * mm))
