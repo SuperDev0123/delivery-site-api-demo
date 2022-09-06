@@ -346,10 +346,10 @@ def auto_select_pricing_4_bok(
         return None
 
     # JasonL - update sales total
-    _quotes = quotes
+    _quotes = pricings
     if bok_1.fk_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
-        send_as_is_quotes = pricings.filter(packed_status=BOK_2_lines.ORIGINAL)
-        auto_pack_quotes = pricings.filter(packed_status=BOK_2_lines.AUTO_PACK)
+        send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
+        auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
 
         if send_as_is_quotes.count() > 3:
             _quotes = send_as_is_quote_cnt
@@ -359,7 +359,7 @@ def auto_select_pricing_4_bok(
             pass
 
     non_air_freight_pricings = []
-    for pricing in pricings:
+    for pricing in _quotes:
         if not pricing.service_name or (
             pricing.service_name and pricing.service_name != "Air Freight"
         ):
