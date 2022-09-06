@@ -65,7 +65,7 @@ style_back_black = ParagraphStyle(
     name="back_black",
     parent=styles["Normal"],
     alignment=TA_CENTER,
-    leading=14,
+    leading=13,
     backColor="black",
 )
 
@@ -473,19 +473,7 @@ def build_label(
 
             Story.append(barcode_table)
 
-            tbl_parcelId = [
-                [
-                    Paragraph(
-                        "<font size=%s><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DME%s%s</b></font>"
-                        % (
-                            label_settings["font_size_medium"],
-                            booking.b_bookingID_Visual or "",
-                            str(j).zfill(3),
-                        ),
-                        style_left,
-                    ),
-                ],
-            ]
+            vx_serviceName = booking.vx_serviceName or ""
 
             tbl_data2 = [
                 [
@@ -497,8 +485,8 @@ def build_label(
                     Paragraph(
                         '<font size=%s color="white"><b>%s</b> </font>'
                         % (
-                            label_settings["font_size_large"],
-                            booking.vx_serviceName or "",
+                            label_settings["font_size_large"] if len(vx_serviceName) < 23 else label_settings["font_size_medium"],
+                            vx_serviceName or "",
                         ),
                         style_back_black,
                     ),
@@ -509,14 +497,31 @@ def build_label(
                 tbl_data2,
                 colWidths=(
                     45,
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm
+                    float(label_settings["label_image_size_length"]) * (5 / 9) * mm
                     - 45,
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (-1, -1), "CENTER"),
                 ],
             )
+
+            tbl_parcelId = [
+                [
+                    Paragraph(
+                        "<font size=%s><b>&nbsp;&nbsp; DME%s%s</b></font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            booking.b_bookingID_Visual or "",
+                            str(j).zfill(3),
+                        ),
+                        style_left,
+                    ),
+                    Spacer(3,3),
+                    tbl_service,
+                ],
+            ]
 
             tbl_package = [
                 [
@@ -541,6 +546,7 @@ def build_label(
                         ),
                         style_left,
                     ),
+                    Spacer(3,3),
                     Paragraph(
                         "<font size=%s>Weight: %s</font>"
                         % (
@@ -553,17 +559,17 @@ def build_label(
                 ],
             ]
 
-            data = [[tbl_parcelId, tbl_service, tbl_package]]
+            data = [[tbl_parcelId, tbl_package]]
             shell_table = Table(
                 data,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (3 / 12) * mm,
-                    float(label_settings["label_image_size_length"]) * (4 / 12) * mm,
+                    float(label_settings["label_image_size_length"]) * (7 / 12) * mm,
                     float(label_settings["label_image_size_length"]) * (5 / 12) * mm,
                 ),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ],
             )
 

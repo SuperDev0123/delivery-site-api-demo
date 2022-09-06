@@ -37,6 +37,7 @@ from api.fp_apis.constants import (
     AVAILABLE_FPS_4_FC,
     HEADER_FOR_NODE,
 )
+from api.clients.jason_l.operations import get_total_sales, get_value_by_formula
 from api.fp_apis.utils import _convert_UOM
 
 
@@ -112,28 +113,20 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         (postal_code >= 1000 and postal_code <= 2249)
         or (postal_code >= 2760 and postal_code <= 2770)
     ):
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=booking.pk_booking_id,
-            is_used=False,
-            freight_provider="Century",
-        )
-
-        quote_3 = quotes.first() if quotes else quote_0
+        quote_3 = quote_0
         quote_3.pk = None
         quote_3.freight_provider = "In House Fleet"
         quote_3.service_name = None
-
-        if quotes:
-            quote_3.client_mu_1_minimum_values -= 1
-        else:
-            quote_3.client_mu_1_minimum_values = 75
-
+        value_by_formula = get_value_by_formula(booking_lines)
+        logger.info(f"[In House Fleet] value_by_formula: {value_by_formula}")
+        quote_3.client_mu_1_minimum_values = value_by_formula
         quote_3.save()
 
-    # JasonL & BSD
+    # JasonL & BSD & Anchor Packaging
     if (
         booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
         or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+        or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
     ):
         # restrict delivery postal code
         if (
@@ -343,6 +336,16 @@ def _loop_process(
         )
     finally:
         loop.close()
+
+    # JasonL: update `client sales total`
+    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        try:
+            booking.client_sales_total = get_total_sales(booking.b_client_order_num)
+            booking.save()
+        except Exception as e:
+            logger.error(f"Client sales total: {str(e)}")
+            booking.client_sales_total = None
+            pass
 
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status

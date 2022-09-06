@@ -45,13 +45,13 @@ def get_address(bok_1):
 
 
 def get_lines(bok_2s):
+    from api.clients.operations.index import extract_product_code
+
     _lines = []
 
     for bok_2 in bok_2s:
         product_code = bok_2.l_003_item
-
-        if "ZERO Dims -" in product_code:
-            product_code = product_code[: product_code.index("ZERO Dims -") - 2]
+        product_code = extract_product_code(product_code)
 
         _lines.append(
             {

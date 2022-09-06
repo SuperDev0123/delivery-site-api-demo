@@ -1858,6 +1858,7 @@ class Bookings(models.Model):
     inv_sell_quoted_override = models.FloatField(blank=True, default=None, null=True)
     inv_sell_actual = models.FloatField(blank=True, default=0, null=True)
     inv_booked_quoted = models.FloatField(blank=True, default=0, null=True)
+    client_sales_total = models.FloatField(blank=True, default=None, null=True)
     b_del_to_signed_name = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
@@ -3112,6 +3113,7 @@ class BOK_1_headers(models.Model):
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
     b_093_b_promo_code = models.CharField(max_length=32, default=None, null=True)
+    b_094_client_sales_total = models.FloatField(blank=True, default=None, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)

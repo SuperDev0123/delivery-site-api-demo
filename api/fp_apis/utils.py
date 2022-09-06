@@ -345,8 +345,21 @@ def auto_select_pricing_4_bok(
         logger.info("#855 - Could not find proper pricing")
         return None
 
+    # JasonL - update sales total
+    _quotes = pricings
+    if bok_1.fk_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
+        auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
+
+        if send_as_is_quotes.count() > 3:
+            _quotes = send_as_is_quotes
+        elif auto_pack_quotes.count() > 0:
+            _quotes = auto_pack_quotes
+        else:
+            pass
+
     non_air_freight_pricings = []
-    for pricing in pricings:
+    for pricing in _quotes:
         if not pricing.service_name or (
             pricing.service_name and pricing.service_name != "Air Freight"
         ):

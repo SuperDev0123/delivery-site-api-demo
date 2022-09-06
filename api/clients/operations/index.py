@@ -141,6 +141,7 @@ def is_postalcode_in_state(state, postal_code):
 
 def bok_quote(bok_1, packed_status):
     from api.fp_apis.operations.pricing import pricing as pricing_oper
+    from api.clients.jason_l.operations import get_total_sales
 
     LOG_ID = "[BOK QUOTE]"
 
@@ -214,6 +215,12 @@ def bok_quote(bok_1, packed_status):
     fc_log.old_quote = bok_1.quote
     body = {"booking": booking, "booking_lines": booking_lines}
     packed_statuses = [packed_status]
+
+    # JasonL - update sales total
+    if bok_1.fk_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        bok_1.b_094_client_sales_total = get_total_sales(bok_1.b_client_order_num)
+        bok_1.save()
+
     _, success, message, quote_set = pricing_oper(
         body=body,
         booking_id=None,
@@ -305,3 +312,10 @@ def check_port_code(de_suburb, de_postcode, de_state):
         raise Exception(message)
 
     logger.info("`port_code` is fine")
+
+
+def extract_product_code(e_item):
+    if e_item and "ZERO Dims -" in e_item:
+        return e_item[: e_item.index("ZERO Dims -") - 2]
+    else:
+        return ""

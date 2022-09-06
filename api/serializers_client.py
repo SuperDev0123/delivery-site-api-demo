@@ -124,6 +124,7 @@ class BOK_1_Serializer(serializers.ModelSerializer):
             "b_093_b_promo_code",
             "zb_105_text_5",  # b_error_Capture
             "b_500_b_client_cust_job_code",
+            "b_094_client_sales_total",
         )
 
 
