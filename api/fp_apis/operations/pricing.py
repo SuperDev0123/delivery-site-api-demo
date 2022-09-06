@@ -255,38 +255,38 @@ def pricing(
                 continue
 
             # Special Pricings
-            # try:
-            #     if (
-            #         not is_pricing_only
-            #         and booking.b_dateBookedDate
-            #         and booking.vx_freight_provider == "Deliver-ME"
-            #     ):
-            #         build_special_fp_pricings(booking, _booking_lines, packed_status)
-            # except:
-            #     build_special_fp_pricings(booking, _booking_lines, packed_status)
-            #     _loop_process(
-            #         booking,
-            #         _booking_lines,
-            #         is_pricing_only,
-            #         packed_status,
-            #         client,
-            #         pu_zones,
-            #         de_zones,
-            #         client_fps,
-            #     )
+            try:
+                if (
+                    not is_pricing_only
+                    and booking.b_dateBookedDate
+                    and booking.vx_freight_provider == "Deliver-ME"
+                ):
+                    build_special_fp_pricings(booking, _booking_lines, packed_status)
+            except:
+                build_special_fp_pricings(booking, _booking_lines, packed_status)
+                _loop_process(
+                    booking,
+                    _booking_lines,
+                    is_pricing_only,
+                    packed_status,
+                    client,
+                    pu_zones,
+                    de_zones,
+                    client_fps,
+                )
 
-            # Normal Pricings
-            _loop_process(
-                booking,
-                _booking_lines,
-                is_pricing_only,
-                packed_status,
-                client,
-                pu_zones,
-                de_zones,
-                client_fps,
-            )
-            build_special_fp_pricings(booking, _booking_lines, packed_status)
+            # # Normal Pricings
+            # _loop_process(
+            #     booking,
+            #     _booking_lines,
+            #     is_pricing_only,
+            #     packed_status,
+            #     client,
+            #     pu_zones,
+            #     de_zones,
+            #     client_fps,
+            # )
+            # build_special_fp_pricings(booking, _booking_lines, packed_status)
 
         # JasonL + SA -> ignore Allied
         if (
