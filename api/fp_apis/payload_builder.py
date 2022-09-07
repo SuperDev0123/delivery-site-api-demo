@@ -283,6 +283,8 @@ def get_book_payload(booking, fp_name):
     maxLength = 0
     if booking.b_client_warehouse_code in ["BIO - HTW", "BIO - FDM"]:
         consignment_id = gen_consignment_num("startrack", None, None, booking)
+
+    sequence = 0
     for line in booking_lines:
         width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
         height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
@@ -309,7 +311,7 @@ def get_book_payload(booking, fp_name):
                 )
 
                 if booking.b_client_warehouse_code in ["BIO - HTW", "BIO - FDM"]:
-                    sequence_no = str(i + 1).zfill(5)
+                    sequence_no = str(sequence + 1).zfill(5)
                     article_id = f"{consignment_id}{item['itemId']}{sequence_no}"
                     barcode_id = article_id
                     item["trackingDetails"] = {
@@ -349,6 +351,7 @@ def get_book_payload(booking, fp_name):
                 ).save()
                 item["packageCode"] = labelCode
 
+            sequence += 1
             items.append(item)
 
             if line.e_weightPerEach:

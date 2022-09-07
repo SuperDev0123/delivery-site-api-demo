@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 styles = getSampleStyleSheet()
 style_right = ParagraphStyle(
-    name="right", 
-    parent=styles["Normal"], 
+    name="right",
+    parent=styles["Normal"],
     alignment=TA_RIGHT,
     leading=18,
     fontSize=18,
@@ -109,10 +109,10 @@ style_PRD = ParagraphStyle(
 
 tableStyle = [
     ("VALIGN", (0, 0), (-1, -1), "CENTER"),
-    ('LEFTPADDING',(0,0),(-1,-1), 0),
-    ('RIGHTPADDING',(0,0),(-1,-1), 0),
-    ('BOTTOMPADDING',(0,0),(-1,-1), 0),
-    ('TOPPADDING',(0,0),(-1,-1), 0),
+    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ("TOPPADDING", (0, 0), (-1, -1), 0),
 ]
 
 styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
@@ -129,27 +129,39 @@ def myLaterPages(canvas, doc):
     canvas.rotate(90)
     canvas.restoreState()
 
+
 def gen_ReceiverBarcode(booking, location_info):
     service_name = str(booking.vx_serviceName)
     postal_code = str(booking.de_To_Address_PostalCode)
-    depote_code = str(location_info['R1'] or "")
+    depote_code = str(location_info["R1"] or "")
 
-    label_code = (
-        f"{service_name}{postal_code}{depote_code}"
-    )
+    label_code = f"{service_name}{postal_code}{depote_code}"
     api_bcl.create(booking, [{"item_id": label_code}])
 
     return label_code
 
-def gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, totalCubic, atl_number, item_no=0):
+
+def gen_QRcodeString(
+    booking,
+    booking_line,
+    location_info,
+    v_FPBookingNumber,
+    totalCubic,
+    atl_number,
+    item_no=0,
+):
     item_index = str(item_no).zfill(5)
     receiver_suburb = str(booking.de_To_Address_Suburb).ljust(30)
     postal_code = str(booking.de_To_Address_PostalCode).ljust(4)
     consignment_num = str(v_FPBookingNumber).ljust(12)
     product_code = str(booking.vx_serviceName)
     freight_item_id = consignment_num + product_code + item_index
-    payer_account = str('').ljust(8)
-    sender_account = (FP_CREDENTIALS['startrack'][booking.b_client_name.lower()][booking.b_client_warehouse_code]['accountCode']).ljust(8)
+    payer_account = str("").ljust(8)
+    sender_account = (
+        FP_CREDENTIALS["startrack"][booking.b_client_name.lower()][
+            booking.b_client_warehouse_code
+        ]["accountCode"]
+    ).ljust(8)
     consignment_quantity = str(booking_line.e_qty).ljust(4)
     consignment_weight = str(math.ceil(booking_line.e_Total_KG_weight)).ljust(5)
     consignment_cube = str(number_format(round(totalCubic, 3))).ljust(5)
@@ -158,40 +170,48 @@ def gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, to
     else:
         despatch_date = booking.puPickUpAvailFrom_Date.strftime("%Y%m%d")
     receiver_name1 = str(booking.de_to_Contact_F_LName or "").ljust(40)
-    receiver_name2 = str("" if booking.deToCompanyName == booking.de_to_Contact_F_LName else (booking.deToCompanyName or "")).ljust(40)
-    unit_type = str("CTN" if len(booking_line.e_type_of_packaging or "") != 3 else booking_line.e_type_of_packaging)
-    destination_depot = str(location_info['R2'] or "").ljust(4)
+    receiver_name2 = str(
+        ""
+        if booking.deToCompanyName == booking.de_to_Contact_F_LName
+        else (booking.deToCompanyName or "")
+    ).ljust(40)
+    unit_type = str(
+        "CTN"
+        if len(booking_line.e_type_of_packaging or "") != 3
+        else booking_line.e_type_of_packaging
+    )
+    destination_depot = str(location_info["R2"] or "").ljust(4)
     receiver_address1 = str(booking.de_To_Address_Street_1).ljust(40)
     receiver_address2 = str("").ljust(40)
     receiver_phone = str(booking.de_to_Phone_Main).ljust(14)
     dangerous_goods_indicator = "Y" if booking_line.e_dangerousGoods == True else "N"
-    movement_type_indicator = 'N'
-    not_before_date = str('').ljust(12)
-    not_after_date = str('').ljust(12)
+    movement_type_indicator = "N"
+    not_before_date = str("").ljust(12)
+    not_after_date = str("").ljust(12)
     atl_number = str(atl_number).ljust(10)
-    rl_number = str('').ljust(10)
+    rl_number = str("").ljust(10)
 
-    label_code = (
-        f"{receiver_suburb}{postal_code}{consignment_num}{freight_item_id}{product_code}{payer_account}{sender_account}{consignment_quantity}{consignment_weight}{consignment_cube}{despatch_date}{receiver_name1}{receiver_name2}{unit_type}{destination_depot}{receiver_address1}{receiver_address2}{receiver_phone}{dangerous_goods_indicator}{movement_type_indicator}{not_before_date}{not_after_date}{atl_number}{rl_number}"
-    )
+    label_code = f"{receiver_suburb}{postal_code}{consignment_num}{freight_item_id}{product_code}{payer_account}{sender_account}{consignment_quantity}{consignment_weight}{consignment_cube}{despatch_date}{receiver_name1}{receiver_name2}{unit_type}{destination_depot}{receiver_address1}{receiver_address2}{receiver_phone}{dangerous_goods_indicator}{movement_type_indicator}{not_before_date}{not_after_date}{atl_number}{rl_number}"
     logger.info(label_code)
     return label_code
 
+
 def number_format(num):
     return str(round(num * 1000))
+
 
 def gen_ArticleBarcode(booking, v_FPBookingNumber, item_no=0):
     service_name = str(booking.vx_serviceName)
     item_index = str(item_no).zfill(5)
 
-    label_code = (
-        f"{v_FPBookingNumber}{service_name}{item_index}"
-    )
+    label_code = f"{v_FPBookingNumber}{service_name}{item_index}"
 
     return label_code
 
+
 def get_serviceName(temp):
-    return 'PRM' if temp == 'FPP' else temp
+    return "PRM" if temp == "FPP" else temp
+
 
 def get_ATL_number(booking):
     freight_provider = Fp_freight_providers.objects.filter(
@@ -201,13 +221,14 @@ def get_ATL_number(booking):
     freight_provider.update(last_atl_number=last_atl_number + 1)
     return f"C{str(freight_provider.first().last_atl_number).zfill(9)}"
 
+
 def build_label(
     booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
 ):
     logger.info(
         f"#110 [{booking.vx_freight_provider} LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
-    v_FPBookingNumber = booking.v_FPBookingNumber 
+    v_FPBookingNumber = booking.v_FPBookingNumber
     # if booking.v_FPBookingNumber else gen_consignment_num(
     #     booking.vx_freight_provider, booking.b_bookingID_Visual
     # )
@@ -313,7 +334,11 @@ def build_label(
     dme_img = Image(dme_logo, 28 * mm, 7.7 * mm)
 
     fp_logo = "./static/assets/logos/startrack.png"
-    fp_img = Image(fp_logo, float(label_settings["label_image_size_width"]) * (2.5 / 10) * mm, 6 * mm)
+    fp_img = Image(
+        fp_logo,
+        float(label_settings["label_image_size_width"]) * (2.5 / 10) * mm,
+        6 * mm,
+    )
 
     fp_color_code = (
         Fp_freight_providers.objects.get(
@@ -349,7 +374,7 @@ def build_label(
             booking_line.e_dimUOM,
             booking_line.e_qty,
         )
-    
+
     if sscc:
         j = 1 + label_index
 
@@ -360,26 +385,39 @@ def build_label(
             if one_page_label and k > 0:
                 continue
             t1_w = float(label_settings["label_image_size_width"]) / 10 * mm
-            locations = pd.read_excel (r'./static/startrack_rt1_rt2_LOCATION-20210606.xlsx')
+            locations = pd.read_excel(
+                "./static/assets/xlsx/startrack_rt1_rt2_LOCATION-20210606.xls"
+            )
             location_info = {}
             for index in range(len(locations)):
-                if(str(locations['Postcode'][index]) == str(booking.de_To_Address_PostalCode) and str(locations['Suburb'][index].lower() == str(booking.de_To_Address_Suburb or "").lower())):
-                    if booking.vx_serviceName == 'EXP':
+                if str(locations["Postcode"][index]) == str(
+                    booking.de_To_Address_PostalCode
+                ) and str(
+                    locations["Suburb"][index].lower()
+                    == str(booking.de_To_Address_Suburb or "").lower()
+                ):
+                    if booking.vx_serviceName == "EXP":
                         location_info = {
-                            'R1': locations['Primary Port'][index],
-                            'R2': locations['Nearest Depot'][index],                            
+                            "R1": locations["Primary Port"][index],
+                            "R2": locations["Nearest Depot"][index],
                         }
                     else:
                         location_info = {
-                            'R1': locations['Primary Port'][index],
-                            'R2': locations['Seconday Port'][index],
+                            "R1": locations["Primary Port"][index],
+                            "R2": locations["Seconday Port"][index],
                         }
 
             prd_data = Table(
                 [
                     [
                         Paragraph(
-                            "<font color='%s'><b>%s</b></font>" %(colors.black if booking.vx_serviceName == 'EXP' else colors.white, get_serviceName(booking.vx_serviceName)),
+                            "<font color='%s'><b>%s</b></font>"
+                            % (
+                                colors.black
+                                if booking.vx_serviceName == "EXP"
+                                else colors.white,
+                                get_serviceName(booking.vx_serviceName),
+                            ),
                             style_PRD,
                         ),
                     ],
@@ -388,7 +426,11 @@ def build_label(
                 rowHeights=[11 * mm],
                 style=[
                     *tableStyle,
-                    *([] if booking.vx_serviceName == 'EXP' else [('BACKGROUND', (0, 0), (-1, -1), "black")]),
+                    *(
+                        []
+                        if booking.vx_serviceName == "EXP"
+                        else [("BACKGROUND", (0, 0), (-1, -1), "black")]
+                    ),
                 ],
             )
             data = [
@@ -400,28 +442,28 @@ def build_label(
                     [
                         Table(
                             [
-                            [
-                                Spacer(1,4),
+                                [
+                                    Spacer(1, 4),
+                                ],
+                                [
+                                    Paragraph(
+                                        "<b>CONNOTE:</b>",
+                                        style_left,
+                                    ),
+                                ],
+                                [
+                                    Paragraph(
+                                        "<b>%s</b>" % (v_FPBookingNumber),
+                                        style_left,
+                                    ),
+                                ],
                             ],
-                            [
-                                Paragraph(
-                                    "<b>CONNOTE:</b>",
-                                    style_left,
-                                ),
-                            ],
-                            [
-                                Paragraph(
-                                    "<b>%s</b>"                            
-                                    % (v_FPBookingNumber),
-                                    style_left,
-                                ),
-                            ],],
-                            rowHeights=[4,10,10],
+                            rowHeights=[4, 10, 10],
                             style=[
                                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                             ],
                         )
-                    ],                    
+                    ],
                     [
                         Paragraph(
                             "<b>AUTHORITY TO LEAVE</b>",
@@ -429,12 +471,12 @@ def build_label(
                         ),
                         code128.Code128(
                             atl_number,
-                            barHeight= 9* mm,
+                            barHeight=9 * mm,
                             barWidth=0.9,
                             humanReadable=False,
                         ),
                         Paragraph(
-                            "<font size=%s> <b>%s</b> </font>"                            
+                            "<font size=%s> <b>%s</b> </font>"
                             % (label_settings["font_size_medium"], atl_number),
                             style_center,
                         ),
@@ -445,27 +487,40 @@ def build_label(
                         Table(
                             [
                                 [
-                                    Paragraph('<font size=%s>TO: </font>'
-                                    % (
-                                        label_settings["font_size_large"],
-                                    ), style_left_large),
-                                    Paragraph('<font size=%s>%s %s <br/> %s %s <br/> %s %s %s </font>'
-                                    % (
-                                        label_settings["font_size_large"],
-                                        booking.de_to_Contact_F_LName or "",
-                                        "" if booking.de_to_Contact_F_LName == booking.deToCompanyName else (booking.deToCompanyName or ""),
-                                        booking.de_To_Address_Street_1 or "",
-                                        ("<br/>" + booking.de_To_Address_Street_2) if booking.de_To_Address_Street_2 else "",
-                                        booking.de_To_Address_Suburb or "",
-                                        booking.de_To_Address_State or "",
-                                        booking.de_To_Address_PostalCode or "",
-                                    ), style_left_large),
+                                    Paragraph(
+                                        "<font size=%s>TO: </font>"
+                                        % (label_settings["font_size_large"],),
+                                        style_left_large,
+                                    ),
+                                    Paragraph(
+                                        "<font size=%s>%s %s <br/> %s %s <br/> %s %s %s </font>"
+                                        % (
+                                            label_settings["font_size_large"],
+                                            booking.de_to_Contact_F_LName or "",
+                                            ""
+                                            if booking.de_to_Contact_F_LName
+                                            == booking.deToCompanyName
+                                            else (booking.deToCompanyName or ""),
+                                            booking.de_To_Address_Street_1 or "",
+                                            ("<br/>" + booking.de_To_Address_Street_2)
+                                            if booking.de_To_Address_Street_2
+                                            else "",
+                                            booking.de_To_Address_Suburb or "",
+                                            booking.de_To_Address_State or "",
+                                            booking.de_To_Address_PostalCode or "",
+                                        ),
+                                        style_left_large,
+                                    ),
                                 ],
                             ],
-                            colWidths=[30, float(label_settings["label_image_size_width"]) * mm - 40],
+                            colWidths=[
+                                30,
+                                float(label_settings["label_image_size_width"]) * mm
+                                - 40,
+                            ],
                             style=[
                                 *tableStyle,
-                                ('LEFTPADDING',(0,0),(-1,-1), 2),
+                                ("LEFTPADDING", (0, 0), (-1, -1), 2),
                                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                             ],
                         )
@@ -475,19 +530,31 @@ def build_label(
                 ],
                 [
                     Table(
-                        [[
-                            Paragraph("<b>PH: %s</b>" %(booking.de_to_Phone_Main or ""), style_left),
-                            Paragraph("<b>%s</b>" %(booking.de_To_Address_Suburb or ""), style_extra_large),
-                            Paragraph("<b>%s</b>" %(booking.de_To_Address_PostalCode or ""), style_right),
-                        ]],
+                        [
+                            [
+                                Paragraph(
+                                    "<b>PH: %s</b>" % (booking.de_to_Phone_Main or ""),
+                                    style_left,
+                                ),
+                                Paragraph(
+                                    "<b>%s</b>" % (booking.de_To_Address_Suburb or ""),
+                                    style_extra_large,
+                                ),
+                                Paragraph(
+                                    "<b>%s</b>"
+                                    % (booking.de_To_Address_PostalCode or ""),
+                                    style_right,
+                                ),
+                            ]
+                        ],
                         colWidths=[t1_w * 2.5, t1_w * 5.5, t1_w * 2],
                         rowHeights=[8 * mm],
                         style=[
                             *tableStyle,
-                            ('LEFTPADDING',(0,0),(-1,-1), 2),
-                            ('RIGHTPADDING',(0,0),(-1,-1), 2),
-                            ('LINEBEFORE', (1,0), (1,0), 0.25, colors.black),
-                            ('LINEAFTER', (1,1), (1,1), 0.25, colors.black),
+                            ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                            ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                            ("LINEBEFORE", (1, 0), (1, 0), 0.25, colors.black),
+                            ("LINEAFTER", (1, 1), (1, 1), 0.25, colors.black),
                             ("VALIGN", (0, 0), (-1, -1), "TOP"),
                         ],
                     ),
@@ -503,10 +570,10 @@ def build_label(
                 rowHeights=[17 * mm, 19 * mm, 8 * mm],
                 style=[
                     *tableStyle,
-                    ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
-                    ('BOX', (0,0), (-1,-1), 0.25, colors.black),
-                    ('SPAN',(0,1),(-1,1)),
-                    ('SPAN',(0,2),(-1,2)),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.black),
+                    ("BOX", (0, 0), (-1, -1), 0.25, colors.black),
+                    ("SPAN", (0, 1), (-1, 1)),
+                    ("SPAN", (0, 2), (-1, 2)),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ],
@@ -515,9 +582,19 @@ def build_label(
 
             tbl_data = [
                 [
-                    Paragraph("<b>%s</b>" %("AU"), style_extra_large),
-                    Paragraph("<b>%s</b>" %('' if booking.vx_serviceName == 'EXP' else (location_info['R1'] or "")), style_extra_large),
-                    Paragraph("<b>%s</b>" %(location_info['R2'] or ""), style_extra_large),
+                    Paragraph("<b>%s</b>" % ("AU"), style_extra_large),
+                    Paragraph(
+                        "<b>%s</b>"
+                        % (
+                            ""
+                            if booking.vx_serviceName == "EXP"
+                            else (location_info["R1"] or "")
+                        ),
+                        style_extra_large,
+                    ),
+                    Paragraph(
+                        "<b>%s</b>" % (location_info["R2"] or ""), style_extra_large
+                    ),
                     Paragraph("<b></b>", style_extra_large),
                 ],
             ]
@@ -534,11 +611,19 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(4,4))
+            Story.append(Spacer(4, 4))
 
             barcode = gen_ReceiverBarcode(booking, location_info)
 
-            qrCodeString = gen_QRcodeString(booking, booking_line, location_info, v_FPBookingNumber, totalCubic, atl_number, j)
+            qrCodeString = gen_QRcodeString(
+                booking,
+                booking_line,
+                location_info,
+                v_FPBookingNumber,
+                totalCubic,
+                atl_number,
+                j,
+            )
             d = Drawing(36 * mm, 34 * mm)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
             d.add(QrCodeWidget(value=qrCodeString, barWidth=36 * mm, barHeight=36 * mm))
@@ -556,7 +641,7 @@ def build_label(
                                 ),
                             ],
                             [
-                                Paragraph('<b>%s</b>' %(barcode), style_center),
+                                Paragraph("<b>%s</b>" % (barcode), style_center),
                             ],
                         ],
                         colWidths=(t1_w * 6),
@@ -589,17 +674,25 @@ def build_label(
                         Table(
                             [
                                 [
-                                    Paragraph('FROM: ', style_left_small),
-                                    Paragraph('%s<br/> %s %s <br/> %s %s %s'
-                                    % (
-                                        booking.puCompany or "",
-                                        booking.pu_Address_Street_1 or "",
-                                        ("<br/>" + booking.pu_Address_street_2) if booking.pu_Address_street_2 else "",
-                                        booking.pu_Address_Suburb or "",
-                                        booking.pu_Address_State or "",
-                                        booking.pu_Address_PostalCode or "",
-                                    ), style_left_small),
-                                    Paragraph('PH:   %s' %(booking.pu_Phone_Main), style_left_small),
+                                    Paragraph("FROM: ", style_left_small),
+                                    Paragraph(
+                                        "%s<br/> %s %s <br/> %s %s %s"
+                                        % (
+                                            booking.puCompany or "",
+                                            booking.pu_Address_Street_1 or "",
+                                            ("<br/>" + booking.pu_Address_street_2)
+                                            if booking.pu_Address_street_2
+                                            else "",
+                                            booking.pu_Address_Suburb or "",
+                                            booking.pu_Address_State or "",
+                                            booking.pu_Address_PostalCode or "",
+                                        ),
+                                        style_left_small,
+                                    ),
+                                    Paragraph(
+                                        "PH:   %s" % (booking.pu_Phone_Main),
+                                        style_left_small,
+                                    ),
                                 ],
                             ],
                             colWidths=[t1_w, t1_w * 6, t1_w * 3],
@@ -613,51 +706,98 @@ def build_label(
                         Table(
                             [
                                 [
-                                    Paragraph('<b>%s<br/> %s <br/> %s <br/></b>' %(booking.b_clientReference_RA_Numbers, "", ""), style_left_small),
-                                    Paragraph('BOOK-IN<br/> NOT BEFORE: %s <br/> NOT AFTER: %s'
-                                    % (
-                                        "",
-                                        "",
-                                    ), style_left_small),
+                                    Paragraph(
+                                        "<b>%s<br/> %s <br/> %s <br/></b>"
+                                        % (
+                                            booking.b_clientReference_RA_Numbers,
+                                            "",
+                                            "",
+                                        ),
+                                        style_left_small,
+                                    ),
+                                    Paragraph(
+                                        "BOOK-IN<br/> NOT BEFORE: %s <br/> NOT AFTER: %s"
+                                        % (
+                                            "",
+                                            "",
+                                        ),
+                                        style_left_small,
+                                    ),
                                 ],
                                 [
                                     Table(
                                         [
                                             [
-                                                Paragraph('DATE: %s'
-                                                %(
-                                                    booking.b_dateBookedDate.strftime("%d/%m/%Y") if booking.b_dateBookedDate else booking.puPickUpAvailFrom_Date.strftime("%d/%m/%Y"),
-                                                ), style_left_small),
-                                                Paragraph('UNIT: %s'
-                                                %(
-                                                    str("CTN" if len(booking_line.e_type_of_packaging or "") != 3 else booking_line.e_type_of_packaging),
-                                                ), style_left_small),
-                                                Paragraph('ITEM %s OF %s'
-                                                %(
-                                                    j,
-                                                    totalQty,
-                                                ), style_left_small),
-                                                Paragraph('WEIGHT: %skg'
-                                                %(
-                                                    round(booking_line.e_Total_KG_weight, 0),
-                                                ), style_left_small),
-                                                Paragraph('CUBE: %s'
-                                                %(
-                                                    round(totalCubic, 3),
-                                                ), style_left_small),
+                                                Paragraph(
+                                                    "DATE: %s"
+                                                    % (
+                                                        booking.b_dateBookedDate.strftime(
+                                                            "%d/%m/%Y"
+                                                        )
+                                                        if booking.b_dateBookedDate
+                                                        else booking.puPickUpAvailFrom_Date.strftime(
+                                                            "%d/%m/%Y"
+                                                        ),
+                                                    ),
+                                                    style_left_small,
+                                                ),
+                                                Paragraph(
+                                                    "UNIT: %s"
+                                                    % (
+                                                        str(
+                                                            "CTN"
+                                                            if len(
+                                                                booking_line.e_type_of_packaging
+                                                                or ""
+                                                            )
+                                                            != 3
+                                                            else booking_line.e_type_of_packaging
+                                                        ),
+                                                    ),
+                                                    style_left_small,
+                                                ),
+                                                Paragraph(
+                                                    "ITEM %s OF %s"
+                                                    % (
+                                                        j,
+                                                        totalQty,
+                                                    ),
+                                                    style_left_small,
+                                                ),
+                                                Paragraph(
+                                                    "WEIGHT: %skg"
+                                                    % (
+                                                        round(
+                                                            booking_line.e_Total_KG_weight,
+                                                            0,
+                                                        ),
+                                                    ),
+                                                    style_left_small,
+                                                ),
+                                                Paragraph(
+                                                    "CUBE: %s"
+                                                    % (round(totalCubic, 3),),
+                                                    style_left_small,
+                                                ),
                                             ]
                                         ],
-                                        colWidths=[t1_w *2.25, t1_w *1.5, t1_w *2.25, t1_w *2.25, t1_w *1.75],
+                                        colWidths=[
+                                            t1_w * 2.25,
+                                            t1_w * 1.5,
+                                            t1_w * 2.25,
+                                            t1_w * 2.25,
+                                            t1_w * 1.75,
+                                        ],
                                         style=tableStyle,
-                                    ),                                    
+                                    ),
                                     "",
-                                ]
+                                ],
                             ],
                             colWidths=[t1_w * 6, t1_w * 4],
                             style=[
                                 *tableStyle,
                                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                                ('SPAN',(0,1),(-1,1)),
+                                ("SPAN", (0, 1), (-1, 1)),
                             ],
                         ),
                     ],
@@ -667,12 +807,12 @@ def build_label(
                 style=[
                     *tableStyle,
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
-                    ('BOX', (0,0), (-1,-1), 0.25, colors.black),
-                    ('LEFTPADDING',(0,0),(-1,-1), 2),
-                    ('RIGHTPADDING',(0,0),(-1,-1), 2),
-                    ('ABOVEPADDING',(0,0),(-1,-1), 2),
-                    ('BOTTOMPADDING',(0,0),(-1,-1), 4),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.black),
+                    ("BOX", (0, 0), (-1, -1), 0.25, colors.black),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                    ("ABOVEPADDING", (0, 0), (-1, -1), 2),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
                 ],
             )
 
@@ -691,8 +831,8 @@ def build_label(
                     ),
                 ],
                 [
-                  Paragraph('<b>Article ID:%s</b>' %(barcode), style_center),  
-                ]
+                    Paragraph("<b>Article ID:%s</b>" % (barcode), style_center),
+                ],
             ]
 
             barcode_table = Table(

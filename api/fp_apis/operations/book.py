@@ -213,6 +213,7 @@ def book(fp_name, booking, booker):
                         email_template_name = "Return Booking"
 
                     send_booking_status_email(booking.pk, email_template_name, booker)
+
             # Save Label for Startrack and AusPost
             elif _fp_name in ["startrack", "auspost"] and is_get_label:
                 api_bcl.create(booking, json_data["items"])
