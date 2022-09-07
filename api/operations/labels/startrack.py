@@ -27,7 +27,6 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 
 from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
-from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS
 from api.operations.api_booking_confirmation_lines import index as api_bcl
 
@@ -229,9 +228,6 @@ def build_label(
         f"#110 [{booking.vx_freight_provider} LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
     v_FPBookingNumber = booking.v_FPBookingNumber
-    # if booking.v_FPBookingNumber else gen_consignment_num(
-    #     booking.vx_freight_provider, booking.b_bookingID_Visual
-    # )
 
     # start check if pdfs folder exists
     if not os.path.exists(filepath):

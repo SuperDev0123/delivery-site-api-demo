@@ -281,7 +281,7 @@ def get_book_payload(booking, fp_name):
     maxHeight = 0
     maxWidth = 0
     maxLength = 0
-    if booking.b_client_warehouse_code in ["BIO - HTW", "BIO - FDM"]:
+    if booking.b_client_warehouse_code in ["BIO - RIC", "BIO - FDM"]:
         consignment_id = gen_consignment_num("startrack", None, None, booking)
 
     sequence = 0
@@ -310,7 +310,7 @@ def get_book_payload(booking, fp_name):
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )
 
-                if booking.b_client_warehouse_code in ["BIO - HTW", "BIO - FDM"]:
+                if booking.b_client_warehouse_code in ["BIO - RIC", "BIO - FDM"]:
                     sequence_no = str(sequence + 1).zfill(5)
                     article_id = f"{consignment_id}{item['itemId']}{sequence_no}"
                     barcode_id = article_id
