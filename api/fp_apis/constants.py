@@ -126,7 +126,7 @@ FP_CREDENTIALS = {
                 "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
                 "accountPassword": "x81775935aece65541c9",
             },
-            "BIO - HTW": {
+            "BIO - RIC": {
                 "accountCode": "10160226",
                 "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
                 "accountPassword": "x81775935aece65541c9",
@@ -315,4 +315,4 @@ SPECIAL_FPS = [
 ]
 
 # security header for DME_NODE
-HEADER_FOR_NODE = {'X-SECURITY-TOKEN': 'DELIVER-ME-API'}
+HEADER_FOR_NODE = {"X-SECURITY-TOKEN": "DELIVER-ME-API"}
