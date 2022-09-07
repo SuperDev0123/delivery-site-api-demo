@@ -25,7 +25,7 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
-from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
+from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers, Bookings
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS
@@ -130,7 +130,7 @@ def myLaterPages(canvas, doc):
     canvas.restoreState()
 
 def gen_ReceiverBarcode(booking, location_info):
-    service_name = str(booking.vx_serviceName)
+    service_name = str(get_serviceName(booking.vx_serviceName))
     postal_code = str(booking.de_To_Address_PostalCode)
     depote_code = str(location_info['R1'] or "")
 
@@ -199,7 +199,7 @@ def get_ATL_number(booking):
     )
     last_atl_number = freight_provider.first().last_atl_number
     freight_provider.update(last_atl_number=last_atl_number + 1)
-    return f"C{str(freight_provider.first().last_atl_number).zfill(9)}"
+    return last_atl_number + 1
 
 def build_label(
     booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
@@ -352,11 +352,13 @@ def build_label(
     
     if sscc:
         j = 1 + label_index
-
+    atl_number = get_ATL_number(booking)
+    Bookings.objects.filter(
+        id=booking.id
+    ).update(fp_atl_number=atl_number)
+    atl_number = f"C{str(atl_number).zfill(9)}"
     for booking_line in lines:
         for k in range(booking_line.e_qty):
-            atl_number = get_ATL_number(booking)
-            logger.info(f"#gees ges {atl_number}")
             if one_page_label and k > 0:
                 continue
             t1_w = float(label_settings["label_image_size_width"]) / 10 * mm
@@ -647,7 +649,7 @@ def build_label(
                                                 ), style_left_small),
                                             ]
                                         ],
-                                        colWidths=[t1_w *2.25, t1_w *1.5, t1_w *2.25, t1_w *2.25, t1_w *1.75],
+                                        colWidths=[t1_w *2.25, t1_w *1.45, t1_w *2.05, t1_w *2.5, t1_w *1.75],
                                         style=tableStyle,
                                     ),                                    
                                     "",

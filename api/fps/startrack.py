@@ -10,4 +10,4 @@ def gen_consignment(booking):
         prefix = "BBB"
         return f"{prefix}Z1{str(warehouse.connote_number).zfill(7)}"
     else:
-        return ""
+        return booking.v_FPBookingNumber
