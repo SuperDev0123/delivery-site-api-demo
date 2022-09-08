@@ -4606,6 +4606,13 @@ def build_label(request):
             status_history.create(booking, "Picked", request.user.username)
 
         booking.save()
+
+        # BioPak: update with json
+        if (
+            booking.b_client_name.lower() == "biopak"
+            and booking.b_client_warehouse_code in ["BIO - RIC"]
+        ):
+            update_biopak_with_booked_booking(booking.pk)
     except Exception as e:
         trace_error.print()
         logger.error(f"{LOG_ID} Error: {str(e)}")

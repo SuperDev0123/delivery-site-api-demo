@@ -6,6 +6,7 @@ from django.conf import settings
 
 from api.models import Bookings
 from api.common import sftp, trace_error
+from api.clients.biopak.index import reprint_label
 
 if settings.ENV == "local":
     production = False  # Local
@@ -27,6 +28,15 @@ sftp_server_infos = {
 
 
 def build_json(booking):
+    label = None
+
+    if booking.b_client_warehouse_code in ["BIO - RIC"]:
+        params = {"clientReferences": booking.b_clientReference_RA_Numbers}
+        result = reprint_label(params)
+
+        if result["success"]:
+            label = result["labels"][0]
+
     json_content = {
         "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
         "consignment_number": booking.v_FPBookingNumber,
@@ -36,6 +46,7 @@ def build_json(booking):
         "warehouse_code": booking.fk_client_warehouse.client_warehouse_code,
         "freight_provider": booking.vx_freight_provider,
         "shipment_id": booking.fk_fp_pickup_id,
+        "label": label,
     }
 
     return json.dumps(json_content)

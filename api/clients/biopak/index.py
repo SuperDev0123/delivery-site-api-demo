@@ -36,7 +36,6 @@ def reprint_label(params, client):
     for booking in bookings:
         booking_lines = []
         label = {"reference": booking.b_clientReference_RA_Numbers}
-        label[booking.b_clientReference_RA_Numbers] = {}
 
         # Get each line's label
         label_lines = []
