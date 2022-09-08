@@ -3,7 +3,6 @@ import uuid
 import asyncio
 import logging
 import requests
-import nest_asyncio
 from datetime import datetime, date
 from base64 import b64encode
 
@@ -294,7 +293,6 @@ def scanned(payload):
         booking.save()
 
         # Get quote in background
-        nest_asyncio.apply()
         asyncio.run(get_quote(booking))
 
         # Build built-in label with SSCC - one sscc should have one page label

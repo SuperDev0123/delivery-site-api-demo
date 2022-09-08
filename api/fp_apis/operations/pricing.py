@@ -1,6 +1,7 @@
 import json
 import logging
 import asyncio
+import nest_asyncio
 import requests_async
 from datetime import datetime
 
@@ -320,6 +321,12 @@ def _loop_process(
     de_zones,
     client_fps,
 ):
+    try:
+        loop = asyncio.get_event_loop()
+        nest_asyncio.apply()
+    except RuntimeError as ex:
+        pass
+
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
