@@ -1,5 +1,6 @@
 import json
 import uuid
+import asyncio
 import logging
 import requests
 from datetime import datetime, date
@@ -128,6 +129,61 @@ def push_webhook(data):
     return None
 
 
+async def get_quote(booking):
+    LOG_ID = "[ASYNC RE-QUOTE]"
+    new_fc_log = FC_Log.objects.create(
+        client_booking_id=booking.b_client_booking_ref_num,
+        old_quote=booking.api_booking_quote,
+    )
+    new_fc_log.save()
+    logger.info(f"#371 {LOG_ID} {booking.b_bookingID_Visual} - Getting Quotes again...")
+    _, success, message, quotes = pricing_oper(
+        body=None,
+        booking_id=booking.pk,
+        is_pricing_only=False,
+        packed_statuses=[Booking_lines.SCANNED_PACK],
+    )
+    logger.info(
+        f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
+    )
+
+    # Select best quotes(fastest, lowest)
+    if quotes.exists() and quotes.count() > 0:
+        quotes = quotes.filter(packed_status=Booking_lines.SCANNED_PACK)
+
+        if booking.booking_type == "DMEM":
+            quotes = quotes.filter(
+                freight_provider__iexact=booking.vx_freight_provider,
+                service_name=booking.vx_serviceName,
+            )
+
+        best_quotes = select_best_options(pricings=quotes)
+        logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
+
+        if best_quotes:
+            set_booking_quote(booking, best_quotes[0])
+            new_fc_log.new_quote = booking.api_booking_quote
+            new_fc_log.save()
+        else:
+            set_booking_quote(booking, None)
+    else:
+        message = f"#521 {LOG_ID} SCAN with No Pricing! Order Number: {booking.b_client_order_num}"
+        logger.error(message)
+
+        if booking.b_client_order_num:
+            send_email_to_admins("No FC result", message)
+
+    # Build label with Line
+    if not booking.api_booking_quote:
+        logger.error(
+            f"{LOG_ID} {booking.b_bookingID_Visual} Booking doens`t have quote."
+        )
+        raise Exception("Booking doens't have quote.")
+
+    if not booking.vx_freight_provider and booking.api_booking_quote:
+        _booking = set_booking_quote(booking, booking.api_booking_quote)
+
+
 def scanned(payload):
     """
     called as get_label
@@ -236,56 +292,8 @@ def scanned(payload):
         booking.puPickUpAvailFrom_Date = next_biz_day
         booking.save()
 
-        new_fc_log = FC_Log.objects.create(
-            client_booking_id=booking.b_client_booking_ref_num,
-            old_quote=booking.api_booking_quote,
-        )
-        new_fc_log.save()
-        logger.info(
-            f"#371 {LOG_ID} {booking.b_bookingID_Visual} - Getting Quotes again..."
-        )
-        _, success, message, quotes = pricing_oper(
-            body=None,
-            booking_id=booking.pk,
-            is_pricing_only=False,
-            packed_statuses=[Booking_lines.SCANNED_PACK],
-        )
-        logger.info(
-            f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
-        )
-
-        # Select best quotes(fastest, lowest)
-        if quotes.exists() and quotes.count() > 0:
-            quotes = quotes.filter(packed_status=Booking_lines.SCANNED_PACK)
-
-            if booking.booking_type == "DMEM":
-                quotes = quotes.filter(
-                    freight_provider__iexact=booking.vx_freight_provider,
-                    service_name=booking.vx_serviceName,
-                )
-
-            best_quotes = select_best_options(pricings=quotes)
-            logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
-
-            if best_quotes:
-                set_booking_quote(booking, best_quotes[0])
-                new_fc_log.new_quote = booking.api_booking_quote
-                new_fc_log.save()
-            else:
-                set_booking_quote(booking, None)
-        else:
-            message = f"#521 {LOG_ID} SCAN with No Pricing! Order Number: {booking.b_client_order_num}"
-            logger.error(message)
-
-            if booking.b_client_order_num:
-                send_email_to_admins("No FC result", message)
-
-        # Build label with Line
-        if not booking.api_booking_quote:
-            raise Exception("Booking doens't have quote.")
-
-        if not booking.vx_freight_provider and booking.api_booking_quote:
-            _booking = set_booking_quote(booking, booking.api_booking_quote)
+        # Get quote in background
+        asyncio.run(get_quote(booking))
 
         # Build built-in label with SSCC - one sscc should have one page label
         label_urls = []

@@ -5,7 +5,6 @@ import json
 import logging
 import requests
 import zipfile
-import asyncio
 from datetime import datetime, date, timedelta
 from base64 import b64decode, b64encode
 
