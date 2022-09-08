@@ -1,6 +1,5 @@
 import json
 import uuid
-import threading
 import logging
 import requests
 from datetime import datetime, date
@@ -31,6 +30,7 @@ from api.operations.labels.index import build_label as build_label_oper
 from api.operations.manifests.index import build_manifest as build_manifest_oper
 from api.operations.labels.index import get_barcode
 from api.common.booking_quote import set_booking_quote
+from api.common.thread import background
 from api.common import (
     common_times as dme_time_lib,
     constants as dme_constants,
@@ -127,18 +127,6 @@ def push_webhook(data):
             send_email_to_admins("No BOK_1", message)
 
     return None
-
-
-def background(f):
-    """
-    a threading decorator
-    use @background above the function you want to run in the background
-    """
-
-    def backgrnd_func(*a, **kw):
-        threading.Thread(target=f, args=a, kwargs=kw).start()
-
-    return backgrnd_func
 
 
 @background
