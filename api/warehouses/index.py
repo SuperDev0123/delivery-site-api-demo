@@ -153,10 +153,12 @@ def get_quote(booking):
         quotes = quotes.filter(packed_status=Booking_lines.SCANNED_PACK)
 
         if booking.booking_type == "DMEM":
-            quotes = quotes.filter(
-                freight_provider__iexact=booking.vx_freight_provider,
-                service_name=booking.vx_serviceName,
-            )
+            if booking.vx_freight_provider:
+                quotes = quotes.filter(
+                    freight_provider__iexact=booking.vx_freight_provider
+                )
+            if booking.vx_serviceName:
+                quotes = quotes.filter(service_name=booking.vx_serviceName)
 
         best_quotes = select_best_options(pricings=quotes)
         logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
