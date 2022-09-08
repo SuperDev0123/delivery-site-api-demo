@@ -35,10 +35,11 @@ def reprint_label(params, client):
 
     for booking in bookings:
         booking_lines = []
-        label = {}
+        label = {"reference": booking.b_clientReference_RA_Numbers}
         label[booking.b_clientReference_RA_Numbers] = {}
 
         # Get each line's label
+        label_lines = []
         for line in lines:
             if booking.pk_booking_id == line.fk_booking_id:
                 filename = (
@@ -52,15 +53,17 @@ def reprint_label(params, client):
                 label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/{filename}"
                 with open(label_url, "rb") as file:
                     pdf_data = str(b64encode(file.read()))[2:-1]
-                label[booking.b_clientReference_RA_Numbers][line.e_item] = pdf_data
+                label_line = {"itemid": line.e_item, "label_base64": pdf_data}
+                label_lines.append(label_line)
 
         if not item_description:
             # Get merged label
             label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
             with open(label_url, "rb") as file:
                 pdf_data = str(b64encode(file.read()))[2:-1]
-            label[booking.b_clientReference_RA_Numbers]["merged"] = pdf_data
+            label["merged"] = pdf_data
 
+        label["lines"] = label_lines
         labels.append(label)
 
     return {"success": True, "labels": labels}
