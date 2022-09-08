@@ -1,6 +1,6 @@
 import json
 import uuid
-import asyncio
+import threading
 import logging
 import requests
 from datetime import datetime, date
@@ -129,7 +129,20 @@ def push_webhook(data):
     return None
 
 
-async def get_quote(booking):
+def background(f):
+    """
+    a threading decorator
+    use @background above the function you want to run in the background
+    """
+
+    def backgrnd_func(*a, **kw):
+        threading.Thread(target=f, args=a, kwargs=kw).start()
+
+    return backgrnd_func
+
+
+@background
+def get_quote(booking):
     LOG_ID = "[ASYNC RE-QUOTE]"
     new_fc_log = FC_Log.objects.create(
         client_booking_id=booking.b_client_booking_ref_num,
@@ -293,7 +306,7 @@ def scanned(payload):
         booking.save()
 
         # Get quote in background
-        asyncio.run(get_quote(booking))
+        get_quote(booking)
 
         # Build built-in label with SSCC - one sscc should have one page label
         label_urls = []
