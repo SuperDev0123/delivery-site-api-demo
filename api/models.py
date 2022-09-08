@@ -1926,6 +1926,7 @@ class Bookings(models.Model):
     packed_status = models.CharField(
         max_length=16, default=None, null=True, choices=PACKED_STATUS_CHOICES
     )
+    fp_atl_number = models.IntegerField(default=0, blank=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
