@@ -392,7 +392,7 @@ def build_label(
                 continue
             t1_w = float(label_settings["label_image_size_width"]) / 10 * mm
             locations = pd.read_excel(
-                r"./static/startrack_rt1_rt2_LOCATION-20210606.xlsx"
+                r"./static/xlx/startrack_rt1_rt2_LOCATION-20210606.xls"
             )
             location_info = {}
             for index in range(len(locations)):
