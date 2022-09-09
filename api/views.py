@@ -4559,7 +4559,9 @@ def build_label(request):
                     _lines.append(line1)
 
             sscc_lines[line.sscc] = _lines
-    logger.info(f"{LOG_ID} \nsscc_list:{sscc_list}\nsscc_lines: {sscc_lines}")
+    logger.info(
+        f"{LOG_ID} \nsscc_list: {sscc_list}\nsscc_lines: {sscc_lines}\nTotal QTY: {total_qty}"
+    )
 
     try:
         # Build label with SSCC - one sscc should have one page label

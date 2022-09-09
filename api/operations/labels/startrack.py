@@ -365,9 +365,9 @@ def build_label(
     j = 1
 
     totalQty = sscc_cnt
-    totalQty = 0
-    for booking_line in lines:
-        totalQty = totalQty + booking_line.e_qty
+    # totalQty = 0
+    # for booking_line in lines:
+    #     totalQty = totalQty + booking_line.e_qty
 
     totalWeight = 0
     totalCubic = 0
