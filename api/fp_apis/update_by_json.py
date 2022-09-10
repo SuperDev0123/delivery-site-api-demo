@@ -4,7 +4,7 @@ import logging
 
 from django.conf import settings
 
-from api.models import Bookings
+from api.models import Bookings, DME_clients
 from api.common import sftp, trace_error
 from api.clients.biopak.index import reprint_label
 
@@ -32,7 +32,8 @@ def build_json(booking):
 
     if booking.b_client_warehouse_code in ["BIO - RIC"]:
         params = {"clientReferences": booking.b_clientReference_RA_Numbers}
-        result = reprint_label(params)
+        client = DME_clients.objects.get(company_name="BioPak")
+        result = reprint_label(params, client)
 
         if result["success"]:
             label = result["labels"][0]
