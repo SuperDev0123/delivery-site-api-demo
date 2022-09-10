@@ -4616,7 +4616,7 @@ def build_label(request):
         ):
             from api.fp_apis.update_by_json import update_biopak_with_booked_booking
 
-            update_biopak_with_booked_booking(booking.pk)
+            update_biopak_with_booked_booking(booking.pk, "label")
     except Exception as e:
         trace_error.print()
         logger.error(f"{LOG_ID} Error: {str(e)}")

@@ -227,11 +227,8 @@ def book(fp_name, booking, booker):
                     booking.save()
 
             # BioPak: update with json
-            if (
-                booking.b_client_name.lower() == "biopak"
-                and booking.b_client_warehouse_code not in ["BIO - RIC"]
-            ):
-                update_biopak_with_booked_booking(booking.pk)
+            if booking.b_client_name.lower() == "biopak":
+                update_biopak_with_booked_booking(booking.pk, "book")
 
             message = f"Successfully booked({booking.v_FPBookingNumber})"
             return True, message
