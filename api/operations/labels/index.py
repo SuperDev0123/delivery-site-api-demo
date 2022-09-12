@@ -55,14 +55,14 @@ def build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )
 
-        # Set consignment number
-        booking.v_FPBookingNumber = gen_consignment_num(
-            booking.vx_freight_provider,
-            booking.b_bookingID_Visual,
-            booking.kf_client_id,
-            booking,
-        )
-        booking.save()
+        # # Set consignment number
+        # booking.v_FPBookingNumber = gen_consignment_num(
+        #     booking.vx_freight_provider,
+        #     booking.b_bookingID_Visual,
+        #     booking.kf_client_id,
+        #     booking,
+        # )
+        # booking.save()
 
         return file_path, file_name
     except Exception as e:

@@ -9,8 +9,8 @@ from api.models import (
     Api_booking_confirmation_lines,
     API_booking_quotes,
 )
-from api.fp_apis.utils import get_status_category_from_status
-from api.operations.labels.index import build_label
+from api.fp_apis.utils import gen_consignment_num
+from api.operations.labels.index import build_label as build_label_oper
 from api.operations.pronto_xi.index import update_note as update_pronto_note
 from api.operations.genesis.index import create_shared_booking, update_shared_booking
 from api.operations.booking.quote import get_quote_again
@@ -258,21 +258,54 @@ def post_save_handler(instance, created, update_fields):
                 lines = Booking_lines.objects.filter(
                     fk_booking_id=instance.pk_booking_id,
                     is_deleted=False,
-                    sscc__isnull=False,
                 )
 
-                if lines.count() == 0:
-                    instance.z_label_url = None
-                    instance.save()
-                    logger.info(f"@369 {LOG_ID} No SSCC lines")
-                    return
+                for line in lines:
+                    if line.sscc and "NOSSCC_" in line.sscc:
+                        line.sscc = None
+                        line.save()
 
-                sscc_lines = {}
+                scanned_lines = []
+                for line in lines:
+                    if line.packed_status == "scanned":
+                        scanned_lines.append(line)
+
+                original_lines = []
+                for line in lines:
+                    if line.packed_status == "original":
+                        original_lines.append(line)
+
+                if instance.api_booking_quote:
+                    selected_lines = []
+
+                    for line in lines:
+                        if (
+                            line.packed_status
+                            == instance.api_booking_quote.packed_status
+                        ):
+                            selected_lines.append(line)
+
+                    lines = selected_lines
+                else:
+                    if scanned_lines:
+                        lines = scanned_lines
+                    else:
+                        lines = original_lines
+
+                # Populate SSCC if doesn't exist
+                for line in lines:
+                    if not line.sscc:
+                        line.sscc = f"NOSSCC_{instance.b_bookingID_Visual}_{line.pk}"
+                        line.save()
+
+                label_urls = []
                 sscc_list = []
-
+                sscc_lines = {}
+                total_qty = 0
                 for line in lines:
                     if line.sscc not in sscc_list:
                         sscc_list.append(line.sscc)
+                        total_qty += line.e_qty
                         _lines = []
 
                         for line1 in lines:
@@ -280,19 +313,29 @@ def post_save_handler(instance, created, update_fields):
                                 _lines.append(line1)
 
                         sscc_lines[line.sscc] = _lines
+                logger.info(
+                    f"{LOG_ID} \nsscc_list: {sscc_list}\nsscc_lines: {sscc_lines}\nTotal QTY: {total_qty}"
+                )
 
-                label_urls = []
-                for index, sscc in enumerate(sscc_list):
-                    file_path, file_name = build_label(
+                # Build label with SSCC - one sscc should have one page label
+                file_path = f"{settings.STATIC_PUBLIC}/pdfs/{instance.vx_freight_provider.lower()}_au"
+
+                label_index = 0
+                for sscc in sscc_list:
+                    logger.info(f"@368 - building label with SSCC...")
+                    file_path, file_name = build_label_oper(
                         booking=instance,
                         file_path=file_path,
                         lines=sscc_lines[sscc],
-                        label_index=index,
+                        label_index=label_index,
                         sscc=sscc,
-                        sscc_cnt=len(sscc_list),
+                        sscc_cnt=total_qty,
                         one_page_label=False,
                     )
-                    logger.info(f"@369 {LOG_ID} Built Label - {file_path}/{file_name}")
+                    label_urls.append(f"{file_path}/{file_name}")
+
+                    for _line in sscc_lines[sscc]:
+                        label_index += _line.e_qty
 
                 if label_urls:
                     entire_label_url = (
@@ -307,11 +350,18 @@ def post_save_handler(instance, created, update_fields):
             else:
                 _fp_name = instance.vx_freight_provider.lower()
                 file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
-                file_path, file_name = build_label(
+                file_path, file_name = build_label_oper(
                     booking=instance, file_path=file_path
                 )
                 instance.z_label_url = f"{_fp_name}_au/{file_name}"
 
+            # Set consignment number
+            instance.v_FPBookingNumber = gen_consignment_num(
+                instance.vx_freight_provider,
+                instance.b_bookingID_Visual,
+                instance.kf_client_id,
+                instance,
+            )
             instance.save()
         except Exception as e:
             trace_error.print()

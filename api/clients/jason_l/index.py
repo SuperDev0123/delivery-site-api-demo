@@ -1252,6 +1252,13 @@ def scanned(payload, client):
     if not booking.b_dateBookedDate and booking.b_status != "Picked":
         status_history.create(booking, "Picked", "jason_l")
 
+    # Set consignment number
+    booking.v_FPBookingNumber = gen_consignment_num(
+        booking.vx_freight_provider,
+        booking.b_bookingID_Visual,
+        booking.kf_client_id,
+        booking,
+    )
     booking.save()
 
     res_json = {"labelUrl": booking.z_label_url}
