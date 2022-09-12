@@ -738,8 +738,8 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Instruction: %s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_to_PickUp_Instructions_Address,
-                            booking.de_to_Pick_Up_Instructions_Contact,
+                            booking.de_to_PickUp_Instructions_Address or "",
+                            booking.de_to_Pick_Up_Instructions_Contact or "",
                         ),
                         style_left,
                     )
