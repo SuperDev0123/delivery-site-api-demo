@@ -8,7 +8,6 @@ from django.conf import settings
 from api.common import trace_error
 from api.common.build_object import Struct
 from api.common.convert_price import interpolate_gaps, apply_markups
-from api.common.booking_quote import set_booking_quote
 from api.serializers import ApiBookingQuotesSerializer
 from api.models import (
     Bookings,
@@ -210,7 +209,6 @@ def pricing(
 
         # Delete all pricing info if exist for this booking
         pk_booking_id = booking.pk_booking_id
-        # set_booking_quote(booking, None)
         # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
 
     if not booking.puPickUpAvailFrom_Date:
