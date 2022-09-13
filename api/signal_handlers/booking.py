@@ -184,27 +184,27 @@ def pre_save_handler(instance, update_fields):
 def post_save_handler(instance, created, update_fields):
     LOG_ID = "[BOOKING POST SAVE]"
 
-    if (
-        not created
-        and not instance.z_lock_status
-        and intersection(IMPORTANT_FIELDS, update_fields or [])
-        and instance.kf_client_id
-        != "461162D2-90C7-BF4E-A905-000000000004"  # Ignore when plum scans
-    ):
-        logger.info(f"{LOG_ID} Updated important field.")
+    # if (
+    #     not created
+    #     and not instance.z_lock_status
+    #     and intersection(IMPORTANT_FIELDS, update_fields or [])
+    #     and instance.kf_client_id
+    #     != "461162D2-90C7-BF4E-A905-000000000004"  # Ignore when plum scans
+    # ):
+    #     logger.info(f"{LOG_ID} Updated important field.")
 
-        # Reset selected Quote and connected Quotes
-        if instance.booking_type != "DMEA":
-            set_booking_quote(instance, None)
-            quotes = API_booking_quotes.objects.filter(
-                fk_booking_id=instance.pk_booking_id,
-                is_used=False,
-            )
-            for quote in quotes:
-                quote.is_used = True
-                quote.save()
-        elif instance.booking_type == "DMEA":
-            get_quote_again(instance)
+    #     # Reset selected Quote and connected Quotes
+    #     if instance.booking_type != "DMEA":
+    #         set_booking_quote(instance, None)
+    #         quotes = API_booking_quotes.objects.filter(
+    #             fk_booking_id=instance.pk_booking_id,
+    #             is_used=False,
+    #         )
+    #         for quote in quotes:
+    #             quote.is_used = True
+    #             quote.save()
+    #     elif instance.booking_type == "DMEA":
+    #         get_quote_again(instance)
 
     if (
         instance.vx_freight_provider
