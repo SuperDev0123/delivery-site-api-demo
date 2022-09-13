@@ -295,9 +295,6 @@ def scanned(payload):
         booking.puPickUpAvailFrom_Date = next_biz_day
         booking.save()
 
-        # Get quote in background
-        get_quote(booking)
-
         # Build built-in label with SSCC - one sscc should have one page label
         label_urls = []
 
@@ -369,6 +366,9 @@ def scanned(payload):
 
         if not booking.b_dateBookedDate and booking.b_status != "Picked":
             status_history.create(booking, "Picked", client_name)
+
+        # Get quote in background
+        get_quote(booking)
 
         return {
             "success": True,
