@@ -152,8 +152,8 @@ def get_pricing(booking, booking_lines):
                     and height <= 1.4
                 ):
                     case = "Pallet Type #1"
-                    inv_cost_quoted += (96.59 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (119.32 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (91.11 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (56.11 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (119.32 - fm_fee_sell)
                         * 0.5
@@ -162,8 +162,8 @@ def get_pricing(booking, booking_lines):
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
                     case = "Pallet Type #2"
-                    inv_cost_quoted += (144.89 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (178.98 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (136.67 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (201.67 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (178.98 - fm_fee_sell)
                         * 0.5
@@ -172,8 +172,8 @@ def get_pricing(booking, booking_lines):
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
                     case = "Pallet Type #3"
-                    inv_cost_quoted += (144.89 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (178.98 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (136.67 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (201.67 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (178.98 - fm_fee_sell)
                         * 0.5
@@ -206,8 +206,8 @@ def get_pricing(booking, booking_lines):
                     and height <= 1.4
                 ):
                     case = "Pallet Type #1"
-                    inv_cost_quoted += (153.41 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (182.82 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (134.94 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (209.94 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (182.82 - fm_fee_sell)
                         * 0.5
@@ -216,8 +216,8 @@ def get_pricing(booking, booking_lines):
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
                     case = "Pallet Type #2"
-                    inv_cost_quoted += (230.11 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (272.73 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (202.41 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (246.11 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (272.73 - fm_fee_sell)
                         * 0.5
@@ -226,8 +226,8 @@ def get_pricing(booking, booking_lines):
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
                     case = "Pallet Type #3"
-                    inv_cost_quoted += (230.11 + fm_fee_cost) * line.e_qty
-                    inv_sell_quoted += (272.73 + fm_fee_sell) * line.e_qty
+                    inv_cost_quoted += (202.41 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (246.11 + fm_fee_sell) * line.e_qty
                     inv_dme_quoted += (
                         (272.73 - fm_fee_sell)
                         * 0.5
