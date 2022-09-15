@@ -1,7 +1,7 @@
 import json
 import logging
-import asyncio
-import requests_async
+import requests
+import threading
 from datetime import datetime
 
 from django.conf import settings
@@ -235,6 +235,7 @@ def pricing(
         client_fps = []
 
     try:
+        threads = []
         for packed_status in packed_statuses:
             _booking_lines = []
             if not booking_lines:
@@ -260,31 +261,37 @@ def pricing(
             #         and booking.vx_freight_provider == "Deliver-ME"
             #     ):
             #         build_special_fp_pricings(booking, _booking_lines, packed_status)
-            # except:
-            #     build_special_fp_pricings(booking, _booking_lines, packed_status)
-            #     _loop_process(
-            #         booking,
-            #         _booking_lines,
-            #         is_pricing_only,
-            #         packed_status,
-            #         client,
-            #         pu_zones,
-            #         de_zones,
-            #         client_fps,
-            #     )
 
             # Normal Pricings
-            _loop_process(
+            _threads = build_threads(
                 booking,
                 _booking_lines,
                 is_pricing_only,
                 packed_status,
-                client,
                 pu_zones,
                 de_zones,
                 client_fps,
             )
+            threads += _threads
             build_special_fp_pricings(booking, _booking_lines, packed_status)
+
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        # timeout=PRICING_TIME,
+        # logger.info(f"#990 [PRICING] - {PRICING_TIME}s Timeout! stop threads! ;)")
+
+        _after_process(
+            booking,
+            _booking_lines,
+            is_pricing_only,
+            client,
+            pu_zones,
+            de_zones,
+            client_fps,
+        )
 
         # JasonL + SA -> ignore Allied
         if (
@@ -308,33 +315,15 @@ def pricing(
         return booking, False, str(e), []
 
 
-def _loop_process(
+def _after_process(
     booking,
     booking_lines,
     is_pricing_only,
-    packed_status,
     client,
     pu_zones,
     de_zones,
     client_fps,
 ):
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(
-            _pricing_process(
-                booking,
-                booking_lines,
-                is_pricing_only,
-                packed_status,
-                pu_zones,
-                de_zones,
-                client_fps,
-            )
-        )
-    finally:
-        loop.close()
-
     # JasonL: update `client sales total`
     if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
         try:
@@ -346,7 +335,7 @@ def _loop_process(
             pass
 
     quotes = API_booking_quotes.objects.filter(
-        fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status
+        fk_booking_id=booking.pk_booking_id, is_used=False
     )
     fp_names = [quote.freight_provider for quote in quotes]
     fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
@@ -375,33 +364,7 @@ def _loop_process(
         quotes = _confirm_visible(booking, booking_lines, quotes)
 
 
-async def _pricing_process(
-    booking,
-    booking_lines,
-    is_pricing_only,
-    packed_status,
-    pu_zones,
-    de_zones,
-    client_fps,
-):
-    try:
-        await asyncio.wait_for(
-            pricing_workers(
-                booking,
-                booking_lines,
-                is_pricing_only,
-                packed_status,
-                pu_zones,
-                de_zones,
-                client_fps,
-            ),
-            timeout=PRICING_TIME,
-        )
-    except asyncio.TimeoutError:
-        logger.info(f"#990 [PRICING] - {PRICING_TIME}s Timeout! stop threads! ;)")
-
-
-async def pricing_workers(
+def build_threads(
     booking,
     booking_lines,
     is_pricing_only,
@@ -411,8 +374,10 @@ async def pricing_workers(
     client_fps,
 ):
     # Schedule n pricing works *concurrently*:
-    _workers = set()
-    logger.info("#910 [PRICING] - Building Pricing workers...")
+    threads = []
+    logger.info(
+        f"#910 [PRICING] - Building Pricing threads for [{packed_status.upper()}]"
+    )
 
     if client_fps:
         client_fps = list(client_fps.values_list("fp__fp_company_name", flat=True))
@@ -487,47 +452,56 @@ async def pricing_workers(
 
                     if _fp_name == "auspost" and services:
                         for service in services:
-                            _worker = _api_pricing_worker_builder(
+                            thread = threading.Thread(
+                                target=_api_pricing_worker_builder,
+                                args=(
+                                    _fp_name,
+                                    booking,
+                                    booking_lines,
+                                    is_pricing_only,
+                                    packed_status,
+                                    account_detail,
+                                    service.fp_delivery_service_code,
+                                    service.fp_delivery_time_description,
+                                ),
+                            )
+                            threads.append(thread)
+                    else:
+                        thread = threading.Thread(
+                            target=_api_pricing_worker_builder,
+                            args=(
                                 _fp_name,
                                 booking,
                                 booking_lines,
                                 is_pricing_only,
                                 packed_status,
                                 account_detail,
-                                service.fp_delivery_service_code,
-                                service.fp_delivery_time_description,
-                            )
-                            _workers.add(_worker)
-                    else:
-                        _worker = _api_pricing_worker_builder(
-                            _fp_name,
-                            booking,
-                            booking_lines,
-                            is_pricing_only,
-                            packed_status,
-                            account_detail,
+                            ),
                         )
-                        _workers.add(_worker)
+                        threads.append(thread)
 
         if _fp_name in BUILT_IN_PRICINGS:
             logger.info(f"#908 [BUILT_IN PRICING] - {_fp_name}")
-            _worker = _built_in_pricing_worker_builder(
-                _fp_name,
-                booking,
-                booking_lines,
-                is_pricing_only,
-                packed_status,
-                pu_zones,
-                de_zones,
+            thread = threading.Thread(
+                target=_built_in_pricing_worker_builder,
+                args=(
+                    _fp_name,
+                    booking,
+                    booking_lines,
+                    is_pricing_only,
+                    packed_status,
+                    pu_zones,
+                    de_zones,
+                ),
             )
-            _workers.add(_worker)
+            threads.append(thread)
 
     logger.info("#911 [PRICING] - Pricing workers will start soon")
-    await asyncio.gather(*_workers)
+    return threads
     logger.info("#919 [PRICING] - Pricing workers finished all")
 
 
-async def _api_pricing_worker_builder(
+def _api_pricing_worker_builder(
     _fp_name,
     booking,
     booking_lines,
@@ -555,9 +529,7 @@ async def _api_pricing_worker_builder(
     logger.info(f"### [PRICING] ({_fp_name.upper()}) Payload: {payload}")
 
     try:
-        response = await requests_async.post(
-            url, params={}, json=payload, headers=HEADER_FOR_NODE
-        )
+        response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
         logger.info(
             f"### [PRICING] Response ({_fp_name.upper()}): {response.status_code}"
         )
@@ -619,7 +591,7 @@ async def _api_pricing_worker_builder(
         logger.info(f"@402 [PRICING] Exception: {str(e)}")
 
 
-async def _built_in_pricing_worker_builder(
+def _built_in_pricing_worker_builder(
     _fp_name,
     booking,
     booking_lines,
