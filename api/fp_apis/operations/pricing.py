@@ -193,6 +193,7 @@ def pricing(
     LOG_ID = "[PRICING]"
     booking_lines = []
     booking = None
+    logger.info(f"{LOG_ID} {booking_id} {packed_statuses}")
 
     # Only quote
     if is_pricing_only and not booking_id:
