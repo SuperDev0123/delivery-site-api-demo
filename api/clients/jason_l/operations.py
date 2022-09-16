@@ -369,8 +369,8 @@ def get_address(order_num):
         address["street_1"] = address["street_2"]
         address["street_2"] = ""
 
-    if not address["street_1"]:
-        errors.append("Stop Error: Delivery street 1 missing or misspelled")
+    # if not address["street_1"]:
+    #     errors.append("Stop Error: Delivery street 1 missing or misspelled")
 
     # Auto replacement
     if (

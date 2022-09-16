@@ -919,7 +919,7 @@ def get_pricing_payload(
     }
 
     payload["pickupAddress"]["postalAddress"] = {
-        "address1": "" or pu_Address_Street_1,
+        "address1": pu_Address_Street_1 or "NO ADDRESS",
         "address2": "" or pu_Address_street_2,
         "country": "" or booking.pu_Address_Country,
         "postCode": "" or booking.pu_Address_PostalCode,
@@ -936,7 +936,7 @@ def get_pricing_payload(
     }
 
     payload["dropAddress"]["postalAddress"] = {
-        "address1": "" or de_To_Address_Street_1,
+        "address1": de_To_Address_Street_1 or "NO ADDRESS",
         "address2": "" or de_To_Address_Street_2,
         "country": "" or booking.de_To_Address_Country,
         "postCode": "" or booking.de_To_Address_PostalCode,
