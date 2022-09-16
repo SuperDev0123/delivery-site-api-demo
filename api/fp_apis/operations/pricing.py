@@ -354,7 +354,7 @@ def _after_process(
 
             _booking_lines = []
             for booking_line in booking_lines:
-                if booking_line.packed_status != packed_status:
+                if booking_line.packed_status != quote.packed_status:
                     continue
                 _booking_lines.append(booking_line)
 
