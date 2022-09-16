@@ -236,6 +236,7 @@ def pricing(
 
     try:
         threads = []
+        entire_booking_lines = []
         for packed_status in packed_statuses:
             _booking_lines = []
             if not booking_lines:
@@ -273,6 +274,7 @@ def pricing(
                 client_fps,
             )
             threads += _threads
+            entire_booking_lines += _booking_lines
             build_special_fp_pricings(booking, _booking_lines, packed_status)
 
         for thread in threads:
@@ -285,7 +287,7 @@ def pricing(
 
         _after_process(
             booking,
-            _booking_lines,
+            entire_booking_lines,
             is_pricing_only,
             client,
             pu_zones,
@@ -350,18 +352,24 @@ def _after_process(
             if quote.freight_provider in SPECIAL_FPS:  # skip Special FPs
                 continue
 
+            _booking_lines = []
+            for booking_line in booking_lines:
+                if booking_line.packed_status != packed_status:
+                    continue
+                _booking_lines.append(booking_line)
+
             for fp in fps:
                 if quote.freight_provider.lower() == fp.fp_company_name.lower():
                     quote_fp = fp
                     break
 
-            gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
+            gen_surcharges(booking, _booking_lines, quote, client, quote_fp, "booking")
 
         # Apply Markups (FP Markup and Client Markup)
         quotes = apply_markups(quotes, client, fps, client_fps)
 
         # Confirm visible
-        quotes = _confirm_visible(booking, booking_lines, quotes)
+        quotes = _confirm_visible(booking, _booking_lines, quotes)
 
 
 def build_threads(
