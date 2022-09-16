@@ -318,4 +318,4 @@ def extract_product_code(e_item):
     if e_item and "ZERO Dims -" in e_item:
         return e_item[: e_item.index("ZERO Dims -") - 2]
     else:
-        return ""
+        return e_item or ""
