@@ -585,7 +585,7 @@ def push_boks(payload, client, username, method):
 
     # Response
     if json_results:
-        push_to_warehouse(bok_1_obj)
+        # push_to_warehouse(bok_1_obj)
         logger.info(f"@8838 {LOG_ID} success: True, 201_created")
         result = {"success": True, "results": json_results}
         url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
