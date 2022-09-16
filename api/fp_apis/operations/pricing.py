@@ -359,6 +359,9 @@ def _after_process(
                     continue
                 _booking_lines.append(booking_line)
 
+            if not _booking_lines:
+                continue
+
             for fp in fps:
                 if quote.freight_provider.lower() == fp.fp_company_name.lower():
                     quote_fp = fp
