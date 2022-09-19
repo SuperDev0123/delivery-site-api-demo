@@ -704,7 +704,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     def get_service_name(self, obj):
         if obj.service_name == "Customer Collect":
             return ""
-        elif "(Into Premises)" in obj.service_name:
+        elif obj.service_name and "(Into Premises)" in obj.service_name:
             return obj.service_name
 
         if obj.freight_provider in [
