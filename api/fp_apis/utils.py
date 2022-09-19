@@ -354,7 +354,7 @@ def auto_select_pricing_4_bok(
 
         if bok_2_lines_cnt < 3:
             _quotes = send_as_is_quotes
-        else
+        else:
             _quotes = auto_pack_quotes
 
     non_air_freight_pricings = []
