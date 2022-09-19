@@ -802,14 +802,15 @@ class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
             return obj.service_name
 
         bok_1 = BOK_1_headers.objects.get(pk_header_id=obj.fk_booking_id)
-        if bok_1.b_054_b_del_company.lower() in [
-            "jl fitouts"
-        ] or obj.freight_provider in [
-            "Deliver-ME",
-            "WeFleet",
-            "In House Fleet",
-            "All Purpose Transport",
-        ]:
+        if (bok_1.b_054_b_del_company.lower() in ["jl fitouts"]) or (
+            obj.freight_provider
+            in [
+                "Deliver-ME",
+                "WeFleet",
+                "In House Fleet",
+                "All Purpose Transport",
+            ]
+        ):
             return f"{obj.service_name or ''} (Into Premises)"
         else:
             return f"{obj.service_name or ''} (To Door, ground level)"
