@@ -636,16 +636,16 @@ def build_label(
             shell_table = Table(
                 to_del_data,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * mm * 7 / 10,
-                    float(label_settings["label_image_size_length"]) * mm * 3 / 10,
+                    float(label_settings["label_image_size_length"]) * mm * 7.5 / 10,
+                    float(label_settings["label_image_size_length"]) * mm * 2.5 / 10,
                 ),
                 style=[
                     # ("VALIGN", (0, 0), (0, -1), "TOP"),
                     ("SPAN", (-1, -1), (-1, 0)),
                     ("VALIGN", (-1, 0), (0, 0), "BOTTOM"),
                     ("ALIGN", (-1, 0), (-1, -1), "CENTER"),
-                    # ("TOPPADDING", (1, 1), (1, 1), 0),
-                    # ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ],
             )
             Story.append(shell_table)
