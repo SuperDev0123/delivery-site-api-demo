@@ -635,7 +635,14 @@ def build_label(
             to_del_data.append(
                 [
                     Paragraph(
-                        "<font size=%s>To: <b>%s</b></font>"
+                        "<font size=%s>To:</font>"
+                        % (
+                            label_settings["font_size_large"],
+                        ),
+                        style_left,
+                    ),
+                    Paragraph(
+                        "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["font_size_large"],
                             booking.deToCompanyName or "",
@@ -658,8 +665,9 @@ def build_label(
             ).lower():
                 to_del_data.append(
                     [
+                        "",
                         Paragraph(
-                            "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b> <b>%s</b>, <b>%s</b></font>"
+                            "<font size=%s><b>%s</b> <b>%s</b>, <b>%s</b></font>"
                             % (
                                 label_settings["font_size_large"]
                                 if len(
@@ -682,8 +690,9 @@ def build_label(
             else:
                 to_del_data.append(
                     [
+                        "",
                         Paragraph(
-                            "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b>, <b>%s</b></font>"
+                            "<font size=%s><b>%s</b>, <b>%s</b></font>"
                             % (
                                 label_settings["font_size_large"]
                                 if len(
@@ -704,8 +713,9 @@ def build_label(
 
             to_del_data.append(
                 [
+                    "",
                     Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s&nbsp;%s&nbsp;%s</b></font>"
+                        "<font size=%s><b>%s&nbsp;%s&nbsp;%s</b></font>"
                         % (
                             label_settings["font_size_large"]
                             if len(
@@ -728,8 +738,9 @@ def build_label(
 
             to_del_data.append(
                 [
+                    "",
                     Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
+                        "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["font_size_large"]
                             if len(booking.de_To_Address_Suburb) < 40
@@ -744,8 +755,9 @@ def build_label(
 
             to_del_data.append(
                 [
+                    "",
                     Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
+                        "<font size=%s><b>%s</b></font>"
                         % (label_settings["font_size_large"], booking.de_to_Phone_Main),
                         style_left,
                     ),
@@ -755,6 +767,7 @@ def build_label(
 
             to_del_data.append(
                 [
+                    "",
                     Paragraph(
                         "<font size=%s><b>Dangerous Goods Enclosed: %s</b></font>"
                         % (
@@ -770,15 +783,16 @@ def build_label(
             shell_table = Table(
                 to_del_data,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * mm * 7 / 10,
-                    float(label_settings["label_image_size_length"]) * mm * 3 / 10,
+                    float(label_settings["label_image_size_length"]) * mm * 0.7 / 10,
+                    float(label_settings["label_image_size_length"]) * mm * 6.8 / 10,
+                    float(label_settings["label_image_size_length"]) * mm * 2.5 / 10,
                 ),
                 style=[
-                    ("VALIGN", (0, 0), (0, -1), "CENTER"),
+                    # ("VALIGN", (0, 1), (0, -1), "CENTER"),
                     ("SPAN", (-1, -1), (-1, 1)),
-                    ("VALIGN", (-1, 0), (-1, -1), "BOTTOM"),
-                    ("ALIGN", (-1, 0), (-1, -1), "CENTER"),
-                    # ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
                     # ("TOPPADDING", (-1, 1), (-1, 1), 20),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ],
