@@ -802,7 +802,9 @@ class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
             return obj.service_name
 
         bok_1 = BOK_1_headers.objects.get(pk_header_id=obj.fk_booking_id)
-        if bok_1.deToCompanyName.lower in ["jl fitouts"] or obj.freight_provider in [
+        if bok_1.b_054_b_del_company.lower() in [
+            "jl fitouts"
+        ] or obj.freight_provider in [
             "Deliver-ME",
             "WeFleet",
             "In House Fleet",
