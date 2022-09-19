@@ -607,7 +607,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
-    service_name = serializers.SerializerMethodField(read_only=True)
+    service_name = serializers.SerializerMethodField()
 
     def get_service_name(self, obj):
         if obj.freight_provider == "Customer Collect":
@@ -720,7 +720,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
-    service_name = serializers.SerializerMethodField(read_only=True)
+    service_name = serializers.SerializerMethodField()
 
     def get_service_name(self, obj):
         if obj.freight_provider == "Customer Collect":
@@ -815,7 +815,7 @@ class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
     cost = serializers.SerializerMethodField(read_only=True)
     eta = serializers.SerializerMethodField(read_only=True)
     fp_name = serializers.SerializerMethodField(read_only=True)
-    service_name = serializers.SerializerMethodField(read_only=True)
+    service_name = serializers.SerializerMethodField()
 
     def get_service_name(self, obj):
         if obj.freight_provider == "Customer Collect":
