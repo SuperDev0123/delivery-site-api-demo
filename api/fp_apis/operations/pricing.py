@@ -172,6 +172,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         quote_2.pk = None
         quote_2.fee = 0
         quote_2.client_mu_1_minimum_values = 0
+        quote_2.service_name = None
         quote_2.freight_provider = "Customer Collect"
         quote_2.tax_value_5 = None
         quote_2.save()
