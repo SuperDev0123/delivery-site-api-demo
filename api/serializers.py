@@ -607,9 +607,9 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
-    service_name = serializers.SerializerMethodField()
+    service_desc = serializers.SerializerMethodField()
 
-    def get_service_name(self, obj):
+    def get_service_desc(self, obj):
         if obj.freight_provider == "Customer Collect":
             return ""
         elif obj.service_name and "(Into Premises)" in obj.service_name:
@@ -720,9 +720,9 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
-    service_name = serializers.SerializerMethodField()
+    service_desc = serializers.SerializerMethodField()
 
-    def get_service_name(self, obj):
+    def get_service_desc(self, obj):
         if obj.freight_provider == "Customer Collect":
             return ""
         elif obj.service_name and "(Into Premises)" in obj.service_name:
@@ -801,6 +801,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             "client_customer_mark_up",
             "eta",
             "service_name",
+            "service_desc",
             "fp_name",
             "cost_dollar",
             "fuel_levy_base_cl",
@@ -815,9 +816,9 @@ class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
     cost = serializers.SerializerMethodField(read_only=True)
     eta = serializers.SerializerMethodField(read_only=True)
     fp_name = serializers.SerializerMethodField(read_only=True)
-    service_name = serializers.SerializerMethodField()
+    service_desc = serializers.SerializerMethodField()
 
-    def get_service_name(self, obj):
+    def get_service_desc(self, obj):
         if obj.freight_provider == "Customer Collect":
             return ""
         elif obj.service_name and "(Into Premises)" in obj.service_name:
@@ -865,6 +866,7 @@ class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
             "cost",
             "eta",
             "service_name",
+            "service_desc",
             "fp_name",
         )
 
