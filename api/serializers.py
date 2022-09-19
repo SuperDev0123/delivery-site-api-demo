@@ -607,6 +607,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
+    service_name = serializers.SerializerMethodField(read_only=True)
 
     def get_service_name(self, obj):
         if obj.freight_provider == "Customer Collect":
