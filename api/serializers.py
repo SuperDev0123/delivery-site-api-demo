@@ -608,6 +608,26 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
 
+    def get_service_name(self, obj):
+        if obj.freight_provider == "Customer Collect":
+            return ""
+        elif obj.service_name and "(Into Premises)" in obj.service_name:
+            return obj.service_name
+
+        booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+        if (booking.deToCompanyName.lower() in ["jl fitouts"]) or (
+            obj.freight_provider
+            in [
+                "Deliver-ME",
+                "WeFleet",
+                "In House Fleet",
+                "All Purpose Transport",
+            ]
+        ):
+            return f"{obj.service_name or ''} (Into Premises)"
+        else:
+            return f"{obj.service_name or ''} (To Door, ground level)"
+
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
         fields_to_exclude = kwargs.pop("fields_to_exclude", None)
