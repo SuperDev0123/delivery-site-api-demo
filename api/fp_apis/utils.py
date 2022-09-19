@@ -350,7 +350,7 @@ def auto_select_pricing_4_bok(
     if bok_1.fk_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
         bok_2_lines_cnt = (
             bok_1.bok_2s()
-            .filter(packed_status=BOK_2_lines.ORIGINAL, is_deleted=False)
+            .filter(b_093_packed_status=BOK_2_lines.ORIGINAL, is_deleted=False)
             .count()
         )
         send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
