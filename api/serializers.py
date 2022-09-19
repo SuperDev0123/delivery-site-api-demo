@@ -788,9 +788,14 @@ class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
     service_name = serializers.SerializerMethodField(read_only=True)
 
     def get_service_name(self, obj):
-        if obj.freight_provider == "Deliver-ME":
+        if "(Into Premises)" in obj.service_name:
             return obj.service_name
-        elif obj.freight_provider in SPECIAL_FPS:
+        elif obj.deToCompanyName.lower in ["jl fitouts"] or obj.freight_provider in [
+            "Deliver-ME",
+            "WeFleet",
+            "In House Fleet",
+            "All Purpose Transport",
+        ]:
             return f"{obj.service_name} (Into Premises)"
         else:
             return f"{obj.service_name} (To Door, ground level)"

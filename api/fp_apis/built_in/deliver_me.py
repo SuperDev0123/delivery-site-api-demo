@@ -141,7 +141,7 @@ def get_pricing(booking, booking_lines):
             if (postal_code >= 3000 and postal_code <= 3207) or (
                 postal_code >= 8000 and postal_code <= 8499
             ):  # Melbourne
-                service_name = "Deliver-ME Direct (Into Premises) (50%)"
+                service_name = "Deliver-ME Direct (Into Premises)"
 
                 if (
                     is_pallet
@@ -195,7 +195,7 @@ def get_pricing(booking, booking_lines):
             elif (postal_code >= 4000 and postal_code <= 4207) or (
                 postal_code >= 9000 and postal_code <= 9499
             ):  # Brisbane
-                service_name = "Deliver-ME Direct (Into Premises) (50%)"
+                service_name = "Deliver-ME Direct (Into Premises)"
 
                 if (
                     is_pallet
@@ -251,7 +251,7 @@ def get_pricing(booking, booking_lines):
             elif (postal_code >= 5000 and postal_code <= 5199) or (
                 postal_code >= 5900 and postal_code <= 5999
             ):  # Adelaide
-                service_name = "Deliver-ME Direct (Into Premises) (50%)"
+                service_name = "Deliver-ME Direct (Into Premises)"
 
                 if (
                     is_pallet
@@ -314,7 +314,7 @@ def get_pricing(booking, booking_lines):
             if (postal_code >= 3000 and postal_code <= 3207) or (
                 postal_code >= 8000 and postal_code <= 8499
             ):  # Melbourne
-                service_name = "Deliver-ME Direct (Into Premises) (50%)"
+                service_name = "Deliver-ME Direct (Into Premises)"
 
                 if (
                     is_pallet
@@ -370,7 +370,7 @@ def get_pricing(booking, booking_lines):
             elif (postal_code >= 4000 and postal_code <= 4207) or (
                 postal_code >= 9000 and postal_code <= 9499
             ):  # Brisbane
-                service_name = "Deliver-ME Direct (Into Premises) (50%)"
+                service_name = "Deliver-ME Direct (Into Premises)"
 
                 if (
                     is_pallet
@@ -426,7 +426,7 @@ def get_pricing(booking, booking_lines):
             elif (postal_code >= 5000 and postal_code <= 5199) or (
                 postal_code >= 5900 and postal_code <= 5999
             ):  # Adelaide
-                service_name = "Deliver-ME Direct (Into Premises) (50%)"
+                service_name = "Deliver-ME Direct (Into Premises)"
 
                 if (
                     is_pallet
