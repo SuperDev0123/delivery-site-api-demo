@@ -799,7 +799,7 @@ class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
     def get_service_name(self, obj):
         if obj.service_name == "Customer Collect":
             return ""
-        elif "(Into Premises)" in obj.service_name:
+        elif obj.service_name and "(Into Premises)" in obj.service_name:
             return obj.service_name
 
         bok_1 = BOK_1_headers.objects.get(pk_header_id=obj.fk_booking_id)
