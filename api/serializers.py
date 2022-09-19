@@ -702,7 +702,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     service_name = serializers.SerializerMethodField(read_only=True)
 
     def get_service_name(self, obj):
-        if obj.service_name == "Customer Collect":
+        if obj.freight_provider == "Customer Collect":
             return ""
         elif obj.service_name and "(Into Premises)" in obj.service_name:
             return obj.service_name
@@ -797,7 +797,7 @@ class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
     service_name = serializers.SerializerMethodField(read_only=True)
 
     def get_service_name(self, obj):
-        if obj.service_name == "Customer Collect":
+        if obj.freight_provider == "Customer Collect":
             return ""
         elif obj.service_name and "(Into Premises)" in obj.service_name:
             return obj.service_name
