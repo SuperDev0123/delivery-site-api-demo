@@ -298,12 +298,18 @@ def scanned(payload):
         # Build built-in label with SSCC - one sscc should have one page label
         label_urls = []
 
+        from django.conf import settings
+
+        settings.DEBUG = True
+        from django.db import connection
+
+        logger.info(f"@368 - building label with SSCC...\n sscc_lines: {sscc_lines}")
         for index, sscc in enumerate(sscc_list):
+            logger.info(
+                f"@368 - building label with SSCC... SSCC: {sscc} --- {len(connection.queries)}"
+            )
             file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
 
-            logger.info(
-                f"@368 - building label with SSCC...\n sscc_lines: {sscc_lines}"
-            )
             file_path, file_name = build_label_oper(
                 booking=booking,
                 file_path=file_path,
