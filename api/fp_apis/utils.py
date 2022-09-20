@@ -289,7 +289,11 @@ def select_best_options(pricings, client=None, original_lines_count=None):
 
     # JasonL
     _quotes = pricings
-    if client and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+    if (
+        original_lines_count
+        and client
+        and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+    ):
         send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
         auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
 
