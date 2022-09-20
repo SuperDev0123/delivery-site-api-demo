@@ -508,6 +508,7 @@ def push_boks(payload, client, username, method):
 
     # Save bok_2s (Product & Child items)
     items = bok_2s
+    original_lines_count = 0
     new_bok_2s = []
     bok_2_objs = []
     lines_missing_dims = []
@@ -553,6 +554,7 @@ def push_boks(payload, client, username, method):
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
+                original_lines_count += 1
 
                 if not line["is_deleted"]:
                     bok_2_objs.append(bok_2_obj)
@@ -850,7 +852,9 @@ def push_boks(payload, client, username, method):
 
         if quote_set.count() > 1:
             best_quotes = select_best_options(
-                pricings=quote_set, client=warehouse.fk_id_dme_client
+                pricings=quote_set,
+                client=warehouse.fk_id_dme_client,
+                original_lines_count=original_lines_count,
             )
         else:
             best_quotes = quote_set

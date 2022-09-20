@@ -280,14 +280,27 @@ def _get_lowest_price(pricings, client=None):
     return lowest_pricing.get("pricing")
 
 
-def select_best_options(pricings, client=None):
-    logger.info(f"#860 Select best options from {len(pricings)} pricings")
+def select_best_options(pricings, client=None, original_lines_count=None):
+    LOG_ID = "[SELECT BEST OPTION]"
+    logger.info(f"{LOG_ID} from {len(pricings)} pricings")
 
     if not pricings:
         return []
 
-    lowest_pricing = _get_lowest_price(pricings, client)
-    fastest_pricing = _get_fastest_price(pricings)
+    # JasonL
+    _quotes = pricings
+    if client and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
+        auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
+
+        logger.info(f"{LOG_ID} Lines count: {original_lines_count}")
+        if original_lines_count < 3:
+            _quotes = send_as_is_quotes
+        else:
+            _quotes = auto_pack_quotes
+
+    lowest_pricing = _get_lowest_price(_quotes, client)
+    fastest_pricing = _get_fastest_price(_quotes)
 
     if lowest_pricing and fastest_pricing:
         if lowest_pricing.pk == fastest_pricing.pk:
