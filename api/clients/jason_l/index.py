@@ -815,8 +815,7 @@ def push_boks(payload, client, username, method):
             and selected_quote.freight_provider == "Deliver-ME"
         ):
             quote_set = quote_set.filter(
-                freight_provider=selected_quote.freight_provider,
-                packed_status=Booking_lines.ORIGINAL,
+                freight_provider=selected_quote.freight_provider
             )
         elif bok_1.get("shipping_type") == "DMEM" and selected_quote:
             quote_set = quote_set.filter(
@@ -826,10 +825,7 @@ def push_boks(payload, client, username, method):
         elif bok_1.get("shipping_type") == "DMEA" and isGood4Linehaul(
             booking["de_To_Address_PostalCode"], booking_lines
         ):
-            quote_set = quote_set.filter(
-                freight_provider="Deliver-ME",
-                packed_status=Booking_lines.ORIGINAL,
-            )
+            quote_set = quote_set.filter(freight_provider="Deliver-ME")
         # All JasonL bookings to State SA are to book with TNT if DMEA no matter what the price
         elif (
             bok_1.get("shipping_type") == "DMEA"
