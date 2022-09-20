@@ -853,7 +853,7 @@ def push_boks(payload, client, username, method):
         if quote_set.count() > 1:
             best_quotes = select_best_options(
                 pricings=quote_set,
-                client=warehouse.fk_id_dme_client,
+                client=client,
                 original_lines_count=original_lines_count,
             )
         else:
