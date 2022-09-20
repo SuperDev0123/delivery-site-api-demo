@@ -343,7 +343,7 @@ def push_boks(payload, client, username, method):
         for item in non_palletized:  # Non Palletized
             line_obj = item["line_obj"]
             line = {}
-            line["fk_header_id"] = line_obj.pk
+            line["fk_header_id"] = line_obj.fk_header_id
             line["v_client_pk_consigment_num"] = line_obj.v_client_pk_consigment_num
             line["pk_booking_lines_id"] = line_obj.pk_booking_lines_id
             line["success"] = line_obj.success
@@ -358,6 +358,13 @@ def push_boks(payload, client, username, method):
             line["l_008_weight_UOM"] = line_obj.l_008_weight_UOM
             line["is_deleted"] = line_obj.is_deleted
             line["b_093_packed_status"] = BOK_2_lines.AUTO_PACK
+            bok_2_serializer = BOK_2_Serializer(data=line)
+            if bok_2_serializer.is_valid():
+                bok_2_serializer.save()
+            else:
+                message = f"Serialiser Error - {bok_2_serializer.errors}"
+                logger.info(f"@8135 {LOG_ID} {message}")
+                raise Exception(message)
             bok_2s.append({"booking_line": line})
 
         for palletized_item in palletized:  # Palletized
