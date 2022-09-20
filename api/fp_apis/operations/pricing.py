@@ -350,11 +350,11 @@ def _after_process(
             quotes = interpolate_gaps(quotes, client)
 
         # Calculate Surcharges
+        _booking_lines = []
         for quote in quotes:
             if quote.freight_provider in SPECIAL_FPS:  # skip Special FPs
                 continue
 
-            _booking_lines = []
             for booking_line in booking_lines:
                 if booking_line.packed_status != quote.packed_status:
                     continue
