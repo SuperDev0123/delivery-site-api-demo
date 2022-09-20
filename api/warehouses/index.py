@@ -244,7 +244,6 @@ def scanned(payload):
         picked_ssccs.append(picked_item["sscc"])
     if picked_ssccs:
         Booking_lines.objects.filter(sscc__in=picked_ssccs).delete()
-        set_booking_quote(booking, None)
 
     # Save
     try:
@@ -369,6 +368,7 @@ def scanned(payload):
             status_history.create(booking, "Picked", client_name)
 
         # Get quote in background
+        set_booking_quote(booking, None)
         get_quote(booking)
 
         return {
