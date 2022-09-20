@@ -98,7 +98,7 @@ def auto_repack(bok_1, repack_status, pallet_id, client):
                     bok_3["ld_002_model_number"] = line.e_item_type
                     bok_3["zbld_121_integer_1"] = line.zbl_131_decimal_1  # Sequence
                     bok_3["zbld_122_integer_2"] = _iter["quantity"]
-                    bok_3["zbl_131_decimal_1"] = line.l_005_dim_length
+                    bok_3["zbld_131_decimal_1"] = line.l_005_dim_length
                     bok_3["zbld_132_decimal_2"] = line.l_006_dim_width
                     bok_3["zbld_133_decimal_3"] = line.l_007_dim_height
                     bok_3["zbld_134_decimal_4"] = round(line.l_009_weight_per_each, 2)
@@ -192,7 +192,7 @@ def auto_repack(bok_1, repack_status, pallet_id, client):
             bok_3["ld_002_model_number"] = bok_2.e_item_type
             bok_3["zbld_121_integer_1"] = bok_2.zbl_131_decimal_1  # Sequence
             bok_3["zbld_122_integer_2"] = bok_2.l_002_qty
-            bok_3["zbl_131_decimal_1"] = bok_2.l_005_dim_length
+            bok_3["zbld_131_decimal_1"] = bok_2.l_005_dim_length
             bok_3["zbld_132_decimal_2"] = bok_2.l_006_dim_width
             bok_3["zbld_133_decimal_3"] = bok_2.l_007_dim_height
             bok_3["zbld_134_decimal_4"] = bok_2.l_009_weight_per_each
