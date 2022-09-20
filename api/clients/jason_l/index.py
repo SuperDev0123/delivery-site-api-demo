@@ -872,6 +872,7 @@ def push_boks(payload, client, username, method):
 
         # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
         best_quote = best_quotes[0]
+        bok_1_obj.quote = best_quote
         bok_1_obj.b_003_b_service_name = best_quote.service_name
         bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
         bok_1_obj.b_002_b_vehicle_type = (
