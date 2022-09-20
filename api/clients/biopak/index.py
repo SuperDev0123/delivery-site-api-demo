@@ -23,7 +23,7 @@ def reprint_label(params, client):
     bookings = Bookings.objects.filter(
         b_clientReference_RA_Numbers__in=b_clientReference_RA_Numbers,
         b_client_name=client.company_name,
-    )
+    ).exclude(b_status="Closed")
 
     pk_booking_ids = [booking.pk_booking_id for booking in bookings]
     lines = Booking_lines.objects.filter(
