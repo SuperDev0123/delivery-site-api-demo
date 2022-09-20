@@ -282,7 +282,7 @@ def _get_lowest_price(pricings, client=None):
 
 def select_best_options(pricings, client=None, original_lines_count=None):
     LOG_ID = "[SELECT BEST OPTION]"
-    logger.info(f"{LOG_ID} from {len(pricings)} pricings")
+    logger.info(f"{LOG_ID} From {len(pricings)} pricings: {pricings}")
 
     if not pricings:
         return []
@@ -293,7 +293,9 @@ def select_best_options(pricings, client=None, original_lines_count=None):
         send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
         auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
 
-        logger.info(f"{LOG_ID} Lines count: {original_lines_count}")
+        logger.info(
+            f"{LOG_ID} Lines count: {original_lines_count}, Original quotes: {send_as_is_quotes}, Auto Quotes: {auto_pack_quotes}"
+        )
         if original_lines_count < 3:
             _quotes = send_as_is_quotes
         else:
