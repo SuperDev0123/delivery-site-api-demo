@@ -251,9 +251,7 @@ def _get_lowest_price(pricings, client=None):
         "1af6bcd2-6148-11eb-ae93-0242ac130002",
         "9e72da0f-77c3-4355-a5ce-70611ffd0bc8",
     ]:
-        logger.info(f"@@!@!@@")
         for pricing in pricings:
-            logger.info(f"@!!!!!!! - {pricing.freight_provider}")
             if pricing.freight_provider == "Deliver-ME":
                 return pricing
 
@@ -306,11 +304,14 @@ def select_best_options(pricings, client=None, original_lines_count=None):
     lowest_pricing = _get_lowest_price(_quotes, client)
     fastest_pricing = _get_fastest_price(_quotes)
 
-    if lowest_pricing and fastest_pricing:
-        if lowest_pricing.pk == fastest_pricing.pk:
-            return [lowest_pricing]
+    if lowest_pricing or fastest_pricing:
+        if lowest_pricing and fastest_pricing:
+            if lowest_pricing.pk == fastest_pricing.pk:
+                return [lowest_pricing]
+            else:
+                return [lowest_pricing, fastest_pricing]
         else:
-            return [lowest_pricing, fastest_pricing]
+            return [lowest_pricing or fastest_pricing]
     else:
         return []
 
