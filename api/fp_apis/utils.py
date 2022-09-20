@@ -341,6 +341,7 @@ def auto_select_pricing(booking, pricings, auto_select_type, client=None):
 def auto_select_pricing_4_bok(
     bok_1, pricings, is_from_script=False, auto_select_type=1, client=None
 ):
+    LOG_ID = "AUTO SELECT"
     if len(pricings) == 0:
         logger.info("#855 - Could not find proper pricing")
         return None
@@ -356,6 +357,7 @@ def auto_select_pricing_4_bok(
         send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
         auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
 
+        logger.info(f"{LOG_ID} Lines count: {bok_2_lines_cnt}")
         if bok_2_lines_cnt < 3:
             _quotes = send_as_is_quotes
         else:
@@ -384,21 +386,23 @@ def auto_select_pricing_4_bok(
                 break
     else:
         if int(auto_select_type) == 1:  # Lowest
+            logger.info(f"{LOG_ID} LOWEST")
             if deliverable_pricings:
                 filtered_pricing = _get_lowest_price(deliverable_pricings, client)
             elif non_air_freight_pricings:
                 filtered_pricing = _get_lowest_price(non_air_freight_pricings, client)
         else:  # Fastest
+            logger.info(f"{LOG_ID} FASTEST")
             if deliverable_pricings:
                 filtered_pricing = _get_fastest_price(deliverable_pricings)
             elif non_air_freight_pricings:
                 filtered_pricing = _get_fastest_price(non_air_freight_pricings)
 
     if filtered_pricing:
-        logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
+        logger.info(f"{LOG_ID} Filtered Pricing - {filtered_pricing}")
         bok_1.quote = filtered_pricing
         bok_1.save()
         return True
     else:
-        logger.info("#855 - Could not find proper pricing")
+        logger.info(f"{LOG_ID} Could not find proper pricing")
         return False
