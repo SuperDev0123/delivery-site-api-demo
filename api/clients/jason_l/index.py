@@ -842,13 +842,13 @@ def push_boks(payload, client, username, method):
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
-        auto_select_pricing_4_bok(
-            bok_1=bok_1_obj,
-            pricings=quote_set,
-            is_from_script=is_from_script,
-            auto_select_type=1,
-            client=client,
-        )
+        # auto_select_pricing_4_bok(
+        #     bok_1=bok_1_obj,
+        #     pricings=quote_set,
+        #     is_from_script=is_from_script,
+        #     auto_select_type=1,
+        #     client=client,
+        # )
 
         if quote_set.count() > 1:
             best_quotes = select_best_options(
