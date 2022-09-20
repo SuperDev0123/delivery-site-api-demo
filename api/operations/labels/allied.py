@@ -27,6 +27,7 @@ from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.operations.api_booking_confirmation_lines import index as api_bcl
+from api.clients.operations.index import extract_product_code
 
 logger = logging.getLogger(__name__)
 
@@ -580,24 +581,55 @@ def build_label(
             to_del_data = []
 
             codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            d = Drawing(40, 40)
+            d = Drawing(20, 20, transform=[1,0,0,1,0,-24])
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            d.add(QrCodeWidget(value=codeString, barWidth=24 * mm, barHeight=24 * mm))
+            d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
 
-            font_size = "font_size_large" if (
-                len(str(booking.deToCompanyName or "" + booking.de_to_Contact_F_LName or "")) < 45 and
-                len(str(booking.de_To_Address_Street_1 or "" + booking.de_To_Address_Street_2 or "")) < 45 and
-                len(str(booking.de_To_Address_State or "" + carrier or "" + booking.de_To_Address_PostalCode or "" + booking.de_To_Address_Suburb or "")) < 40) else "font_size_medium"
+            # font_size = "font_size_large" if (
+            #     len(str(booking.deToCompanyName or "" + booking.de_to_Contact_F_LName or "")) < 45 and
+            #     len(str(booking.de_To_Address_Street_1 or "" + booking.de_To_Address_Street_2 or "")) < 45 and
+            #     len(str(booking.de_To_Address_State or "" + carrier or "" + booking.de_To_Address_PostalCode or "" + booking.de_To_Address_Suburb or "")) < 40) else "font_size_medium"
             to_del_data.append(
                 [
                     Paragraph(
-                        "<font size=%s>To: <b>%s %s</b> <br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s %s</b> <br/> </font>"
+                        "<font size=%s>To:</font>"
                         % (
-                            label_settings[font_size],
+                            label_settings['font_size_large'],
+                        ),
+                        style_left,
+                    ),
+                    Paragraph(
+                        "<font size=%s><b>%s %s</b> <br/> <b>%s</b> <br/> </font>"
+                        % (
+                            label_settings['font_size_large'],
                             booking.deToCompanyName or "",
                             "" if booking.deToCompanyName == booking.de_to_Contact_F_LName else (booking.de_to_Contact_F_LName or ""),
-                            booking.de_To_Address_Street_1 or "",
-                            booking.de_To_Address_Street_2 or "",
+                            ((booking.de_To_Address_Street_1 or "") + " " + (booking.de_To_Address_Street_2 or ""))[:30],
+                        ),
+                        style_left,
+                    ),
+                    Paragraph(
+                        "<font size=%s>Description:&nbsp;%s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            extract_product_code(booking_line.e_item),
+                        ),
+                        style_left,
+                    ),
+                ]
+            )
+
+            to_del_data.append(
+                [
+                    "",
+                    Paragraph(
+                        "<font size=%s><b>%s&nbsp;%s&nbsp;%s&nbsp;%s</b></font>"
+                        % (
+                            label_settings['font_size_large'],
+                            booking.de_To_Address_State or "",
+                            carrier or "",
+                            booking.de_To_Address_PostalCode or "",
+                            booking.de_To_Address_Suburb or "",
                         ),
                         style_left,
                     ),
@@ -607,26 +639,10 @@ def build_label(
 
             to_del_data.append(
                 [
-                    Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s&nbsp;%s&nbsp;%s&nbsp;%s</b></font>"
-                        % (
-                            label_settings[font_size],
-                            booking.de_To_Address_State or "",
-                            carrier or "",
-                            booking.de_To_Address_PostalCode or "",
-                            booking.de_To_Address_Suburb or "",
-                        ),
-                        style_left,
-                    ),
                     "",
-                ]
-            )
-
-            to_del_data.append(
-                [
                     Paragraph(
-                        "<font size=%s>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b></font>"
-                        % (label_settings[font_size], booking.de_to_Phone_Main),
+                        "<font size=%s><b>%s</b></font>"
+                        % (label_settings['font_size_large'], booking.de_to_Phone_Main),
                         style_left,
                     ),
                     "",
@@ -636,14 +652,14 @@ def build_label(
             shell_table = Table(
                 to_del_data,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * mm * 7.5 / 10,
-                    float(label_settings["label_image_size_length"]) * mm * 2.5 / 10,
+                    float(label_settings["label_image_size_length"]) * mm * 0.7 / 10,
+                    float(label_settings["label_image_size_length"]) * mm * 6.3 / 10,
+                    float(label_settings["label_image_size_length"]) * mm * 3 / 10,
                 ),
                 style=[
-                    # ("VALIGN", (0, 0), (0, -1), "TOP"),
-                    ("SPAN", (-1, -1), (-1, 0)),
-                    ("VALIGN", (-1, 0), (0, 0), "BOTTOM"),
-                    ("ALIGN", (-1, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                 ],
