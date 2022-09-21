@@ -255,6 +255,10 @@ def _get_lowest_price(pricings, client=None):
             if pricing.freight_provider == "Deliver-ME":
                 return pricing
 
+    is_tnt_exist = pricings.filter(freight_provider="TNT", service_name="Road Express", service_code="76")
+    if is_tnt_exist.count() > 0 :
+        pricings = pricings.exclude(freight_provider="TNT", service_name="Technology Express - Sensitive Express", service_code="717B")
+
     for pricing in pricings:
         if pricing.freight_provider in SPECIAL_FPS:
             continue
