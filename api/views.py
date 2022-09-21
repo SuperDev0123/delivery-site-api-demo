@@ -4617,13 +4617,13 @@ def build_label(request):
         booking.save()
 
         # BioPak: update with json
-        if (
-            booking.b_client_name.lower() == "biopak"
-            and booking.b_client_warehouse_code in ["BIO - RIC"]
-        ):
-            from api.fp_apis.update_by_json import update_biopak_with_booked_booking
+        # if (
+        #     booking.b_client_name.lower() == "biopak"
+        #     and booking.b_client_warehouse_code in ["BIO - RIC"]
+        # ):
+        #     from api.fp_apis.update_by_json import update_biopak_with_booked_booking
 
-            update_biopak_with_booked_booking(booking.pk, "label")
+        #     update_biopak_with_booked_booking(booking.pk, "label")
     except Exception as e:
         trace_error.print()
         logger.error(f"{LOG_ID} Error: {str(e)}")
