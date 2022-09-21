@@ -350,8 +350,9 @@ def _after_process(
             quotes = interpolate_gaps(quotes, client)
 
         # Calculate Surcharges
-        _booking_lines = []
         for quote in quotes:
+            _booking_lines = []
+
             if quote.freight_provider in SPECIAL_FPS:  # skip Special FPs
                 continue
 
@@ -370,11 +371,11 @@ def _after_process(
 
             gen_surcharges(booking, _booking_lines, quote, client, quote_fp, "booking")
 
+            # Confirm visible
+            quotes = _confirm_visible(booking, _booking_lines, quotes)
+
         # Apply Markups (FP Markup and Client Markup)
         quotes = apply_markups(quotes, client, fps, client_fps)
-
-        # Confirm visible
-        quotes = _confirm_visible(booking, _booking_lines, quotes)
 
 
 def build_threads(
