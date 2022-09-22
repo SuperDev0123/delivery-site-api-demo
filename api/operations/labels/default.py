@@ -195,10 +195,10 @@ def build_label(
     dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
 
-    if fp_id == 8:
+    if pre_data["fp_id"] == 8:
         fp_logo = "./static/assets/logos/cameron.png"
         fp_img = Image(fp_logo, 30 * mm, 7.7 * mm)
-    elif fp_id == 9:
+    elif pre_data["fp_id"] == 9:
         fp_logo = "./static/assets/logos/northline.png"
         fp_img = Image(fp_logo, 30 * mm, 7.7 * mm)
     else:

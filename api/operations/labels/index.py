@@ -39,7 +39,7 @@ def _get_pre_data(booking):
     fp_name = booking.vx_freight_provider.lower()
     _pre_data["fp_name"] = fp_name
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
-    # _pre_data["fp_id"] = fp.pk
+    _pre_data["fp_id"] = fp.pk
     _pre_data["color_code"] = fp.hex_color_code
     v_FPBookingNumber = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual
