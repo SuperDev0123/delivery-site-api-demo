@@ -9,6 +9,9 @@ def gen_consignment(booking):
     if warehouse.client_warehouse_code == "BIO - RIC":
         prefix = "56R"
         return f"{prefix}Z2{str(warehouse.connote_number).zfill(7)}"
+    elif warehouse.client_warehouse_code == "BIO - HAZ":
+        prefix = "9XA"
+        return f"{prefix}Z5{str(warehouse.connote_number).zfill(7)}"
     elif warehouse.client_warehouse_code == "BIO - FDM":
         prefix = "BBB"
         return f"{prefix}Z1{str(warehouse.connote_number).zfill(7)}"

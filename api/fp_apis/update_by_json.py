@@ -39,7 +39,10 @@ def build_json(booking, type):
         "shipment_id": booking.fk_fp_pickup_id,
     }
 
-    if type == "label" and booking.b_client_warehouse_code in ["BIO - RIC"]:
+    if type == "label" and booking.b_client_warehouse_code in [
+        "BIO - RIC",
+        "BIO - HAZ",
+    ]:
         params = {"clientReferences": booking.b_clientReference_RA_Numbers}
         client = DME_clients.objects.get(company_name="BioPak")
         result = reprint_label(params, client)
