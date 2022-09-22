@@ -1,6 +1,6 @@
 import logging
 
-from api.models import Bookings, Fp_freight_providers, FPRouting
+from api.models import Bookings, Fp_freight_providers, FPRouting, FP_zones
 from api.common import trace_error
 from api.fp_apis.utils import gen_consignment_num
 from api.convertors import pdf
