@@ -298,7 +298,6 @@ def post_save_handler(instance, created, update_fields):
                         line.sscc = f"NOSSCC_{instance.b_bookingID_Visual}_{line.pk}"
                         line.save()
 
-                label_urls = []
                 sscc_list = []
                 sscc_lines = {}
                 total_qty = 0
@@ -318,30 +317,22 @@ def post_save_handler(instance, created, update_fields):
                 )
 
                 # Build label with SSCC - one sscc should have one page label
-                file_path = f"{settings.STATIC_PUBLIC}/pdfs/{instance.vx_freight_provider.lower()}_au"
+                file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+                label_data = build_label_oper(
+                    booking=instance,
+                    file_path=file_path,
+                    total_qty=total_qty,
+                    sscc_list=sscc_list,
+                    sscc_lines=sscc_lines,
+                    sscc_cnt=total_qty,
+                    need_zpl=False,
+                )
 
-                label_index = 0
-                for sscc in sscc_list:
-                    logger.info(f"@368 - building label with SSCC...")
-                    file_path, file_name = build_label_oper(
-                        booking=instance,
-                        file_path=file_path,
-                        lines=sscc_lines[sscc],
-                        label_index=label_index,
-                        sscc=sscc,
-                        sscc_cnt=total_qty,
-                        one_page_label=False,
-                    )
-                    label_urls.append(f"{file_path}/{file_name}")
-
-                    for _line in sscc_lines[sscc]:
-                        label_index += _line.e_qty
-
-                if label_urls:
+                if label_data["urls"]:
                     entire_label_url = (
                         f"{file_path}/DME{instance.b_bookingID_Visual}.pdf"
                     )
-                    pdf_merge(label_urls, entire_label_url)
+                    pdf_merge(label_data["urls"], entire_label_url)
 
                 instance.z_label_url = f"{settings.WEB_SITE_URL}/label/{instance.b_client_booking_ref_num}/"
                 logger.info(

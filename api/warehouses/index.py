@@ -295,66 +295,23 @@ def scanned(payload):
         booking.puPickUpAvailFrom_Date = next_biz_day
         booking.save()
 
-        # Build built-in label with SSCC - one sscc should have one page label
-        label_urls = []
+        # Build label with SSCC - one sscc should have one page label
+        file_path = (
+            f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+        )
+        label_data = build_label_oper(
+            booking=booking,
+            file_path=file_path,
+            total_qty=len(sscc_list),
+            sscc_list=sscc_list,
+            sscc_lines=sscc_lines,
+            need_base64=True,
+            need_zpl=False,
+        )
 
-        from django.conf import settings
-
-        settings.DEBUG = True
-        from django.db import connection
-
-        logger.info(f"@368 - building label with SSCC...\n sscc_lines: {sscc_lines}")
-        for index, sscc in enumerate(sscc_list):
-            logger.info(
-                f"@368 - building label with SSCC... SSCC: {sscc} --- {len(connection.queries)}"
-            )
-            file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
-
-            file_path, file_name = build_label_oper(
-                booking=booking,
-                file_path=file_path,
-                lines=sscc_lines[sscc],
-                label_index=index,
-                sscc=sscc,
-                sscc_cnt=len(sscc_list),
-                one_page_label=False,
-            )
-
-            # Convert label into ZPL format
-            logger.info(
-                f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
-            )
-            label_url = f"{file_path}/{file_name}"
-            label_urls.append(label_url)
-
-            # # Plum ZPL printer requries portrait label
-            # if booking.vx_freight_provider.lower() in ["hunter", "tnt"]:
-            #     label_url = pdf.rotate_pdf(label_url)
-
-            # result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-            # if not result:
-            #     message = (
-            #         "Please contact DME support center. <bookings@deliver-me.com.au>"
-            #     )
-            #     raise Exception(message)
-
-            # with open(label_url[:-4] + ".zpl", "rb") as zpl:
-            #     zpl_data = str(b64encode(zpl.read()))[2:-1]
-
-            labels.append(
-                {
-                    "sscc": sscc,
-                    "label": str(pdf.pdf_to_base64(label_url))[2:-1],
-                    "barcode": get_barcode(
-                        booking, [new_line], index + 1, len(sscc_list)
-                    ),
-                }
-            )
-
-        if label_urls:
+        if label_data["urls"]:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
-            pdf.pdf_merge(label_urls, entire_label_url)
+            pdf.pdf_merge(label_data["urls"], entire_label_url)
             booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
             # Set consignment number
             booking.v_FPBookingNumber = gen_consignment_num(
@@ -385,9 +342,9 @@ def scanned(payload):
                 booking.b_bookingID_Visual,
                 booking.kf_client_id,
             ),
-            "labels": labels,
+            "labels": label_data["labels"],
             "label": entire_label_b64,
-            "freightProvider": CARRIER_MAPPING[booking.vx_freight_provider],
+            "freightProvider": CARRIER_MAPPING[booking.vx_freight_provider.lower()],
         }
     except Exception as e:
         trace_error.print()

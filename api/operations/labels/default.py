@@ -23,9 +23,8 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
-from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
+from api.models import Booking_lines
 from api.helpers.cubic import get_cubic_meter
-from api.fp_apis.utils import gen_consignment_num
 from api.operations.api_booking_confirmation_lines import index as api_bcl
 from api.clients.operations.index import extract_product_code
 
@@ -94,40 +93,30 @@ def gen_barcode(booking, item_no=0):
         if not booking.v_FPBookingNumber
         else f"{booking.v_FPBookingNumber}{item_index}"
     )
-    api_bcl.create(booking, [{"label_code": label_code}])
+    # api_bcl.create(booking, [{"label_code": label_code}])
 
     return label_code
 
 
 def build_label(
-    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+    booking,
+    filepath,
+    pre_data,
+    lines,
+    label_index,
+    sscc,
+    sscc_cnt=1,
+    one_page_label=True,
 ):
     logger.info(
         f"#110 [{booking.vx_freight_provider} LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
-    v_FPBookingNumber = gen_consignment_num(
-        booking.vx_freight_provider, booking.b_bookingID_Visual
-    )
+    v_FPBookingNumber = pre_data["v_FPBookingNumber"]
 
     # start check if pdfs folder exists
     if not os.path.exists(filepath):
         os.makedirs(filepath)
     # end check if pdfs folder exists
-
-    fp_id = Fp_freight_providers.objects.get(
-        fp_company_name=booking.vx_freight_provider
-    ).id
-    try:
-        carrier = FP_zones.objects.get(
-            state=booking.de_To_Address_State,
-            suburb=booking.de_To_Address_Suburb,
-            postal_code=booking.de_To_Address_PostalCode,
-            fk_fp=fp_id,
-        ).carrier
-    except FP_zones.DoesNotExist:
-        carrier = ""
-    except Exception as e:
-        logger.info(f"#110 [{booking.vx_freight_provider} LABEL] Error: {str(e)}")
 
     # start pdf file name using naming convention
     if lines:
@@ -215,12 +204,7 @@ def build_label(
     else:
         fp_img = None
 
-    fp_color_code = (
-        Fp_freight_providers.objects.get(
-            fp_company_name=booking.vx_freight_provider
-        ).hex_color_code
-        or "808080"
-    )
+    fp_color_code = pre_data["color_code"] or "808080"
 
     style_center_bg = ParagraphStyle(
         name="right",
@@ -636,9 +620,7 @@ def build_label(
                 [
                     Paragraph(
                         "<font size=%s>To:</font>"
-                        % (
-                            label_settings["font_size_large"],
-                        ),
+                        % (label_settings["font_size_large"],),
                         style_left,
                     ),
                     Paragraph(
@@ -679,7 +661,11 @@ def build_label(
                                 # < 35
                                 # else label_settings["font_size_medium"],
                                 booking.de_to_Contact_F_LName or "",
-                                ((booking.de_To_Address_Street_1 or "") + ", " + (booking.de_To_Address_Street_2 or ""))[:30]
+                                (
+                                    (booking.de_To_Address_Street_1 or "")
+                                    + ", "
+                                    + (booking.de_To_Address_Street_2 or "")
+                                )[:30],
                             ),
                             style_left,
                         ),
@@ -719,14 +705,14 @@ def build_label(
                             label_settings["font_size_large"]
                             if len(
                                 booking.de_To_Address_State
-                                or "" + carrier
+                                or "" + pre_data["carrier"]
                                 or "" + booking.de_To_Address_PostalCode
                                 or ""
                             )
                             < 35
                             else label_settings["font_size_medium"],
                             booking.de_To_Address_State or "",
-                            carrier or "",
+                            pre_data["carrier"] or "",
                             booking.de_To_Address_PostalCode or "",
                         ),
                         style_left,

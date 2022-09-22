@@ -957,16 +957,11 @@ def scanned(payload, client):
     over_picked_items = []
     estimated_picked = {}
     is_picked_all = True
-    scanned_items_count = 0
 
     for model_number_qty in model_number_qtys:
         estimated_picked[model_number_qty[0]] = 0
 
     for scanned_item in scanned_items:
-        if scanned_item.e_item_type:
-            estimated_picked[scanned_item.e_item_type] += scanned_item.e_qty
-            scanned_items_count += scanned_item.e_qty
-
         for line_data in line_datas:
             if (
                 line_data.fk_booking_lines_id == scanned_item.pk_booking_lines_id
@@ -1058,24 +1053,12 @@ def scanned(payload, client):
                     new_line.e_Total_KG_weight = (
                         picked_item["weight"]["weight"] * new_line.e_qty
                     )
-                    # new_line.e_1_Total_dimCubicMeter = get_cubic_meter(
-                    #     new_line.e_dimLength,
-                    #     new_line.e_dimWidth,
-                    #     new_line.e_dimHeight,
-                    #     new_line.e_dimUOM,
-                    # )
                 else:
                     new_line.e_weightUOM = old_line.e_weightUOM
                     new_line.e_weightPerEach = old_line.e_weightPerEach
                     new_line.e_Total_KG_weight = (
                         old_line.e_weightPerEach * new_line.e_qty
                     )
-                    # new_line.e_1_Total_dimCubicMeter = get_cubic_meter(
-                    #     new_line.e_dimLength,
-                    #     new_line.e_dimWidth,
-                    #     new_line.e_dimHeight,
-                    #     new_line.e_dimUOM,
-                    # )
 
                 new_line.sscc = picked_item["sscc"]
                 new_line.picked_up_timestamp = (
@@ -1088,10 +1071,6 @@ def scanned(payload, client):
                     sscc_lines[picked_item["sscc"]] = [new_line]
                 else:
                     sscc_lines[picked_item["sscc"]].append(new_line)
-
-                # Soft delete source line
-                # old_line.is_deleted = True
-                # old_line.save()
 
                 for item in picked_item["items"]:
                     # Create new Line_Data
@@ -1120,66 +1099,32 @@ def scanned(payload, client):
 
         # Build built-in label with SSCC - one sscc should have one page label
         label_urls = []
-        item_cnt = 0
+        total_qty = 0
         for item in original_items:
-            item_cnt += item.e_qty
+            total_qty += item.e_qty
 
         # Reset all Api_booking_confirmation_lines
         Api_booking_confirmation_lines.objects.filter(
             fk_booking_id=booking.pk_booking_id
         ).delete()
 
-        for index, sscc in enumerate(sscc_list):
-            file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+        file_path = (
+            f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+        )
+        label_data = build_label_oper(
+            booking=booking,
+            file_path=file_path,
+            total_qty=total_qty,
+            sscc_list=sscc_list,
+            sscc_lines=sscc_lines,
+            need_zpl=True,
+            scanned_items=scanned_items,
+        )
 
-            logger.info(
-                f"@368 - building label with SSCC...\n sscc_lines: {sscc_lines}"
-            )
-            file_path, file_name = build_label(
-                booking=booking,
-                file_path=file_path,
-                lines=sscc_lines[sscc],
-                label_index=scanned_items.count() + index,
-                sscc=sscc,
-                sscc_cnt=item_cnt,
-                one_page_label=False,
-            )
-
-            # Convert label into ZPL format
-            logger.info(
-                f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
-            )
-            label_url = f"{file_path}/{file_name}"
-            label_urls.append(label_url)
-
-            # Plum ZPL printer requries portrait label
-            if booking.vx_freight_provider.lower() in ["hunter", "tnt"]:
-                label_url = pdf.rotate_pdf(label_url)
-
-            result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-            if not result:
-                message = (
-                    "Please contact DME support center. <bookings@deliver-me.com.au>"
-                )
-                raise Exception(message)
-
-            with open(label_url[:-4] + ".zpl", "rb") as zpl:
-                zpl_data = str(b64encode(zpl.read()))[2:-1]
-
-            labels.append(
-                {
-                    "sscc": sscc,
-                    "label": zpl_data,
-                    "barcode": get_barcode(booking, [new_line], index + 1, item_cnt),
-                }
-            )
-
-        if label_urls:
+        if label_data["urls"]:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
             pdf.pdf_merge(label_urls, entire_label_url)
             booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
-            # Set consignment number
             booking.v_FPBookingNumber = gen_consignment_num(
                 booking.vx_freight_provider,
                 booking.b_bookingID_Visual,
@@ -1263,24 +1208,6 @@ def scanned(payload, client):
                     "Please contact DME support center. <bookings@deliver-me.com.au>"
                 )
                 raise Exception(message)
-            # else:
-            #     label_url = f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-            #     result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-            #     if not result:
-            #         message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-            #         raise Exception(message)
-
-            #     with open(label_url[:-4] + ".zpl", "rb") as zpl:
-            #         zpl_data = str(b64encode(zpl.read()))[2:-1]
-
-            #     labels.append(
-            #         {
-            #             "sscc": picked_item["sscc"],
-            #             "label": zpl_data,
-            #             "barcode": get_barcode(booking, [new_line]),
-            #         }
-            #     )
 
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
@@ -1293,7 +1220,7 @@ def scanned(payload, client):
                 booking.b_bookingID_Visual,
                 booking.kf_client_id,
             ),
-            "labels": labels,
+            "labels": label_data["labels"],
         }
     except Exception as e:
         error_msg = f"@370 {LOG_ID} Exception: {str(e)}"

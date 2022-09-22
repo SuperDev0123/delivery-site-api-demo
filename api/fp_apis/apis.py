@@ -780,10 +780,11 @@ def get_label(request, fp_name):
                     trace_error.print()
                     error_msg = f"KeyError: {e}"
                     _set_error(booking, error_msg)
-            elif _fp_name in ["dhl"]:
-                file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
-                file_path, file_name = build_label(booking, file_path)
-                z_label_url = f"{_fp_name}_au/{file_name}"
+            # Deactivated on 2022-09-22
+            # elif _fp_name in ["dhl"]:
+            #     file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+            #     file_path, file_name = build_label(booking, file_path)
+            #     z_label_url = f"{_fp_name}_au/{file_name}"
 
             # JasonL & BSD
             if not booking.kf_client_id in [

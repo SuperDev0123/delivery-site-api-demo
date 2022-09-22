@@ -4874,55 +4874,56 @@ class BookingSets(models.Model):
     class Meta:
         db_table = "dme_booking_sets"
 
-    @transaction.atomic
-    def save(self, *args, **kwargs):
-        creating = self._state.adding
+        # Deactivated on 2022-09-22
+        # @transaction.atomic
+        # def save(self, *args, **kwargs):
+        #     creating = self._state.adding
 
-        if not creating:
-            old_obj = BookingSets.objects.get(pk=self.pk)
+        #     if not creating:
+        #         old_obj = BookingSets.objects.get(pk=self.pk)
 
-        if self.status == "Starting BOOK" and self.status != old_obj.status:
-            # Check if set includes bookings that should be BOOKed via CSV
-            booking_ids = self.booking_ids.split(", ")
-            bookings = Bookings.objects.filter(
-                pk__in=booking_ids,
-                vx_freight_provider="State Transport",
-                b_dateBookedDate__isnull=True,
-            )
+        #     if self.status == "Starting BOOK" and self.status != old_obj.status:
+        #         # Check if set includes bookings that should be BOOKed via CSV
+        #         booking_ids = self.booking_ids.split(", ")
+        #         bookings = Bookings.objects.filter(
+        #             pk__in=booking_ids,
+        #             vx_freight_provider="State Transport",
+        #             b_dateBookedDate__isnull=True,
+        #         )
 
-            if bookings:
-                from api.operations.csv.index import build_csv
-                from api.operations.labels.index import build_label
-                from api.operations.email_senders import send_booking_status_email
-                from api.utils import get_sydney_now_time
-                from api.common import status_history
+        #         if bookings:
+        #             from api.operations.csv.index import build_csv
+        #             from api.operations.labels.index import build_label
+        #             from api.operations.email_senders import send_booking_status_email
+        #             from api.utils import get_sydney_now_time
+        #             from api.common import status_history
 
-                build_csv(bookings.values_list("pk", flat=True))
+        #             build_csv(bookings.values_list("pk", flat=True))
 
-                for booking in bookings:
-                    booking.b_dateBookedDate = get_sydney_now_time(
-                        return_type="datetime"
-                    )
-                    booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
-                    status_history.create(booking, "Booked", "DME_BE")
-                    booking.save()
+        #             for booking in bookings:
+        #                 booking.b_dateBookedDate = get_sydney_now_time(
+        #                     return_type="datetime"
+        #                 )
+        #                 booking.v_FPBookingNumber = "DME" + str(booking.b_bookingID_Visual)
+        #                 status_history.create(booking, "Booked", "DME_BE")
+        #                 booking.save()
 
-                    # Build Label and send booking email
-                    _fp_name = booking.vx_freight_provider.lower()
-                    file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
-                    file_path, file_name = build_label(booking, file_path)
-                    booking.z_label_url = f"{_fp_name}_au/{file_name}"
-                    booking.save()
+        #                 # Build Label and send booking email
+        #                 _fp_name = booking.vx_freight_provider.lower()
+        #                 file_path = f"{S3_URL}/pdfs/{_fp_name}_au/"
+        #                 file_path, file_name = build_label(booking, file_path)
+        #                 booking.z_label_url = f"{_fp_name}_au/{file_name}"
+        #                 booking.save()
 
-                    # Send email when GET_LABEL
-                    email_template_name = "General Booking"
+        #                 # Send email when GET_LABEL
+        #                 email_template_name = "General Booking"
 
-                    # if booking.b_booking_Category == "Salvage Expense":
-                    #     email_template_name = "Return Booking"
+        #                 # if booking.b_booking_Category == "Salvage Expense":
+        #                 #     email_template_name = "Return Booking"
 
-                    send_booking_status_email(booking.pk, email_template_name, "DME_BE")
+        #                 send_booking_status_email(booking.pk, email_template_name, "DME_BE")
 
-        return super(BookingSets, self).save(*args, **kwargs)
+        #   return super(BookingSets, self).save(*args, **kwargs)
 
 
 class Tokens(models.Model):

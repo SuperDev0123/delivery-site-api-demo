@@ -23,9 +23,8 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
-from api.models import Booking_lines, FPRouting, Fp_freight_providers
+from api.models import Booking_lines
 from api.helpers.cubic import get_cubic_meter
-from api.fp_apis.utils import gen_consignment_num
 from api.operations.api_booking_confirmation_lines import index as api_bcl
 
 logger = logging.getLogger(__name__)
@@ -85,20 +84,25 @@ def gen_itm(booking, booking_lines, line_index, sscc_cnt):
     CCCCCC = "132214"  # DME
     item_index = str(line_index).zfill(3)
     label_code = f"{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}"
-    api_bcl.create(booking, [{"label_code": label_code}])
+    # api_bcl.create(booking, [{"label_code": label_code}])
 
     return label_code
 
 
 def build_label(
-    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+    booking,
+    filepath,
+    pre_data,
+    lines,
+    label_index,
+    sscc,
+    sscc_cnt=1,
+    one_page_label=True,
 ):
     logger.info(
         f"#110 [TNT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
-    v_FPBookingNumber = gen_consignment_num(
-        booking.vx_freight_provider, booking.b_bookingID_Visual
-    )
+    v_FPBookingNumber = pre_data["v_FPBookingNumber"]
 
     # start check if pdfs folder exists
     if not os.path.exists(filepath):
@@ -186,85 +190,6 @@ def build_label(
     Story = []
     j = 1
 
-    # Get routing_group with vx_service_name
-    # routing_group = None
-    # if booking.vx_serviceName == "Road Express":
-    #     routing_group = "EXP"
-    # elif booking.vx_serviceName in [
-    #     "09:00 Express",
-    #     "10:00 Express",
-    #     "12:00 Express",
-    #     "Overnight Express",
-    #     "PAYU - Satchel",
-    #     "ONFC Satchel",
-    # ]:
-    #     routing_group = "PRI"
-    # elif booking.vx_serviceName in [
-    #     "Technology Express - Sensitive Express",
-    #     "Sensitive Express",
-    #     "Fashion Delivery",
-    # ]:
-    #     routing_group = "TE"
-
-    """
-    Let's assume service group EXP
-    Using the D records relating to that service group, establish the origin depot thaservices the consignment’s origin postcode.
-    This should appear in section 3 of the routing label preceded by “Ex “.
-    """
-    crecords = FPRouting.objects.filter(
-        freight_provider=12,
-        dest_suburb=booking.de_To_Address_Suburb,
-        dest_postcode=booking.de_To_Address_PostalCode,
-        dest_state=booking.de_To_Address_State,
-        data_code="C"
-        # routing_group=routing_group,
-    ).only("orig_depot_except", "gateway", "onfwd", "sort_bin")
-
-    routing = None
-    orig_depot = ""
-    if crecords.exists():
-        drecord = (
-            FPRouting.objects.filter(
-                freight_provider=12,
-                orig_postcode=booking.pu_Address_PostalCode,
-                # routing_group=routing_group,
-                orig_depot__isnull=False,
-                data_code="D",
-            )
-            .only("orig_depot")
-            .first()
-        )
-
-        if drecord:
-            orig_depot = drecord.orig_depot
-            for crecord in crecords:
-                if crecord.orig_depot_except == drecord.orig_depot:
-                    routing = crecord
-                    break
-
-        if not routing:
-            routing = (
-                FPRouting.objects.filter(
-                    freight_provider=12,
-                    dest_suburb=booking.de_To_Address_Suburb,
-                    dest_postcode=booking.de_To_Address_PostalCode,
-                    dest_state=booking.de_To_Address_State,
-                    orig_depot_except__isnull=True,
-                    data_code="C"
-                    # routing_group=routing_group,
-                )
-                .only("orig_depot_except", "gateway", "onfwd", "sort_bin")
-                .first()
-            )
-
-        logger.info(
-            f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}, {orig_depot}"
-        )
-    else:
-        logger.info(
-            f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}, {routing_group}"
-        )
-
     totalQty = 0
     if one_page_label:
         lines = [lines[0]]
@@ -296,7 +221,11 @@ def build_label(
                     ),
                     Paragraph(
                         "<font size=%s><b>via %s  to  %s</b></font>"
-                        % (16, routing.gateway, routing.onfwd),
+                        % (
+                            16,
+                            pre_data["routing"].gateway,
+                            pre_data["routing"].onfwd,
+                        ),
                         style_right,
                     ),
                 ],
@@ -417,7 +346,7 @@ def build_label(
                     ),
                     Paragraph(
                         "<font size=%s><b>%s</b></font><font size=%s><b>%s</b></font>"
-                        % (8, "Sort bin:", 16, routing.sort_bin),
+                        % (8, "Sort bin:", 16, pre_data["routing"].sort_bin),
                         style_right,
                     ),
                 ],
@@ -483,7 +412,8 @@ def build_label(
                         style_left,
                     ),
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>" % (9, "Ex " + orig_depot),
+                        "<font size=%s><b>%s</b></font>"
+                        % (9, "Ex " + pre_data["orig_depot"]),
                         style_right,
                     ),
                 ],
@@ -1110,10 +1040,7 @@ def build_label(
             Story.append(t1)
             Story.append(Spacer(1, 5))
 
-            fp_color_code = (
-                Fp_freight_providers.objects.get(fp_company_name="TNT").hex_color_code
-                or "808080"
-            )
+            fp_color_code = pre_data["color_code"] or "808080"
 
             tbl_data1 = [[tnt_img], [""]]
 
