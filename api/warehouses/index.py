@@ -322,9 +322,7 @@ def scanned(payload):
         booking.save()
 
         time2 = t.time()
-        logger.info(
-            f"{LOG_ID} Requester: {user.username}\nSpent time: {str(int(round(time2 - time1)))}s\n"
-        )
+        logger.info(f"{LOG_ID} Spent time: {str(int(round(time2 - time1)))}s\n")
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
         )
