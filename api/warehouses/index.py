@@ -2,6 +2,7 @@ import json
 import uuid
 import logging
 import requests
+import time as t
 from datetime import datetime, date
 from base64 import b64encode
 
@@ -198,6 +199,7 @@ def scanned(payload):
     client_name = payload.get("clientName")
     b_client_order_num = payload.get("orderNumber")
     picked_items = payload.get("items")
+    time1 = t.time()
 
     # Check required params are included
     if not client_name:
@@ -319,6 +321,10 @@ def scanned(payload):
 
         booking.save()
 
+        time2 = t.time()
+        logger.info(
+            f"{LOG_ID} Requester: {user.username}\nSpent time: {str(int(round(time2 - time1)))}s\n"
+        )
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
         )
@@ -327,8 +333,8 @@ def scanned(payload):
             status_history.create(booking, "Picked", client_name)
 
         # Get quote in background
-        # set_booking_quote(booking, None)
-        # get_quote(booking)
+        set_booking_quote(booking, None)
+        get_quote(booking)
 
         return {
             "success": True,
