@@ -1,6 +1,12 @@
 import logging
 
-from api.models import Bookings, Fp_freight_providers, FPRouting, FP_zones
+from api.models import (
+    Bookings,
+    Fp_freight_providers,
+    FPRouting,
+    FP_zones,
+    Booking_lines_data,
+)
 from api.common import trace_error
 from api.fp_apis.utils import gen_consignment_num
 from api.convertors import pdf
@@ -19,15 +25,16 @@ from api.operations.labels import (
 logger = logging.getLogger(__name__)
 
 
-def get_barcode(booking, booking_lines, line_index=1, sscc_cnt=1):
+def get_barcode(booking, booking_lines, pre_data, line_index=1, sscc_cnt=1):
     """
     Get barcode for label
     """
     result = None
-    fp_name = booking.vx_freight_provider.lower()
 
-    if fp_name == "hunter":
+    if pre_data["fp_name"] == "hunter":
         result = hunter.gen_barcode(booking, booking_lines, line_index, sscc_cnt)
+    elif pre_data["fp_name"] == "tnt":
+        result = tnt.gen_barcode(booking, booking_lines, line_index, sscc_cnt)
     else:  # "auspost", "startrack", "TNT", "State Transport"
         result = ship_it.gen_barcode(booking, booking_lines, line_index, sscc_cnt)
 
@@ -51,25 +58,11 @@ def _get_pre_data(booking):
     elif fp_name == "hunter":
         pass
     elif fp_name == "tnt":
-        # Get routing_group with vx_service_name
-        # routing_group = None
-        # if booking.vx_serviceName == "Road Express":
-        #     routing_group = "EXP"
-        # elif booking.vx_serviceName in [
-        #     "09:00 Express",
-        #     "10:00 Express",
-        #     "12:00 Express",
-        #     "Overnight Express",
-        #     "PAYU - Satchel",
-        #     "ONFC Satchel",
-        # ]:
-        #     routing_group = "PRI"
-        # elif booking.vx_serviceName in [
-        #     "Technology Express - Sensitive Express",
-        #     "Sensitive Express",
-        #     "Fashion Delivery",
-        # ]:
-        #     routing_group = "TE"
+        lines_data = Booking_lines_data.objects.filter(
+            fk_booking_id=booking.pk_booking_id
+        ).only("fk_booking_lines_id", "gap_ra", "modelNumber")
+        _pre_data["lines_data"] = lines_data
+        _pre_data["lines_data_cnt"] = lines_data.count()
 
         """
         Let's assume service group EXP
@@ -248,6 +241,12 @@ def _build_sscc_label(
         return None
 
 
+from django.conf import settings
+from django.db import connection
+
+settings.DEBUG = True
+
+
 def build_label(
     booking,
     file_path,
@@ -265,6 +264,7 @@ def build_label(
 
     label_index = len(scanned_items)
     for index, sscc in enumerate(sscc_list):
+        logger.info(f"#2220 -  {len(connection.queries)}")
         file_path, file_name = _build_sscc_label(
             booking=booking,
             file_path=file_path,
@@ -275,6 +275,7 @@ def build_label(
             sscc_cnt=total_qty,
             one_page_label=False,
         )
+        logger.info(f"#2221 -  {len(connection.queries)}")
 
         for _line in sscc_lines[sscc]:
             label_index += _line.e_qty
@@ -284,7 +285,7 @@ def build_label(
         label = {}
         label["sscc"] = sscc
         label["barcode"] = get_barcode(
-            booking, sscc_lines[sscc], index + 1, len(sscc_list)
+            booking, sscc_lines[sscc], pre_data, index + 1, len(sscc_list)
         )
 
         if need_base64:

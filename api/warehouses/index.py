@@ -28,7 +28,6 @@ from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations.email_senders import send_email_to_admins
 from api.operations.labels.index import build_label as build_label_oper
 from api.operations.manifests.index import build_manifest as build_manifest_oper
-from api.operations.labels.index import get_barcode
 from api.common.booking_quote import set_booking_quote
 from api.common.thread import background
 from api.common import (
@@ -188,12 +187,19 @@ def get_quote(booking):
 
 
 def scanned(payload):
+    from django.conf import settings
+    from django.db import connection
+
+    settings.DEBUG = True
+
     """
     called as get_label
 
     request when item(s) is picked(scanned) at warehouse
     should response LABEL if payload is correct
     """
+    logger.info(f"#1110 -  {len(connection.queries)}")
+
     LOG_ID = "[SCANNED at WHSE]"
     client_name = payload.get("clientName")
     b_client_order_num = payload.get("orderNumber")
@@ -220,7 +226,7 @@ def scanned(payload):
     if bookings.count() == 0:
         message = "Order does not exist. 'orderNumber' is invalid."
         raise ValidationError(message)
-
+    logger.info(f"#1111 -  {len(connection.queries)}")
     # If Order exists
     booking = bookings.first()
     pk_booking_id = booking.pk_booking_id
@@ -231,20 +237,17 @@ def scanned(payload):
     )
     scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
     sscc_list = scanned_items.values_list("sscc", flat=True)
-
+    logger.info(f"#1112 -  {len(connection.queries)}")
     logger.info(f"@360 {LOG_ID} Booking: {booking}")
     logger.info(f"@361 {LOG_ID} Lines: {lines}")
     logger.info(f"@362 {LOG_ID} original_items: {original_items}")
     logger.info(f"@363 {LOG_ID} scanned_items: {scanned_items}")
     logger.info(f"@365 {LOG_ID} sscc(s): {sscc_list}")
-
+    logger.info(f"#11121 -  {len(connection.queries)}")
     # Delete existing ssccs(for scanned ones)
-    picked_ssccs = []
-    for picked_item in picked_items:
-        picked_ssccs.append(picked_item["sscc"])
-    if picked_ssccs:
-        Booking_lines.objects.filter(sscc__in=picked_ssccs).delete()
+    scanned_items.delete()
 
+    logger.info(f"#1113 -  {len(connection.queries)}")
     # Save
     try:
         labels = []
@@ -293,8 +296,7 @@ def scanned(payload):
 
         next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
         booking.puPickUpAvailFrom_Date = next_biz_day
-        booking.save()
-
+        logger.info(f"#1114 -  {len(connection.queries)}")
         # Build label with SSCC - one sscc should have one page label
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
@@ -308,6 +310,7 @@ def scanned(payload):
             need_base64=True,
             need_zpl=False,
         )
+        logger.info(f"#1115 -  {len(connection.queries)}")
 
         if label_data["urls"]:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
@@ -320,9 +323,10 @@ def scanned(payload):
                 booking.kf_client_id,
                 booking,
             )
-            booking.save()
             entire_label_b64 = str(pdf.pdf_to_base64(entire_label_url))[2:-1]
 
+        booking.save()
+        logger.info(f"#1116 -  {len(connection.queries)}")
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
         )
@@ -331,8 +335,8 @@ def scanned(payload):
             status_history.create(booking, "Picked", client_name)
 
         # Get quote in background
-        set_booking_quote(booking, None)
-        get_quote(booking)
+        # set_booking_quote(booking, None)
+        # get_quote(booking)
 
         return {
             "success": True,

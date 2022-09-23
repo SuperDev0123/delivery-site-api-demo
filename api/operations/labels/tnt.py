@@ -719,14 +719,24 @@ def build_label(
             )
             Story.append(shell_table)
 
+            # Gap/RA
+            gap_ras = []
+            if pre_data["lines_data_cnt"] > 0:
+                for line_data in pre_data["lines_data"]:
+                    if (
+                        line_data.fk_booking_lines_id
+                        == booking_line.pk_booking_lines_id
+                    ):
+                        gap_ras.append(line_data.gap_ra)
+
             tbl_data1 = [
                 [
                     Paragraph(
                         "<font size=%s><b>Senders Ref:</b> %s</font>"
                         % (
                             8,
-                            booking_line.gap_ras
-                            if booking_line.gap_ras
+                            ",".join(gap_ras)
+                            if gap_ras
                             else booking.b_client_order_num,
                         ),
                         style_left,
