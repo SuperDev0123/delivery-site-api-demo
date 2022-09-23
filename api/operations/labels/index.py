@@ -241,12 +241,6 @@ def _build_sscc_label(
         return None
 
 
-from django.conf import settings
-from django.db import connection
-
-settings.DEBUG = True
-
-
 def build_label(
     booking,
     file_path,
@@ -260,11 +254,11 @@ def build_label(
     label_data = {"urls": [], "labels": []}
     logger.info(f"@368 - building label with SSCC...\n sscc_lines: {sscc_lines}")
 
+    # Prepare data
     pre_data = _get_pre_data(booking)
 
     label_index = len(scanned_items)
     for index, sscc in enumerate(sscc_list):
-        logger.info(f"#2220 -  {len(connection.queries)}")
         file_path, file_name = _build_sscc_label(
             booking=booking,
             file_path=file_path,
@@ -275,7 +269,6 @@ def build_label(
             sscc_cnt=total_qty,
             one_page_label=False,
         )
-        logger.info(f"#2221 -  {len(connection.queries)}")
 
         for _line in sscc_lines[sscc]:
             label_index += _line.e_qty
