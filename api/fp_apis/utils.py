@@ -374,7 +374,7 @@ def auto_select_pricing_4_bok(
         bok_2_lines_cnt = (
             bok_1.bok_2s()
             .filter(b_093_packed_status=BOK_2_lines.ORIGINAL, is_deleted=False)
-            .count()
+            .aggregate(Sum("l_002_qty"))
         )
         send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
         auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
