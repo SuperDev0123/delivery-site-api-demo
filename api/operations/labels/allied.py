@@ -412,7 +412,7 @@ def build_label(
             tbl_data = [
                 [
                     Paragraph(
-                        "<font size=%s>Consignment No: <b>%s</b></font>"
+                        "<font size=%s>Consignment: <b>%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
                             v_FPBookingNumber,
