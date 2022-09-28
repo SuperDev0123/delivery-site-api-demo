@@ -286,7 +286,7 @@ def build_label(
 
         if need_zpl:
             # Convert label into ZPL format
-            msg = f"@369 {LOG_ID} converting LABEL({label_url}) into ZPL format..."
+            msg = f"@369 converting LABEL({label_url}) into ZPL format..."
             logger.info(msg)
 
             # Plum ZPL printer requries portrait label
