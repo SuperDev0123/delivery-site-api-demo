@@ -554,7 +554,7 @@ def push_boks(payload, client, username, method):
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
-                original_lines_count += 1
+                original_lines_count += item["qty"]
 
                 if not line["is_deleted"]:
                     bok_2_objs.append(bok_2_obj)
