@@ -420,6 +420,14 @@ def build_label(
                         style_left,
                     ),
                     Paragraph(
+                        "<font size=%s>Consignment No: <b>%s</b></font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            v_FPBookingNumber,
+                        ),
+                        style_left,
+                    ),
+                    Paragraph(
                         "<font size=%s>Order Ref: %s</font>"
                         % (
                             label_settings["font_size_medium"],
@@ -433,7 +441,8 @@ def build_label(
             shell_table = Table(
                 tbl_data,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (2 / 3) * mm,
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
+                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
                     float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
                 ),
                 style=[
