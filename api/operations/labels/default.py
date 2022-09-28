@@ -543,11 +543,10 @@ def build_label(
             tbl_parcelId = [
                 [
                     Paragraph(
-                        "<font size=%s><b>&nbsp;&nbsp; DME%s%s</b></font>"
+                        "<font size=%s><b>&nbsp;&nbsp; Consignment No: %s</b></font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_bookingID_Visual or "",
-                            str(j).zfill(3),
+                            v_FPBookingNumber or "",
                         ),
                         style_left,
                     ),
