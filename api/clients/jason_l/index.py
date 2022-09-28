@@ -237,7 +237,6 @@ def push_boks(payload, client, username, method):
         bok_1["b_client_order_num"] = bok_1["b_client_order_num"].strip()
         bok_1["b_client_sales_inv_num"] = bok_1["b_client_sales_inv_num"].strip()
         bok_1["shipping_type"] = bok_1.get("shipping_type", "DMEM").strip()
-        bok_1["pusher"] = bok_1.get("pusher")
 
     bok_1["b_053_b_del_address_type"] = (
         bok_1.get("b_053_b_del_delivery_type", "").strip().lower()
@@ -417,7 +416,7 @@ def push_boks(payload, client, username, method):
         bok_1["client_booking_id"] = client_booking_id
 
     bok_1["fk_client_id"] = client.dme_account_num
-    bok_1["x_booking_Created_With"] = pusher or ""
+    bok_1["x_booking_Created_With"] = "DME API"
     bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
     bok_1["b_092_booking_type"] = bok_1.get("shipping_type")
 
