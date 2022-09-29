@@ -339,7 +339,7 @@ def build_label(
                         "<font size=%s>From: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.puCompany or "",
+                            booking.puCompany[:18] if booking.puCompany else "",
                         ),
                         style_left,
                     ),
@@ -381,19 +381,29 @@ def build_label(
             Story.append(shell_table)
             Story.append(Spacer(1, 2))
 
+            essentialPart = "%s %s %s %s" % (
+                booking.pu_Address_Suburb or "",
+                (booking.pu_Address_State or "").upper(),
+                booking.pu_Address_PostalCode or "",
+                booking.pu_Address_Country,
+            )
+
+            addressPart = "%s %s, %s" % (
+                booking.pu_Contact_F_L_Name or "",
+                booking.pu_Address_Street_1 or "",
+                booking.pu_Address_street_2 or "",
+            )
+
+            addressLen = 80 - len(essentialPart)
+
             tbl_data = [
                 [
                     Paragraph(
-                        "<font size=%s>%s %s, %s %s %s %s %s</font>"
+                        "<font size=%s>%s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.pu_Contact_F_L_Name or "",
-                            booking.pu_Address_Street_1 or "",
-                            booking.pu_Address_street_2 or "",
-                            booking.pu_Address_Suburb or "",
-                            (booking.pu_Address_State or "").upper(),
-                            booking.pu_Address_PostalCode or "",
-                            booking.pu_Address_Country,
+                            addressPart[:addressLen],
+                            essentialPart,
                         ),
                         style_left,
                     )
@@ -419,7 +429,7 @@ def build_label(
                         "<font size=%s>Contact: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_to_Contact_F_LName or "",
+                            (booking.de_to_Contact_F_LName or "")[:20],
                         ),
                         style_left,
                     ),
@@ -458,14 +468,6 @@ def build_label(
             tbl_data = [
                 [
                     Paragraph(
-                        "<font size=%s>Consignment: <b>%s</b></font>"
-                        % (
-                            label_settings["font_size_medium"],
-                            v_FPBookingNumber,
-                        ),
-                        style_left,
-                    ),
-                    Paragraph(
                         "<font size=%s>Parcel ID: <b>%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
@@ -487,8 +489,7 @@ def build_label(
             shell_table = Table(
                 tbl_data,
                 colWidths=(
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
-                    float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
+                    float(label_settings["label_image_size_length"]) * (2 / 3) * mm,
                     float(label_settings["label_image_size_length"]) * (1 / 3) * mm,
                 ),
                 style=[
@@ -568,7 +569,7 @@ def build_label(
             tbl_parcelId = [
                 [
                     Paragraph(
-                        "<font size=%s><b>&nbsp;&nbsp; DME%s%s</b></font>"
+                        "<font size=%s>&nbsp;&nbsp; Item No: <b>DME%s%s</b></font>"
                         % (
                             label_settings["font_size_medium"],
                             booking.b_bookingID_Visual or "",
@@ -576,7 +577,16 @@ def build_label(
                         ),
                         style_left,
                     ),
-                    Spacer(3, 3),
+                    Spacer(1, 1),
+                    Paragraph(
+                        "<font size=%s>&nbsp;&nbsp; Consignment No: <b>%s</b></font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            v_FPBookingNumber,
+                        ),
+                        style_left,
+                    ),
+                    Spacer(1, 1),
                     tbl_service,
                 ],
             ]
@@ -604,13 +614,22 @@ def build_label(
                         ),
                         style_left,
                     ),
-                    Spacer(3, 3),
+                    Spacer(1, 1),
                     Paragraph(
                         "<font size=%s>Weight: %s</font>"
                         % (
                             label_settings["font_size_medium"],
                             str(booking_line.e_qty * booking_line.e_weightPerEach)
                             + "KG",
+                        ),
+                        style_left,
+                    ),
+                    Spacer(1, 1),
+                    Paragraph(
+                        "<font size=%s>Description:&nbsp;%s</font>"
+                        % (
+                            label_settings["font_size_medium"],
+                            extract_product_code(booking_line.e_item)[:20],
                         ),
                         style_left,
                     ),
@@ -637,7 +656,7 @@ def build_label(
             to_del_data = []
 
             codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            d = Drawing(20, 20)
+            d = Drawing(15, 15, transform=[1,0,0,1,0,-45])
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
             d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
 
@@ -654,18 +673,11 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["font_size_large"],
-                            booking.deToCompanyName or "",
+                            (booking.deToCompanyName or "")[:30],
                         ),
                         style_left,
                     ),
-                    Paragraph(
-                        "<font size=%s>Description:&nbsp;%s</font>"
-                        % (
-                            label_settings["font_size_medium"],
-                            extract_product_code(booking_line.e_item),
-                        ),
-                        style_left,
-                    ),
+                    d,
                 ]
             )
 
@@ -692,7 +704,7 @@ def build_label(
                             ),
                             style_left,
                         ),
-                        d,
+                        "",
                     ]
                 )
             else:
@@ -700,22 +712,21 @@ def build_label(
                     [
                         "",
                         Paragraph(
-                            "<font size=%s><b>%s</b>, <b>%s</b></font>"
+                            "<font size=%s><b>%s</b></font>"
                             % (
-                                label_settings["font_size_large"]
-                                if len(
-                                    booking.de_To_Address_Street_1
-                                    or "" + booking.de_To_Address_Street_2
-                                    or ""
-                                )
-                                < 35
-                                else label_settings["font_size_medium"],
-                                booking.de_To_Address_Street_1 or "",
-                                booking.de_To_Address_Street_2 or "",
+                                label_settings["font_size_large"],
+                                # if len(
+                                #     booking.de_To_Address_Street_1
+                                #     or "" + booking.de_To_Address_Street_2
+                                #     or ""
+                                # )
+                                # < 35
+                                # else label_settings["font_size_medium"],
+                                ((booking.de_To_Address_Street_1 or "") + ", " + (booking.de_To_Address_Street_2 or ""))[:30],
                             ),
                             style_left,
                         ),
-                        d,
+                        "",
                     ]
                 )
 
@@ -725,17 +736,17 @@ def build_label(
                     Paragraph(
                         "<font size=%s><b>%s&nbsp;%s&nbsp;%s</b></font>"
                         % (
-                            label_settings["font_size_large"]
-                            if len(
-                                booking.de_To_Address_State
-                                or "" + carrier
-                                or "" + booking.de_To_Address_PostalCode
-                                or ""
-                            )
-                            < 35
-                            else label_settings["font_size_medium"],
+                            label_settings["font_size_large"],
+                            # if len(
+                            #     booking.de_To_Address_State
+                            #     or "" + carrier
+                            #     or "" + booking.de_To_Address_PostalCode
+                            #     or ""
+                            # )
+                            # < 35
+                            # else label_settings["font_size_medium"],
                             booking.de_To_Address_State or "",
-                            carrier or "",
+                            (carrier or "")[:20],
                             booking.de_To_Address_PostalCode or "",
                         ),
                         style_left,
@@ -750,10 +761,10 @@ def build_label(
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
                         % (
-                            label_settings["font_size_large"]
-                            if len(booking.de_To_Address_Suburb) < 40
-                            else label_settings["font_size_medium"],
-                            booking.de_To_Address_Suburb,
+                            label_settings["font_size_large"],
+                            # if len(booking.de_To_Address_Suburb) < 40
+                            # else label_settings["font_size_medium"],
+                            booking.de_To_Address_Suburb[:30],
                         ),
                         style_left,
                     ),
@@ -766,7 +777,7 @@ def build_label(
                     "",
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
-                        % (label_settings["font_size_large"], booking.de_to_Phone_Main),
+                        % (label_settings["font_size_large"], booking.de_to_Phone_Main[:30]),
                         style_left,
                     ),
                     "",
@@ -811,11 +822,10 @@ def build_label(
             tbl_data1 = [
                 [
                     Paragraph(
-                        "<font size=%s>Instruction: %s %s</font>"
+                        "<font size=%s>Instruction: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_to_PickUp_Instructions_Address or "",
-                            booking.de_to_Pick_Up_Instructions_Contact or "",
+                            ((booking.de_to_PickUp_Instructions_Address or "") + " " + (booking.de_to_Pick_Up_Instructions_Contact or ""))[:70],
                         ),
                         style_left,
                     )
