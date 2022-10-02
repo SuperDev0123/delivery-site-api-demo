@@ -375,7 +375,12 @@ def _after_process(
             quotes = _confirm_visible(booking, _booking_lines, quotes)
 
         # Apply Markups (FP Markup and Client Markup)
-        quotes = apply_markups(quotes, client, fps, client_fps)
+        de_addr = {
+            "state": booking.de_To_Address_State,
+            "postal_code": booking.de_To_Address_PostalCode,
+            "suburb": booking.de_To_Address_Suburb,
+        }
+        quotes = apply_markups(quotes, client, fps, client_fps, de_addr)
 
 
 def build_threads(

@@ -52,7 +52,12 @@ def handle_manual_surcharge_change(booking, surcharge):
         quote.save()
 
     # Apply Markups (FP Markup and Client Markup)
-    quotes = apply_markups(quotes, client, fps, client_fps)
+    de_addr = {
+        "state": booking.de_To_Address_State,
+        "postal_code": booking.de_To_Address_PostalCode,
+        "suburb": booking.de_To_Address_Suburb,
+    }
+    quotes = apply_markups(quotes, client, fps, client_fps, de_addr)
 
     # Update Booking's quote info
     for quote in quotes:
