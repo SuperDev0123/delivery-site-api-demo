@@ -418,6 +418,12 @@ def gen_surcharges(booking_obj, line_objs, quote_obj, client, fp, data_type="bok
 
     if data_type == "bok_1":
         client_fps = Client_FP.objects.filter(client=client, is_active=True)
+        de_addr = {
+            "state": booking_obj.de_To_Address_State,
+            "postal_code": booking_obj.de_To_Address_PostalCode,
+            "suburb": booking_obj.de_To_Address_Suburb,
+        }
+        quotes = apply_markups(quotes, client, fps, client_fps, de_addr)
         apply_markups([quote_obj], client, [fp], client_fps)
 
     return result

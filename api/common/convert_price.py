@@ -2,6 +2,7 @@ import logging
 
 from api.models import DME_clients, Fp_freight_providers
 from api.fp_apis.constants import FP_CREDENTIALS, SPECIAL_FPS
+from api.fps.index import get_fp_fl
 
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ def _is_used_client_credential(fp_name, client_name, account_code):
     return False
 
 
-def _apply_mu(quote, fp, client, client_fp):
+def _apply_mu(quote, fp, client, client_fp, de_addr):
     """
     Convert FP price to DME price
 
@@ -40,7 +41,14 @@ def _apply_mu(quote, fp, client, client_fp):
     logger.info(f"[FP $ -> DME $] Start quote: {quote}")
 
     # FP MU(Fuel Levy)
-    fp_mu = (client_fp and client_fp.fuel_levy) or fp.fp_markupfuel_levy_percent
+    fp_mu = get_fp_fl(
+        fp,
+        client,
+        de_addr["state"],
+        de_addr["postal_code"],
+        de_addr["suburb"],
+        client_fp,
+    )
 
     # DME will consider tax on `invoicing` stage
     # tax = quote.tax_value_1 if quote.tax_value_1 else 0
@@ -88,7 +96,7 @@ def _apply_mu(quote, fp, client, client_fp):
     return quoted_dollar, fuel_levy_base, client_mu
 
 
-def apply_markups(quotes, client, fps, client_fps):
+def apply_markups(quotes, client, fps, client_fps, de_addr):
     logger.info(f"[APPLY MU] Start")
 
     if not quotes:
@@ -114,15 +122,20 @@ def apply_markups(quotes, client, fps, client_fps):
                 break
 
         client_mu_1_minimum_values, fuel_levy_base, client_mu = _apply_mu(
-            quote, fp, client, _client_fp
+            quote, fp, client, _client_fp, de_addr
         )
 
         if not (quote.fee == 0 and quote.x_price_surcharge == 0):
             quote.client_mu_1_minimum_values = client_mu_1_minimum_values
 
-        quote.mu_percentage_fuel_levy = (
-            _client_fp and _client_fp.fuel_levy
-        ) or fp.fp_markupfuel_levy_percent
+        quote.mu_percentage_fuel_levy = get_fp_fl(
+            fp,
+            client,
+            de_addr["state"],
+            de_addr["postal_code"],
+            de_addr["suburb"],
+            client_fp,
+        )
         quote.fuel_levy_base = fuel_levy_base
         quote.client_mark_up_percent = client_mu
         quote.save()
