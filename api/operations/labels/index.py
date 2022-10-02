@@ -13,6 +13,7 @@ from api.operations.labels import (
     allied,
     startrack,
     default,
+    small_label,
 )
 
 logger = logging.getLogger(__name__)
@@ -55,6 +56,37 @@ def build_label(
                 booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
             )
 
+        # # Set consignment number
+        # booking.v_FPBookingNumber = gen_consignment_num(
+        #     booking.vx_freight_provider,
+        #     booking.b_bookingID_Visual,
+        #     booking.kf_client_id,
+        #     booking,
+        # )
+        # booking.save()
+
+        return file_path, file_name
+    except Exception as e:
+        trace_error.print()
+        logger.error(f"[LABEL] error: {str(e)}")
+        return None
+
+def build_small_label(
+    booking,
+    file_path,
+    lines=[],
+    label_index=0,
+    sscc=None,
+    sscc_cnt=1,
+    one_page_label=False,
+):
+    fp_name = booking.vx_freight_provider.lower()
+
+    try:
+        file_path, file_name = small_label.build_label(
+            booking, file_path, lines, label_index, sscc, sscc_cnt, one_page_label
+        )
+        
         # # Set consignment number
         # booking.v_FPBookingNumber = gen_consignment_num(
         #     booking.vx_freight_provider,
