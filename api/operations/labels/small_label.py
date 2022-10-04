@@ -99,7 +99,7 @@ def build_label(
     booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
 ):
     logger.info(
-        f"#110 [TNT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
+        f"#110 [SMALL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
     v_FPBookingNumber = gen_consignment_num(
         booking.vx_freight_provider, booking.b_bookingID_Visual
@@ -137,7 +137,7 @@ def build_label(
             + v_FPBookingNumber
             + "_"
             + str(booking.b_bookingID_Visual)
-            + ".pdf"
+            + "-small.pdf"
         )
 
     file = open(f"{filepath}/{filename}", "w")
