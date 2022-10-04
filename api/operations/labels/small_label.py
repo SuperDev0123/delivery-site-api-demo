@@ -101,9 +101,7 @@ def build_label(
     logger.info(
         f"#110 [SMALL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
-    v_FPBookingNumber = gen_consignment_num(
-        booking.vx_freight_provider, booking.b_bookingID_Visual
-    )
+    v_FPBookingNumber = booking.v_FPBookingNumber
 
     # start check if pdfs folder exists
     if not os.path.exists(filepath):
@@ -201,7 +199,6 @@ def build_label(
         fp_img = Image(fp_logo, 30 * mm, 7.7 * mm)
     else:
         fp_img = None
-
 
     dme_logo = "./static/assets/logos/dme.png"
     dme_img = Image(dme_logo, 30 * mm, 7.7 * mm)
@@ -1130,18 +1127,23 @@ def build_label(
                 or "808080"
             )
 
-            tbl_data1 = [[
-                fp_img if fp_img else Paragraph(
-                    "<font size=%s><b>%s</b></font>"
-                    % (
-                        label_settings["font_size_extra_large"],
-                        (booking.vx_freight_provider)
-                        if (booking.vx_freight_provider)
-                        else "",
-                    ),
-                    style_center_bg,
-                )
-            ], [""]]
+            tbl_data1 = [
+                [
+                    fp_img
+                    if fp_img
+                    else Paragraph(
+                        "<font size=%s><b>%s</b></font>"
+                        % (
+                            label_settings["font_size_extra_large"],
+                            (booking.vx_freight_provider)
+                            if (booking.vx_freight_provider)
+                            else "",
+                        ),
+                        style_center_bg,
+                    )
+                ],
+                [""],
+            ]
 
             t1 = Table(
                 tbl_data1,
