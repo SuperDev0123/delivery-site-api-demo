@@ -4608,7 +4608,6 @@ def build_label(request):
         booking.z_label_url = (
             f"{settings.WEB_SITE_URL}/label/{booking.b_client_booking_ref_num}/"
         )
-        booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 
         # Jason L
         if not booking.b_dateBookedDate and booking.b_status != "Picked":
