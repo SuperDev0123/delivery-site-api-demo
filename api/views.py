@@ -110,6 +110,7 @@ from api.operations.booking.refs import (
 )
 from api.operations.genesis.index import update_shared_booking
 from api.operations.email_senders import send_email_to_admins
+from api.fps.index import get_fp_fl
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -4037,7 +4038,13 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             fp = Fp_freight_providers.objects.get(
                 fp_company_name__iexact=booking.vx_freight_provider
             )
-            res["fuel_levy_base_cl"] = without_surcharge * fp.fp_markupfuel_levy_percent
+            res["fuel_levy_base_cl"] = without_surcharge * get_fp_fl(
+                fp,
+                client,
+                booking.de_To_Address_State,
+                booking.de_To_Address_PostalCode,
+                booking.de_To_Address_Suburb,
+            )
             res["cost_dollar"] = without_surcharge - res["fuel_levy_base_cl"]
             res = [res]
 
@@ -4601,7 +4608,6 @@ def build_label(request):
         booking.z_label_url = (
             f"{settings.WEB_SITE_URL}/label/{booking.b_client_booking_ref_num}/"
         )
-        booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 
         # Jason L
         if not booking.b_dateBookedDate and booking.b_status != "Picked":

@@ -464,8 +464,14 @@ def get_book_payload(booking, fp_name):
             payload["customerReference"] = booking.clientRefNumbers
 
         payload["isDangerousGoods"] = False
-        payload["payer"] = "Receiver"
-        payload["receiver_Account"] = "30021385"
+
+        # JasonL
+        if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+            payload["payer"] = "Sender"
+            payload["receiver_Account"] = ""
+        else:
+            payload["payer"] = "Receiver"
+            payload["receiver_Account"] = "30021385"
     elif fp_name == "capital":  # Capital
         payload["serviceType"] = "EC"
     elif fp_name == "dhl":  # DHL

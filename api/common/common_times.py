@@ -11,7 +11,7 @@ from api.models import Fp_freight_providers
 logger = logging.getLogger(__name__)
 SYDNEY_TZ = pytz.timezone("Australia/Sydney")
 UTC_TZ = pytz.timezone("UTC")
-TIME_DIFFERENCE = 10  # Difference between UTC and AU(Sydney) time
+TIME_DIFFERENCE = 11  # Difference between UTC and AU(Sydney) time
 
 
 def get_sydney_now_time(return_type="char"):
