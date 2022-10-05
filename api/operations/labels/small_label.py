@@ -76,10 +76,9 @@ def myLaterPages(canvas, doc):
     canvas.restoreState()
 
 
-def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
+def gen_barcode(booking, v_FPBookingNumber, line_index):
     item_index = str(line_index).zfill(3)
-    visual_id = str(booking.b_bookingID_Visual)
-    label_code = f"DME{visual_id}{item_index}"
+    label_code = f"{v_FPBookingNumber}-{item_index}"
     api_bcl.create(booking, [{"label_code": label_code}])
     return label_code
 
@@ -397,7 +396,12 @@ def build_label(
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
-                        % (9, datetime.datetime.now().strftime("%d-%m-%Y")),
+                        % (
+                            9, 
+                            booking.b_dateBookedDate.strftime("%d/%m/%Y")
+                            if booking.b_dateBookedDate
+                            else booking.puPickUpAvailFrom_Date.strftime("%d/%m/%Y"),
+                        ),
                         style_left,
                     ),
                     Paragraph(
@@ -1036,7 +1040,7 @@ def build_label(
             Story.append(shell_table)
             Story.append(Spacer(1,5))
 
-            barcode = gen_barcode(booking, lines, j, sscc_cnt)
+            barcode = gen_barcode(booking, v_FPBookingNumber, j)
 
             tbl_data = [[code128.Code128(barcode, barWidth=1.1, barHeight=12 * mm)]]
 
