@@ -742,7 +742,7 @@ def build_label(
                             "<font size=%s>%s%s, %s, %s, %s, %s, %s</font>"
                             % (
                                 8,
-                                ((booking.puCompany + " ") if (booking.puCompany or "").lower() != (booking.pu_Contact_F_L_Name or "").lower() else ""),
+                                ((booking.puCompany + ", ") if (booking.puCompany or "").lower() != (booking.pu_Contact_F_L_Name or "").lower() else ""),
                                 booking.pu_Contact_F_L_Name or "",
                                 booking.pu_Address_Street_1 or "",
                                 booking.pu_Address_street_2 or "",
@@ -761,7 +761,7 @@ def build_label(
                             "<font size=%s>%s%s, %s, %s, %s, %s</font>"
                             % (
                                 8,
-                                ((booking.puCompany + " ") if (booking.puCompany or "").lower() != (booking.pu_Contact_F_L_Name or "").lower() else ""),
+                                ((booking.puCompany + ", ") if (booking.puCompany or "").lower() != (booking.pu_Contact_F_L_Name or "").lower() else ""),
                                 booking.pu_Contact_F_L_Name or "",
                                 booking.pu_Address_Street_1 or "",
                                 booking.pu_Address_Suburb or "",
