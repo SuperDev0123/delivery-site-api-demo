@@ -492,7 +492,7 @@ def build_label(
                         "<font size=%s><b>Item Wt.:%s %s.</b></font>"
                         % (
                             9,
-                            e_Total_KG_weight or "",
+                            round(e_Total_KG_weight, 3) or "",
                             booking_line.e_weightUOM or "KG",
                         ),
                         style_left,
@@ -1003,7 +1003,7 @@ def build_label(
                         "<font size=%s><b>Con Note Wt.: %s %s.</b></font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking_line.e_weightPerEach * booking_line.e_qty or "",
+                            round(booking_line.e_weightPerEach * booking_line.e_qty, 3) or "",
                             booking_line.e_weightUOM or "KG",
                         ),
                         style_left,
