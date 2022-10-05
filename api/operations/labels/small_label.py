@@ -77,12 +77,11 @@ def myLaterPages(canvas, doc):
 
 
 def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
-    TT = 11
-    CCCCCC = "132214"  # DME
     item_index = str(line_index).zfill(3)
-    postal_code = str(booking.de_To_Address_PostalCode)
-
-    return f"6104{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}{postal_code.zfill(5)}0"
+    visual_id = str(booking.b_bookingID_Visual)
+    label_code = f"DME{visual_id}{item_index}"
+    api_bcl.create(booking, [{"label_code": label_code}])
+    return label_code
 
 
 def gen_itm(booking, booking_lines, line_index, sscc_cnt):
@@ -1035,6 +1034,7 @@ def build_label(
             )
 
             Story.append(shell_table)
+            Story.append(Spacer(1,5))
 
             barcode = gen_barcode(booking, lines, j, sscc_cnt)
 
@@ -1054,7 +1054,7 @@ def build_label(
             )
 
             Story.append(t1)
-            Story.append(Spacer(1, 5))
+            # Story.append(Spacer(1, 5))
 
             fp_color_code = (
                 Fp_freight_providers.objects.get(fp_company_name="TNT").hex_color_code
@@ -1099,10 +1099,10 @@ def build_label(
                 ],
             )
 
-            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
+            # codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
             d = Drawing(20, 20)
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
+            # d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
 
             tbl_data1 = [[dme_img, d, t1]]
 
