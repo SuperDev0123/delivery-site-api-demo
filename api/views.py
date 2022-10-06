@@ -5227,6 +5227,39 @@ class SurchargeViewSet(viewsets.ModelViewSet):
 @permission_classes((IsAuthenticated,))
 class ChartsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
+    def get_daily_booked(self, request):
+        try:
+            startDate = request.GET.get("startDate")
+            endDate = request.GET.get("endDate")
+            fp = request.GET.get("fp")
+            client = request.GET.get("client")
+            
+            filterBooking = Bookings.objects.filter(
+                Q(b_dateBookedDate__range=[startDate, endDate])
+            )
+            
+            if fp != "all":
+                filterBooking = filterBooking.filter(vx_freight_provider__iexact=fp)
+
+            if client != "all":
+                filterBooking = filterBooking.filter(b_client_name__iexact=client)
+
+
+            result = (
+                filterBooking.extra(select={"bookedDate": "DATE(b_dateBookedDate)"})
+                .values("bookedDate")
+                .annotate(bookedCount=Count("b_dateBookedDate"))
+                .order_by("bookedCount")
+            )
+
+            num_reports = list(result)
+            
+            return JsonResponse({"results": num_reports})
+        except Exception as e:
+            # print(f"Error #102: {e}")
+            return JsonResponse({"results": [], "success": False, "message": str(e)})
+    
+    @action(detail=False, methods=["get"])
     def get_num_bookings_per_fp(self, request):
         try:
             startDate = request.GET.get("startDate")
