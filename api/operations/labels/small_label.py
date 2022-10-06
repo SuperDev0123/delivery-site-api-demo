@@ -51,6 +51,15 @@ style_center_bg = ParagraphStyle(
     alignment=TA_CENTER,
     leading=20,
 )
+style_uppercase_big = ParagraphStyle(
+    name="uppercase",
+    parent=styles["Normal"],
+    alignment=TA_LEFT,
+    leading=12,
+    spaceBefore=0,
+    spaceAfter=0,
+    textTransform="uppercase",
+)
 style_uppercase = ParagraphStyle(
     name="uppercase",
     parent=styles["Normal"],
@@ -545,7 +554,7 @@ def build_label(
                             font_size,
                             booking.de_to_Contact_F_LName or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_big,
                     )
                 ]
             )
@@ -561,7 +570,7 @@ def build_label(
                                 font_size,
                                 booking.deToCompanyName or "",
                             ),
-                            style_uppercase,
+                            style_uppercase_big,
                         )
                     ]
                 )
@@ -574,7 +583,7 @@ def build_label(
                             font_size,
                             booking.de_To_Address_Street_1 or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_big,
                     )
                 ]
             )
@@ -586,7 +595,7 @@ def build_label(
                             font_size,
                             booking.de_To_Address_Street_2 or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_big,
                     )
                 ]
             )
@@ -600,17 +609,17 @@ def build_label(
                             booking.de_To_Address_PostalCode or "",
                             booking.de_To_Address_State or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_big,
                     ),
                 ]
             )
-
+            
             t2 = Table(
                 tbl_data2,
                 colWidths=(float(label_settings["label_image_size_length"]) * mm - 20),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (-1, -1), 0),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -768,34 +777,32 @@ def build_label(
             special_instruction = booking.pu_pickup_instructions_address or ""
 
             if special_instruction:
-                special_instruction = f"{special_instruction}, {booking.de_to_PickUp_Instructions_Address or ''}"
+                special_instruction = f"{special_instruction}, {booking.de_to_PickUp_Instructions_Address or ''}"[:35]
             else:
-                special_instruction = booking.de_to_PickUp_Instructions_Address or ""
+                special_instruction = (booking.de_to_PickUp_Instructions_Address or "")[:35]
 
             tbl_data1 = [
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>" % (9, "Special Instructions:"),
-                        style_center,
+                        style_left,
                     ),
-                ],
-                [
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>" % (7, special_instruction),
-                        style_center,
+                        "<font size=%s>%s</font>" % (9, special_instruction),
+                        style_left,
                     ),
                 ],
             ]
 
             t1 = Table(
                 tbl_data1,
-                colWidths=(float(label_settings["label_image_size_length"]) * mm),
+                colWidths=(33 * mm, (float(label_settings["label_image_size_length"]) - 33) * mm),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (-1, -1), 0),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ],
             )
 
@@ -868,7 +875,7 @@ def build_label(
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.de_To_Address_Street_1 or "",
+                            (booking.de_To_Address_Street_1 or "")[:25],
                         ),
                         style_uppercase,
                     ),
@@ -885,19 +892,10 @@ def build_label(
                 ],
                 [
                     Paragraph(
-                        "<font size=%s>%s</font> "
+                        "<font size=%s>%s %s %s</font> "
                         % (
                             label_settings["font_size_normal"],
                             booking.de_To_Address_Suburb or "",
-                        ),
-                        style_uppercase,
-                    ),
-                ],
-                [
-                    Paragraph(
-                        "<font size=%s>%s %s</font> "
-                        % (
-                            label_settings["font_size_normal"],
                             booking.de_To_Address_PostalCode or "",
                             booking.de_To_Address_State or "",
                         ),
@@ -982,19 +980,10 @@ def build_label(
                 ],
                 [
                     Paragraph(
-                        "<font size=%s>%s</font> "
+                        "<font size=%s>%s %s %s</font> "
                         % (
                             label_settings["font_size_normal"],
                             booking.pu_Address_Suburb or "",
-                        ),
-                        style_uppercase,
-                    ),
-                ],
-                [
-                    Paragraph(
-                        "<font size=%s>%s %s</font> "
-                        % (
-                            label_settings["font_size_normal"],
                             booking.pu_Address_PostalCode or "",
                             booking.pu_Address_State or "",
                         ),
@@ -1038,7 +1027,7 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1,5))
+            Story.append(Spacer(5,5))
 
             barcode = gen_barcode(booking, v_FPBookingNumber, j)
 
@@ -1050,8 +1039,8 @@ def build_label(
                 style=[
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("VALIGN", (0, 0), (0, -1), "TOP"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 3),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                    ("TOPPADDING", (0, 0), (-1, -1), 0),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (0, -1), 0),
                     ("RIGHTPADDING", (0, 0), (0, -1), 0),
                 ],
@@ -1104,11 +1093,12 @@ def build_label(
             )
 
             # codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            d = Drawing(20, 20)
-            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            # d = Drawing(20, 20)
+            # d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
             # d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
 
-            tbl_data1 = [[dme_img, d, t1]]
+            # tbl_data1 = [[dme_img, d, t1]]
+            tbl_data1 = [[dme_img, "", t1]]
 
             t1 = Table(
                 tbl_data1,
@@ -1117,7 +1107,7 @@ def build_label(
                     float(label_settings["label_dimension_length"]) * (2 / 10) * mm,
                     float(label_settings["label_dimension_length"]) * (5 / 10) * mm,
                 ),
-                rowHeights=(float(label_settings["line_height_large"]) * 4 / 2 * mm),
+                rowHeights=(float(label_settings["line_height_large"]) * 1.9 * mm),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
