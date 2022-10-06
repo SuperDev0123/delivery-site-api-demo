@@ -190,7 +190,7 @@ def build_label(booking, filepath, lines=[], label_index=0):
         "font_size_large": "10",
         "font_size_extra_large": "13",
         "label_dimension_length": "100",
-        "label_dimension_width": "145",
+        "label_dimension_width": "150",
         "label_image_size_length": "85",
         "label_image_size_width": "130",
         "label_image_size_height": "130",
