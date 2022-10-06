@@ -602,22 +602,10 @@ def build_label(
             tbl_data2.append(
                 [
                     Paragraph(
-                        "<font size=%s><b>%s</b></font> "
+                        "<font size=%s><b>%s %s %s</b></font> "
                         % (
                             font_size,
                             booking.de_To_Address_Suburb or "",
-                        ),
-                        style_uppercase_big,
-                    ),
-                ]
-            )
-            
-            tbl_data2.append(
-                [
-                    Paragraph(
-                        "<font size=%s><b>%s %s</b></font> "
-                        % (
-                            font_size,
                             booking.de_To_Address_PostalCode or "",
                             booking.de_To_Address_State or "",
                         ),
@@ -625,7 +613,7 @@ def build_label(
                     ),
                 ]
             )
-
+            
             t2 = Table(
                 tbl_data2,
                 colWidths=(float(label_settings["label_image_size_length"]) * mm - 20),
@@ -789,34 +777,32 @@ def build_label(
             special_instruction = booking.pu_pickup_instructions_address or ""
 
             if special_instruction:
-                special_instruction = f"{special_instruction}, {booking.de_to_PickUp_Instructions_Address or ''}"
+                special_instruction = f"{special_instruction}, {booking.de_to_PickUp_Instructions_Address or ''}"[:35]
             else:
-                special_instruction = booking.de_to_PickUp_Instructions_Address or ""
+                special_instruction = (booking.de_to_PickUp_Instructions_Address or "")[:35]
 
             tbl_data1 = [
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>" % (9, "Special Instructions:"),
-                        style_center,
+                        style_left,
                     ),
-                ],
-                [
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>" % (7, special_instruction),
-                        style_center,
+                        "<font size=%s>%s</font>" % (9, special_instruction),
+                        style_left,
                     ),
                 ],
             ]
 
             t1 = Table(
                 tbl_data1,
-                colWidths=(float(label_settings["label_image_size_length"]) * mm),
+                colWidths=(33 * mm, (float(label_settings["label_image_size_length"]) - 33) * mm),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (-1, -1), 0),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                    ("VALIGN", (0, 0), (0, -1), "TOP"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ],
             )
 
@@ -906,19 +892,10 @@ def build_label(
                 ],
                 [
                     Paragraph(
-                        "<font size=%s>%s</font> "
+                        "<font size=%s>%s %s %s</font> "
                         % (
                             label_settings["font_size_normal"],
                             booking.de_To_Address_Suburb or "",
-                        ),
-                        style_uppercase,
-                    ),
-                ],
-                [
-                    Paragraph(
-                        "<font size=%s>%s %s</font> "
-                        % (
-                            label_settings["font_size_normal"],
                             booking.de_To_Address_PostalCode or "",
                             booking.de_To_Address_State or "",
                         ),
@@ -1003,19 +980,10 @@ def build_label(
                 ],
                 [
                     Paragraph(
-                        "<font size=%s>%s</font> "
+                        "<font size=%s>%s %s %s</font> "
                         % (
                             label_settings["font_size_normal"],
                             booking.pu_Address_Suburb or "",
-                        ),
-                        style_uppercase,
-                    ),
-                ],
-                [
-                    Paragraph(
-                        "<font size=%s>%s %s</font> "
-                        % (
-                            label_settings["font_size_normal"],
                             booking.pu_Address_PostalCode or "",
                             booking.pu_Address_State or "",
                         ),
