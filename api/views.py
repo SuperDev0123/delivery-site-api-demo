@@ -1708,14 +1708,15 @@ class BookingsViewSet(viewsets.ViewSet):
         for booking in bookings_with_manifest:
             if not booking.manifest_timestamp in manifest_dates:
                 manifest_dates.append(booking.manifest_timestamp)
-                print("@1 - ", booking.manifest_timestamp)
 
-        print(
-            "@2 - ",
-            manifest_logs.count(),
-            bookings_with_manifest.count(),
-            len(manifest_dates),
-        )
+        for manifest_date in manifest_dates:
+            does_exist = False
+            for booking in bookings_with_manifest:
+                if booking.manifest_timestamp == manifest_date:
+                    does_exist = True
+
+            if not does_exist:
+                print("@1 - ", manifest_date)
 
         results = []
         report_fps = []
