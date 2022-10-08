@@ -198,7 +198,6 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
             }
         )
 
-    logger.info(f"@1 - {lines}, {lengths + widths + heights}")
     max_dimension = max(lengths + widths + heights)
     dead_weight = math.ceil(dead_weight)
     cubic_weight = math.ceil(cubic_weight)

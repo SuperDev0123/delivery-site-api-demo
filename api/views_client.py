@@ -664,6 +664,7 @@ def push_boks(request):
     user = request.user
     logger.info(f"@800 {LOG_ID} Requester: {user.username}")
     logger.info(f"@801 {LOG_ID} Payload: {request.data}")
+    time1 = t.time()
 
     try:
         client = get_client(user)
@@ -712,6 +713,10 @@ def push_boks(request):
             result = standard.push_boks(request.data, client)
 
         logger.info(f"@828 {LOG_ID} Push BOKS success!, 201_created")
+        time2 = t.time()
+        logger.info(
+            f"\n#838 {LOG_ID} Requester: {user.username}\nSpent time: {str(int(round(time2 - time1)))}s\n"
+        )
         return JsonResponse(result, status=HTTP_201_CREATED)
     except Exception as e:
         logger.info(f"@829 {LOG_ID} Exception: {str(e)}")
@@ -747,7 +752,7 @@ def scanned(request):
         logger.info(f"#838 {LOG_ID} {message}")
         time2 = t.time()
         logger.info(
-            f"\n#838 {LOG_ID} Requester: {user.username}\nPayload: {request.data}\nSpent time: {str(int(round(time2 - time1)))}s\n"
+            f"\n#838 {LOG_ID} Requester: {user.username}\nSpent time: {str(int(round(time2 - time1)))}s\n"
         )
         return JsonResponse(result, status=HTTP_200_OK)
     except Exception as e:
@@ -755,7 +760,7 @@ def scanned(request):
         trace_error.print()
         time2 = t.time()
         logger.info(
-            f"\n#838 {LOG_ID} Requester: {user.username}\nPayload: {request.data}\nSpent time: {str(int(round(time2 - time1)))}s\n"
+            f"\n#838 {LOG_ID} Requester: {user.username}\nSpent time: {str(int(round(time2 - time1)))}s\n"
         )
         res_json = {"success": False, "message": str(e)}
         return Response(res_json, status=HTTP_400_BAD_REQUEST)
