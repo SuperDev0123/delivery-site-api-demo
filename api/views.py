@@ -1698,6 +1698,7 @@ class BookingsViewSet(viewsets.ViewSet):
             )
         )
 
+        # Client filter
         if clientname != "dme":
             bookings_with_manifest = bookings_with_manifest.filter(
                 b_client_name=clientname
@@ -1707,6 +1708,13 @@ class BookingsViewSet(viewsets.ViewSet):
         for booking in bookings_with_manifest:
             if not booking.manifest_timestamp in manifest_dates:
                 manifest_dates.append(booking.manifest_timestamp)
+
+        print(
+            "@! - ",
+            manifest_logs.count(),
+            bookings_with_manifest.count(),
+            len(manifest_dates),
+        )
 
         results = []
         report_fps = []
@@ -1744,13 +1752,14 @@ class BookingsViewSet(viewsets.ViewSet):
             result["manifest_date"] = manifest_date
             result["b_bookingID_Visuals"] = b_bookingID_Visuals
             result["kf_client_id"] = first_booking.kf_client_id
-
             results.append(result)
 
             if first_booking.vx_freight_provider not in report_fps:
                 report_fps.append(first_booking.vx_freight_provider)
+
             if first_booking.kf_client_id not in client_ids:
                 client_ids.append(first_booking.kf_client_id)
+
             index += 1
 
         clients = DME_clients.objects.filter(dme_account_num__in=client_ids).only(
