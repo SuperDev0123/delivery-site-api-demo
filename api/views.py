@@ -1708,9 +1708,10 @@ class BookingsViewSet(viewsets.ViewSet):
         for booking in bookings_with_manifest:
             if not booking.manifest_timestamp in manifest_dates:
                 manifest_dates.append(booking.manifest_timestamp)
+                print("@1 - ", booking.manifest_timestamp)
 
         print(
-            "@! - ",
+            "@2 - ",
             manifest_logs.count(),
             bookings_with_manifest.count(),
             len(manifest_dates),
