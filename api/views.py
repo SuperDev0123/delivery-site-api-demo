@@ -1711,7 +1711,7 @@ class BookingsViewSet(viewsets.ViewSet):
 
         for manifest_date in manifest_dates:
             does_exist = False
-            coutn = 0
+            count = 0
 
             for booking in bookings_with_manifest:
                 if booking.manifest_timestamp == manifest_date:
