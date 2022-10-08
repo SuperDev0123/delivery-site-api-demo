@@ -1711,12 +1711,15 @@ class BookingsViewSet(viewsets.ViewSet):
 
         for manifest_date in manifest_dates:
             does_exist = False
+            coutn = 0
+
             for booking in bookings_with_manifest:
                 if booking.manifest_timestamp == manifest_date:
                     does_exist = True
+                    count += 1
 
-            if not does_exist:
-                print("@1 - ", manifest_date)
+            if not does_exist or count > 1:
+                print("@1 - ", manifest_date, count)
 
         results = []
         report_fps = []
