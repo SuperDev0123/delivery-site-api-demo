@@ -4158,9 +4158,12 @@ def download(request):
                 booking.z_downloaded_connote_timestamp = timezone.now()
                 booking.save()
             if booking.z_label_url and len(booking.z_label_url) > 0:
-                file_paths.append(
-                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-                )
+                if "http" in booking.z_label_url:
+                    label_url = f"DME{booking.b_bookingID_Visual}"
+                else:
+                    label_url = booking.z_label_url
+
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
                 booking.z_downloaded_shipping_label_timestamp = timezone.now()
                 booking.save()
     elif download_option == "zpl":
