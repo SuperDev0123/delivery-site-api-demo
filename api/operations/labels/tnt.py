@@ -730,7 +730,7 @@ def build_label(
                             "<font size=%s>%s, %s, %s, %s, %s, %s</font>"
                             % (
                                 8,
-                                booking.pu_Contact_F_L_Name or "",
+                                booking.puCompany or "",
                                 booking.pu_Address_Street_1 or "",
                                 booking.pu_Address_street_2 or "",
                                 booking.pu_Address_Suburb or "",
@@ -748,7 +748,7 @@ def build_label(
                             "<font size=%s>%s, %s, %s, %s, %s</font>"
                             % (
                                 8,
-                                booking.pu_Contact_F_L_Name or "",
+                                booking.puCompany or "",
                                 booking.pu_Address_Street_1 or "",
                                 booking.pu_Address_Suburb or "",
                                 booking.pu_Address_PostalCode or "",
