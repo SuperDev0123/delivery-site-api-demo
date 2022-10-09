@@ -2356,8 +2356,8 @@ class Booking_lines(models.Model):
 
             for booking_line_data in booking_lines_data:
                 gap_ra = booking_line_data.gap_ra
-                if gap_ra and not gap_ra in gap_ras:
-                    gap_ras.append(gap_ra)
+                if gap_ra and not gap_ra in _gap_ras:
+                    _gap_ras.append(gap_ra)
 
             return ", ".join(_gap_ras)
         except Exception as e:
