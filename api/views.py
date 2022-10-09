@@ -4095,9 +4095,13 @@ def download(request):
     elif download_option == "label":
         for booking in bookings:
             if booking.z_label_url and len(booking.z_label_url) > 0:
-                file_paths.append(
-                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-                )
+                if "http" in booking.z_label_url:
+                    fp_name = f"{booking.vx_freight_provider.lower()}_au"
+                    label_url = f"{fp_name}/DME{booking.b_bookingID_Visual}.pdf"
+                else:
+                    label_url = booking.z_label_url
+
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
                 booking.z_downloaded_shipping_label_timestamp = str(datetime.now())
                 booking.save()
     elif download_option == "pod":
