@@ -4159,7 +4159,8 @@ def download(request):
                 booking.save()
             if booking.z_label_url and len(booking.z_label_url) > 0:
                 if "http" in booking.z_label_url:
-                    label_url = f"DME{booking.b_bookingID_Visual}"
+                    fp_name = f"{booking.vx_freight_provider.lower()}_au"
+                    label_url = f"{fp_name}/DME{booking.b_bookingID_Visual}.pdf"
                 else:
                     label_url = booking.z_label_url
 
