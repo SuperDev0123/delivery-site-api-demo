@@ -584,7 +584,7 @@ def build_label(
             tbl_package = [
                 [
                     Paragraph(
-                        "<font size=%s>Item %s: %s x %s x %s = %s M<super rise=4 size=4>3</super></font>"
+                        "<font size=%s>Item %s: %sx%sx%s = %s M<super rise=4 size=4>3</super></font>"
                         % (
                             label_settings["font_size_medium"],
                             j,
@@ -730,7 +730,7 @@ def build_label(
                 [
                     "",
                     Paragraph(
-                        "<font size=%s><b>%s&nbsp;%s&nbsp;%s</b></font>"
+                        "<font size=%s><b>%s&nbsp;%s&nbsp;%s&nbsp;%s</b></font>"
                         % (
                             label_settings["font_size_large"]
                             if len(
@@ -744,22 +744,6 @@ def build_label(
                             booking.de_To_Address_State or "",
                             (pre_data["carrier"] or "")[:20],
                             booking.de_To_Address_PostalCode or "",
-                        ),
-                        style_left_bg,
-                    ),
-                    "",
-                ]
-            )
-
-            to_del_data.append(
-                [
-                    "",
-                    Paragraph(
-                        "<font size=%s><b>%s</b></font>"
-                        % (
-                            label_settings["font_size_large"],
-                            # if len(booking.de_To_Address_Suburb) < 40
-                            # else label_settings["font_size_medium"],
                             booking.de_To_Address_Suburb[:30],
                         ),
                         style_left_bg,

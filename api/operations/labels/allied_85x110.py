@@ -658,7 +658,7 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
             tbl_data1 = [
                 [
                     Paragraph(
-                        "<font size=%s>Item %s: %s x %s x %s = %s M<super rise=8 size=8>3</super></font>"
+                        "<font size=%s>Item %s: %sx%sx%s = %s M<super rise=8 size=8>3</super></font>"
                         % (
                             label_settings["font_size_medium"],
                             j,
