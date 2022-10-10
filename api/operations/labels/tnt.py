@@ -26,6 +26,7 @@ from reportlab.graphics.barcode import createBarcodeDrawing
 from api.models import Booking_lines, FPRouting
 from api.helpers.cubic import get_cubic_meter
 from api.operations.api_booking_confirmation_lines import index as api_bcl
+from api.common.ratio import _get_dim_amount, _get_weight_amount
 
 logger = logging.getLogger(__name__)
 
