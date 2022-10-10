@@ -124,7 +124,7 @@ class RotatedImage(Image):
 
 def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
     consignment_num = gen_consignment_num(
-        booking.vx_freight_provider, booking.b_bookingID_Visual, booking.kf_client_id
+        booking.vx_freight_provider, booking.b_bookingID_Visual, booking.kf_client_id, booking
     )
     item_index = str(line_index).zfill(3)
     items_count = str(sscc_cnt).zfill(3)
