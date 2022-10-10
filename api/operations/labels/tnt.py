@@ -23,7 +23,7 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
-from api.models import Booking_lines
+from api.models import Booking_lines, FPRouting
 from api.helpers.cubic import get_cubic_meter
 from api.operations.api_booking_confirmation_lines import index as api_bcl
 
