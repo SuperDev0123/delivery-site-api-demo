@@ -29,7 +29,6 @@ def build_label(
     one_page_label=False,
 ):
     fp_name = booking.vx_freight_provider.lower()
-
     try:
         if fp_name == "dhl":
             file_path, file_name = dhl.build_label(
