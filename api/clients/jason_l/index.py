@@ -594,7 +594,7 @@ def push_boks(payload, client, username, method):
             )
             break
 
-    if carton_cnt < 3000 and (carton_cnt > 2 or need_palletize):
+    if carton_cnt < 5000 and (carton_cnt > 2 or need_palletize):
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
 
