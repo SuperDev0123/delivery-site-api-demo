@@ -36,6 +36,13 @@ style_left = ParagraphStyle(
     name="left",
     parent=styles["Normal"],
     alignment=TA_LEFT,
+    leading=8,
+    spaceBefore=0,
+)
+style_left_bg = ParagraphStyle(
+    name="left",
+    parent=styles["Normal"],
+    alignment=TA_LEFT,
     leading=10,
     spaceBefore=0,
 )
@@ -158,9 +165,9 @@ def build_label(
         "font_size_large": "10",
         "font_size_extra_large": "13",
         "label_dimension_length": "150",
-        "label_dimension_width": "115",
+        "label_dimension_width": "100",
         "label_image_size_length": "135",
-        "label_image_size_width": "105",
+        "label_image_size_width": "100",
         "barcode_dimension_length": "85",
         "barcode_dimension_width": "30",
         "barcode_font_size": "18",
@@ -169,7 +176,7 @@ def build_label(
         "line_height_medium": "6",
         "line_height_large": "8",
         "line_height_extra_large": "12",
-        "margin_v": "5",
+        "margin_v": "2",
         "margin_h": "0",
     }
 
@@ -478,7 +485,7 @@ def build_label(
                     Paragraph(
                         "<font size=%s>Service: </font>"
                         % (label_settings["font_size_medium"]),
-                        style_left,
+                        style_left_bg,
                     ),
                     Paragraph(
                         '<font size=%s color="white"><b>%s</b> </font>'
@@ -527,7 +534,7 @@ def build_label(
                         ),
                         style_left,
                     ),
-                    Spacer(1, 1),
+                    Spacer(4, 4),
                     tbl_service,
                 ],
             ]
@@ -565,7 +572,7 @@ def build_label(
                         ),
                         style_left,
                     ),
-                    Spacer(1, 1),
+                    Spacer(4, 4),
                     Paragraph(
                         "<font size=%s>Description:&nbsp;%s</font>"
                         % (
@@ -611,7 +618,7 @@ def build_label(
                     Paragraph(
                         "<font size=%s>To:</font>"
                         % (label_settings["font_size_large"],),
-                        style_left,
+                        style_left_bg,
                     ),
                     Paragraph(
                         "<font size=%s><b>%s %s</b> <br/> <b>%s</b> <br/> </font>"
@@ -627,7 +634,7 @@ def build_label(
                                 + (booking.de_To_Address_Street_2 or "")
                             )[:30],
                         ),
-                        style_left,
+                        style_left_bg,
                     ),
                     d,
                 ]
@@ -645,7 +652,7 @@ def build_label(
                             booking.de_To_Address_PostalCode or "",
                             booking.de_To_Address_Suburb or "",
                         ),
-                        style_left,
+                        style_left_bg,
                     ),
                     "",
                 ]

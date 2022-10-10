@@ -1698,28 +1698,25 @@ class BookingsViewSet(viewsets.ViewSet):
             )
         )
 
+        # Client filter
         if clientname != "dme":
             bookings_with_manifest = bookings_with_manifest.filter(
                 b_client_name=clientname
             )
 
-        manifest_dates = []
-        for booking in bookings_with_manifest:
-            if not booking.manifest_timestamp in manifest_dates:
-                manifest_dates.append(booking.manifest_timestamp)
-
         results = []
         report_fps = []
         client_ids = []
         index = 0
-        for manifest_date in manifest_dates:
+        for manifest_log in manifest_logs:
             result = {"freight_providers": [], "vehicles": [], "cnt_4_each_fp": {}}
             daily_count = 0
             first_booking = None
             b_bookingID_Visuals = []
 
             for booking in bookings_with_manifest:
-                if booking.manifest_timestamp == manifest_date:
+                manifest_url = "startrack_au/" + manifest_log.manifest_url
+                if booking.z_manifest_url == manifest_url:
                     first_booking = booking
                     daily_count += 1
                     b_bookingID_Visuals.append(booking.b_bookingID_Visual)
@@ -1741,16 +1738,17 @@ class BookingsViewSet(viewsets.ViewSet):
             result["count"] = daily_count
             result["z_manifest_url"] = first_booking.z_manifest_url
             result["warehouse_name"] = first_booking.fk_client_warehouse.name
-            result["manifest_date"] = manifest_date
+            result["manifest_date"] = manifest_log.z_createdTimeStamp
             result["b_bookingID_Visuals"] = b_bookingID_Visuals
             result["kf_client_id"] = first_booking.kf_client_id
-
             results.append(result)
 
             if first_booking.vx_freight_provider not in report_fps:
                 report_fps.append(first_booking.vx_freight_provider)
+
             if first_booking.kf_client_id not in client_ids:
                 client_ids.append(first_booking.kf_client_id)
+
             index += 1
 
         clients = DME_clients.objects.filter(dme_account_num__in=client_ids).only(
@@ -4097,9 +4095,13 @@ def download(request):
     elif download_option == "label":
         for booking in bookings:
             if booking.z_label_url and len(booking.z_label_url) > 0:
-                file_paths.append(
-                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-                )
+                if "http" in booking.z_label_url:
+                    fp_name = f"{booking.vx_freight_provider.lower()}_au"
+                    label_url = f"{fp_name}/DME{booking.b_bookingID_Visual}.pdf"
+                else:
+                    label_url = booking.z_label_url
+
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
                 booking.z_downloaded_shipping_label_timestamp = str(datetime.now())
                 booking.save()
     elif download_option == "pod":
@@ -4160,9 +4162,13 @@ def download(request):
                 booking.z_downloaded_connote_timestamp = timezone.now()
                 booking.save()
             if booking.z_label_url and len(booking.z_label_url) > 0:
-                file_paths.append(
-                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-                )
+                if "http" in booking.z_label_url:
+                    fp_name = f"{booking.vx_freight_provider.lower()}_au"
+                    label_url = f"{fp_name}/DME{booking.b_bookingID_Visual}.pdf"
+                else:
+                    label_url = booking.z_label_url
+
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
                 booking.z_downloaded_shipping_label_timestamp = timezone.now()
                 booking.save()
     elif download_option == "zpl":
@@ -4600,7 +4606,6 @@ def build_label(request):
         booking.z_label_url = (
             f"{settings.WEB_SITE_URL}/label/{booking.b_client_booking_ref_num}/"
         )
-        booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 
         # Jason L
         if not booking.b_dateBookedDate and booking.b_status != "Picked":

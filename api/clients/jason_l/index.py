@@ -594,7 +594,7 @@ def push_boks(payload, client, username, method):
             )
             break
 
-    if carton_cnt > 2 or need_palletize:
+    if carton_cnt < 3000 and (carton_cnt > 2 or need_palletize):
         message = "Auto repacking..."
         logger.info(f"@8130 {LOG_ID} {message}")
 
@@ -1235,7 +1235,6 @@ def scanned(payload, client):
     booking.z_label_url = (
         f"{settings.WEB_SITE_URL}/label/{booking.b_client_booking_ref_num}/"
     )
-    booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 
     if not booking.b_dateBookedDate and booking.b_status != "Picked":
         status_history.create(booking, "Picked", "jason_l")

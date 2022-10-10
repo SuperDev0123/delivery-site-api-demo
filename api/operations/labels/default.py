@@ -36,6 +36,13 @@ style_left = ParagraphStyle(
     name="left",
     parent=styles["Normal"],
     alignment=TA_LEFT,
+    leading=8,
+    spaceBefore=0,
+)
+style_left_bg = ParagraphStyle(
+    name="left",
+    parent=styles["Normal"],
+    alignment=TA_LEFT,
     leading=10,
     spaceBefore=0,
 )
@@ -166,9 +173,9 @@ def build_label(
         "font_size_large": "10",
         "font_size_extra_large": "13",
         "label_dimension_length": "150",
-        "label_dimension_width": "115",
+        "label_dimension_width": "100",
         "label_image_size_length": "135",
-        "label_image_size_width": "105",
+        "label_image_size_width": "100",
         "barcode_dimension_length": "85",
         "barcode_dimension_width": "30",
         "barcode_font_size": "18",
@@ -177,7 +184,7 @@ def build_label(
         "line_height_medium": "6",
         "line_height_large": "8",
         "line_height_extra_large": "12",
-        "margin_v": "5",
+        "margin_v": "2",
         "margin_h": "0",
     }
 
@@ -405,7 +412,6 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 2))
 
             tbl_data = [
                 [
@@ -521,7 +527,7 @@ def build_label(
                     Paragraph(
                         "<font size=%s>Service: </font>"
                         % (label_settings["font_size_medium"]),
-                        style_left,
+                        style_left_bg,
                     ),
                     Paragraph(
                         '<font size=%s color="white"><b>%s</b> </font>'
@@ -529,7 +535,7 @@ def build_label(
                             label_settings["font_size_large"]
                             if len(vx_serviceName) < 23
                             else label_settings["font_size_medium"],
-                            booking.vx_serviceName or "",
+                            booking.vx_serviceName or "test",
                         ),
                         style_back_black,
                     ),
@@ -570,7 +576,7 @@ def build_label(
                         ),
                         style_left,
                     ),
-                    Spacer(1, 1),
+                    Spacer(3, 3),
                     tbl_service,
                 ],
             ]
@@ -608,7 +614,7 @@ def build_label(
                         ),
                         style_left,
                     ),
-                    Spacer(1, 1),
+                    Spacer(3, 3),
                     Paragraph(
                         "<font size=%s>Description:&nbsp;%s</font>"
                         % (
@@ -640,7 +646,7 @@ def build_label(
             to_del_data = []
 
             codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            d = Drawing(15, 15, transform=[1, 0, 0, 1, 0, -45])
+            d = Drawing(12, 12, transform=[1, 0, 0, 1, 0, -45])
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
             d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
 
@@ -657,7 +663,7 @@ def build_label(
                             label_settings["font_size_large"],
                             (booking.deToCompanyName or "")[:30],
                         ),
-                        style_left,
+                        style_left_bg,
                     ),
                     d,
                 ]
@@ -688,7 +694,7 @@ def build_label(
                                     + (booking.de_To_Address_Street_2 or "")
                                 )[:30],
                             ),
-                            style_left,
+                            style_left_bg,
                         ),
                         "",
                     ]
@@ -714,7 +720,7 @@ def build_label(
                                     + (booking.de_To_Address_Street_2 or "")
                                 )[:30],
                             ),
-                            style_left,
+                            style_left_bg,
                         ),
                         "",
                     ]
@@ -739,7 +745,7 @@ def build_label(
                             (pre_data["carrier"] or "")[:20],
                             booking.de_To_Address_PostalCode or "",
                         ),
-                        style_left,
+                        style_left_bg,
                     ),
                     "",
                 ]
@@ -756,7 +762,7 @@ def build_label(
                             # else label_settings["font_size_medium"],
                             booking.de_To_Address_Suburb[:30],
                         ),
-                        style_left,
+                        style_left_bg,
                     ),
                     "",
                 ]
@@ -771,7 +777,7 @@ def build_label(
                             label_settings["font_size_large"],
                             booking.de_to_Phone_Main[:30],
                         ),
-                        style_left,
+                        style_left_bg,
                     ),
                     "",
                 ]

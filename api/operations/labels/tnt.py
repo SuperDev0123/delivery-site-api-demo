@@ -156,7 +156,7 @@ def build_label(
         "font_size_large": "10",
         "font_size_extra_large": "13",
         "label_dimension_length": "100",
-        "label_dimension_width": "160",
+        "label_dimension_width": "150",
         "label_image_size_length": "85",
         "label_image_size_width": "130",
         "barcode_dimension_height": "33",
@@ -189,6 +189,85 @@ def build_label(
 
     Story = []
     j = 1
+
+    # Get routing_group with vx_service_name
+    # routing_group = None
+    # if booking.vx_serviceName == "Road Express":
+    #     routing_group = "EXP"
+    # elif booking.vx_serviceName in [
+    #     "09:00 Express",
+    #     "10:00 Express",
+    #     "12:00 Express",
+    #     "Overnight Express",
+    #     "PAYU - Satchel",
+    #     "ONFC Satchel",
+    # ]:
+    #     routing_group = "PRI"
+    # elif booking.vx_serviceName in [
+    #     "Technology Express - Sensitive Express",
+    #     "Sensitive Express",
+    #     "Fashion Delivery",
+    # ]:
+    #     routing_group = "TE"
+
+    """
+    Let's assume service group EXP
+    Using the D records relating to that service group, establish the origin depot thaservices the consignment’s origin postcode.
+    This should appear in section 3 of the routing label preceded by “Ex “.
+    """
+    crecords = FPRouting.objects.filter(
+        freight_provider=12,
+        dest_suburb=booking.de_To_Address_Suburb,
+        dest_postcode=booking.de_To_Address_PostalCode,
+        dest_state=booking.de_To_Address_State,
+        data_code="C"
+        # routing_group=routing_group,
+    ).only("orig_depot_except", "gateway", "onfwd", "sort_bin")
+
+    routing = None
+    orig_depot = ""
+    if crecords.exists():
+        drecord = (
+            FPRouting.objects.filter(
+                freight_provider=12,
+                orig_postcode=booking.pu_Address_PostalCode,
+                # routing_group=routing_group,
+                orig_depot__isnull=False,
+                data_code="D",
+            )
+            .only("orig_depot")
+            .first()
+        )
+
+        if drecord:
+            orig_depot = drecord.orig_depot
+            for crecord in crecords:
+                if crecord.orig_depot_except == drecord.orig_depot:
+                    routing = crecord
+                    break
+
+        if not routing:
+            routing = (
+                FPRouting.objects.filter(
+                    freight_provider=12,
+                    dest_suburb=booking.de_To_Address_Suburb,
+                    dest_postcode=booking.de_To_Address_PostalCode,
+                    dest_state=booking.de_To_Address_State,
+                    orig_depot_except__isnull=True,
+                    data_code="C"
+                    # routing_group=routing_group,
+                )
+                .only("orig_depot_except", "gateway", "onfwd", "sort_bin")
+                .first()
+            )
+
+        logger.info(
+            f"#113 [TNT LABEL] Found FPRouting: {routing}, {routing.gateway}, {routing.onfwd}, {routing.sort_bin}, {orig_depot}"
+        )
+    else:
+        logger.info(
+            f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}"
+        )
 
     totalQty = 0
     if one_page_label:
@@ -660,7 +739,7 @@ def build_label(
                             "<font size=%s>%s, %s, %s, %s, %s, %s</font>"
                             % (
                                 8,
-                                booking.pu_Contact_F_L_Name or "",
+                                booking.puCompany or "",
                                 booking.pu_Address_Street_1 or "",
                                 booking.pu_Address_street_2 or "",
                                 booking.pu_Address_Suburb or "",
@@ -678,7 +757,7 @@ def build_label(
                             "<font size=%s>%s, %s, %s, %s, %s</font>"
                             % (
                                 8,
-                                booking.pu_Contact_F_L_Name or "",
+                                booking.puCompany or "",
                                 booking.pu_Address_Street_1 or "",
                                 booking.pu_Address_Suburb or "",
                                 booking.pu_Address_PostalCode or "",
