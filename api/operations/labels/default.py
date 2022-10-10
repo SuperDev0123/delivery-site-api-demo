@@ -28,6 +28,7 @@ from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.operations.api_booking_confirmation_lines import index as api_bcl
 from api.clients.operations.index import extract_product_code
+from api.common.ratio import _get_dim_amount, _get_weight_amount
 
 logger = logging.getLogger(__name__)
 
@@ -597,6 +598,13 @@ def build_label(
                 ],
             ]
 
+            if booking_line.e_dimUOM:
+                _dim_amount = _get_dim_amount(booking_line.e_dimUOM)
+
+            _length = _dim_amount * (booking_line.e_dimLength or 0)
+            _width = _dim_amount * (booking_line.e_dimWidth or 0)
+            _height = _dim_amount * (booking_line.e_dimHeight or 0)
+
             tbl_package = [
                 [
                     Paragraph(
@@ -604,9 +612,9 @@ def build_label(
                         % (
                             label_settings["font_size_medium"],
                             j,
-                            booking_line.e_dimLength or "",
-                            booking_line.e_dimWidth or "",
-                            booking_line.e_dimHeight or "",
+                            _length,
+                            _width,
+                            _height,
                             round(
                                 get_cubic_meter(
                                     booking_line.e_dimLength,
