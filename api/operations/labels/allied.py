@@ -552,7 +552,7 @@ def build_label(
             tbl_package = [
                 [
                     Paragraph(
-                        "<font size=%s>Item %s: %s x %s x %s = %s M<super rise=4 size=4>3</super></font>"
+                        "<font size=%s>Item %s: %sx%sx%s = %s M<super rise=4 size=4>3</super></font>"
                         % (
                             label_settings["font_size_medium"],
                             j,
