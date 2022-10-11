@@ -332,14 +332,14 @@ def _after_process(
     client_fps,
 ):
     # JasonL: update `client sales total`
-    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
-        try:
-            booking.client_sales_total = get_total_sales(booking.b_client_order_num)
-            booking.save()
-        except Exception as e:
-            logger.error(f"Client sales total: {str(e)}")
-            booking.client_sales_total = None
-            pass
+    # if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+    #     try:
+    #         booking.client_sales_total = get_total_sales(booking.b_client_order_num)
+    #         booking.save()
+    #     except Exception as e:
+    #         logger.error(f"Client sales total: {str(e)}")
+    #         booking.client_sales_total = None
+    #         pass
 
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
