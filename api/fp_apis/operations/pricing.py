@@ -282,10 +282,10 @@ def pricing(
             # entire_booking_lines += _booking_lines
             # build_special_fp_pricings(booking, _booking_lines, packed_status)
 
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
+        # for thread in threads:
+        #     thread.start()
+        # for thread in threads:
+        #     thread.join()
 
         # timeout=PRICING_TIME,
         # logger.info(f"#990 [PRICING] - {PRICING_TIME}s Timeout! stop threads! ;)")
