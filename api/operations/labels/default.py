@@ -420,7 +420,7 @@ def build_label(
                         "<font size=%s>Contact: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            (booking.de_to_Contact_F_LName or "")[:20],
+                            (booking.de_to_Contact_F_LName or "")[:16],
                         ),
                         style_left,
                     ),
