@@ -585,9 +585,9 @@ def build_label(
             if booking_line.e_dimUOM:
                 _dim_amount = _get_dim_amount(booking_line.e_dimUOM)
 
-            _length = _dim_amount * (booking_line.e_dimLength or 0)
-            _width = _dim_amount * (booking_line.e_dimWidth or 0)
-            _height = _dim_amount * (booking_line.e_dimHeight or 0)
+            _length = round(_dim_amount * (booking_line.e_dimLength or 0), 3)
+            _width = round(_dim_amount * (booking_line.e_dimWidth or 0), 3)
+            _height = round(_dim_amount * (booking_line.e_dimHeight or 0), 3)
 
             tbl_package = [
                 [
