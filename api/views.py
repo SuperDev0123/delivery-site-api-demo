@@ -1734,6 +1734,10 @@ class BookingsViewSet(viewsets.ViewSet):
                             else f"{booking.vx_freight_provider} Vehicle"
                         )
 
+            if not first_booking:
+                logger.error("Can not find first booking:", manifest_log, manifest_url)
+                continue
+
             result["manifest_id"] = manifest_ids[index]
             result["count"] = daily_count
             result["z_manifest_url"] = first_booking.z_manifest_url
