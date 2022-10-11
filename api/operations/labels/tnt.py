@@ -57,6 +57,16 @@ style_uppercase = ParagraphStyle(
     textTransform="uppercase",
 )
 
+style_uppercase_lg = ParagraphStyle(
+    name="uppercase",
+    parent=styles["Normal"],
+    alignment=TA_LEFT,
+    leading=12,
+    spaceBefore=0,
+    spaceAfter=0,
+    textTransform="uppercase",
+)
+
 styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
 
 
@@ -610,7 +620,7 @@ def build_label(
                             font_size,
                             booking.de_to_Contact_F_LName or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_lg,
                     )
                 ]
             )
@@ -626,7 +636,7 @@ def build_label(
                                 font_size,
                                 booking.deToCompanyName or "",
                             ),
-                            style_uppercase,
+                            style_uppercase_lg,
                         )
                     ]
                 )
@@ -639,7 +649,7 @@ def build_label(
                             font_size,
                             booking.de_To_Address_Street_1 or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_lg,
                     )
                 ]
             )
@@ -651,7 +661,7 @@ def build_label(
                             font_size,
                             booking.de_To_Address_Street_2 or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_lg,
                     )
                 ]
             )
@@ -665,7 +675,7 @@ def build_label(
                             booking.de_To_Address_PostalCode or "",
                             booking.de_To_Address_State or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_lg,
                     ),
                 ]
             )
@@ -675,7 +685,7 @@ def build_label(
                 colWidths=(float(label_settings["label_image_size_length"]) * mm - 20),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (-1, -1), 0),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
