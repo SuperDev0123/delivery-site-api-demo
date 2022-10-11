@@ -76,6 +76,54 @@ def get_percentage(vehicle_name):
         return 0.23483337
     elif vehicle_name == "DD000070_220607_SYD-MEL":
         return 0.658705525
+    elif vehicle_name == "DD000107_220802_SYD-MEL":
+        return 0.026420593
+    elif vehicle_name == "DD000094_220707_SYD-BRIS":
+        return 0.234069937
+    elif vehicle_name == "DD000106_220802_SYD-BRIS":
+        return 0.518394852
+    elif vehicle_name == "DD000108_220804_SYD-BRIS":
+        return 0.242411365
+    elif vehicle_name == "DD000109_220804_SYD-MEL":
+        return 0.39405051
+    elif vehicle_name == "DD000110_220809_SYD-BRIS":
+        return 0.180087421
+    elif vehicle_name == "DD000111_220809_SYD-MEL":
+        return 0.849502186
+    elif vehicle_name == "DD000112_220811_SYD-BRIS":
+        return 0.265517241
+    elif vehicle_name == "DD000113_220811_SYD-MEL":
+        return 0.21651287
+    elif vehicle_name == "DD000114_220816_SYD-BRIS":
+        return 0.119681884
+    elif vehicle_name == "DD000115_220816_SYD-MEL":
+        return 0.393795532
+    elif vehicle_name == "DD000116_220818_SYD-BRIS":
+        return 0.116949976
+    elif vehicle_name == "DD000117_220818_SYD-MEL":
+        return 0.332880039
+    elif vehicle_name == "DD000119_220823_SYD-MEL":
+        return 0.165735794
+    elif vehicle_name == "DD000120_220825_SYD-BRIS":
+        return 0.163343856
+    elif vehicle_name == "DD000121_220825_SYD-MEL":
+        return 0.51811559
+    elif vehicle_name == "DD000123_220830_SYD-MEL":
+        return 0.717411365
+    elif vehicle_name == "DD000126_220902_SYD-MEL":
+        return 0.498266667
+    elif vehicle_name == "DD000127_220902_SYD-BRIS":
+        return 0.789779339
+    elif vehicle_name == "DD000129_220908_SYD-MEL":
+        return 0.623690855
+    elif vehicle_name == "DD000131_220913_SYD-MEL":
+        return 0.184905039
+    elif vehicle_name == "DD000132_220915_SYD-MEL":
+        return 0.258118344
+    elif vehicle_name == "DD000134_220920_SYD-MEL":
+        return 0.417169832
+    elif vehicle_name == "DD000135_220921_SYD-BRIS":
+        return 0.249566363
     else:
         return 1
 
