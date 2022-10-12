@@ -298,8 +298,6 @@ def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote):
         bok_1_obj.b_002_b_vehicle_type = (
             best_quote.vehicle.description if best_quote.vehicle else None
         )
-        bok_1_obj.zb_104_text_4 = None
-        bok_1_obj.save()
         fc_log.new_quote = best_quotes[0]
         fc_log.save()
 
@@ -312,6 +310,9 @@ def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote):
             message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
             logger.error(message)
             send_email_to_admins("No FC result", message)
+
+    bok_1_obj.zb_104_text_4 = None
+    bok_1_obj.save()
 
     # # Set Express or Standard
     # if len(json_results) == 1:
