@@ -130,7 +130,7 @@ def push_webhook(data):
 
 
 @background
-def get_quote(booking):
+def quoting_in_bg(booking):
     LOG_ID = "[ASYNC RE-QUOTE]"
     new_fc_log = FC_Log.objects.create(
         client_booking_id=booking.b_client_booking_ref_num,
@@ -152,7 +152,7 @@ def get_quote(booking):
     if quotes.exists() and quotes.count() > 0:
         quotes = quotes.filter(packed_status=Booking_lines.SCANNED_PACK)
 
-        if booking.booking_type == "DMEM":
+        if booking.booking_type == "DMEM" or booking.is_quote_locked:
             if booking.vx_freight_provider:
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider
@@ -332,7 +332,7 @@ def scanned(payload):
 
         # Get quote in background
         set_booking_quote(booking, None)
-        get_quote(booking)
+        quoting_in_bg(booking)
 
         return {
             "success": True,

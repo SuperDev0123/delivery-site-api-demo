@@ -508,6 +508,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "pu_service",
             "de_service",
             "booking_type",
+            "is_quote_locked",
             "inv_booked_quoted",
         )
 
@@ -746,7 +747,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return client_customer_mark_up
 
     def get_cost(self, obj):
-        cost = obj.client_mu_1_minimum_values
+        cost = obj.client_mu_1_minimum_values or 0
 
         if obj.freight_provider in SPECIAL_FPS:
             return round(cost, 2)

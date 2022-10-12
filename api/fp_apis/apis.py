@@ -1201,7 +1201,7 @@ def pricing(request):
     if is_pricing_only:
         API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
     else:
-        if booking.booking_type == "DMEM":
+        if booking.booking_type == "DMEM" or booking.is_quote_locked:
             results = results.filter(
                 freight_provider__iexact=booking.vx_freight_provider,
                 service_name=booking.vx_serviceName,

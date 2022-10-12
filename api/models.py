@@ -1921,6 +1921,7 @@ class Bookings(models.Model):
     booking_type = models.CharField(
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
+    is_quote_locked = models.BooleanField(default=False, null=True)
     selected = models.BooleanField(default=None, null=True)
     packed_status = models.CharField(
         max_length=16, default=None, null=True, choices=PACKED_STATUS_CHOICES
@@ -3114,6 +3115,7 @@ class BOK_1_headers(models.Model):
     b_092_booking_type = models.CharField(
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
+    b_092_is_quote_locked = models.BooleanField(default=False, null=True)
     b_093_b_promo_code = models.CharField(max_length=32, default=None, null=True)
     b_094_client_sales_total = models.FloatField(blank=True, default=None, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)

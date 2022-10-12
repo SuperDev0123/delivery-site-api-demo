@@ -1563,6 +1563,7 @@ class BookingsViewSet(viewsets.ViewSet):
                         if booking.b_client_name == "Jason L":
                             if field_content in SPECIAL_FPS:
                                 booking.booking_type = "DMEM"
+                                booking.is_quote_locked = True
 
                     booking.save()
             return JsonResponse(
@@ -2644,6 +2645,7 @@ class BookingViewSet(viewsets.ViewSet):
                 "api_booking_quote",
                 "b_dateBookedDate",
                 "client_sales_total",
+                "is_quote_locked",
             )
             .order_by("id")
             .last()

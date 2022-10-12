@@ -257,14 +257,16 @@ def pricing(
                 continue
 
             # Special Pricings
-            try:
-                if (
-                    not is_pricing_only
-                    and booking.b_dateBookedDate
-                    and booking.vx_freight_provider == "Deliver-ME"
-                ):
-                    entire_booking_lines += _booking_lines
-                    build_special_fp_pricings(booking, _booking_lines, packed_status)
+            # try:
+            #     if (
+            #         not is_pricing_only
+            #         and booking.b_dateBookedDate
+            #         and booking.vx_freight_provider == "Deliver-ME"
+            #     ):
+            #         entire_booking_lines += _booking_lines
+            #         build_special_fp_pricings(booking, _booking_lines, packed_status)
+            # except Exception as e:
+            #     pass
 
             # Normal Pricings
             # _threads = build_threads(

@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from django.conf import settings
+from django.db.models import Sum
 
 from api.models import *
 from api.common import ratio
@@ -375,7 +376,7 @@ def auto_select_pricing_4_bok(
             bok_1.bok_2s()
             .filter(b_093_packed_status=BOK_2_lines.ORIGINAL, is_deleted=False)
             .aggregate(Sum("l_002_qty"))
-        )
+        )["l_002_qty__sum"]
         send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
         auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
 

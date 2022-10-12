@@ -441,6 +441,10 @@ def reset_repack(bok_1, repack_status):
         ).delete()
         bok_2.delete()
 
+    API_booking_quotes.objects.filter(
+        fk_booking_id=bok_1.pk_header_id, packed_status=repack_status
+    ).update(is_used=True)
+
     logger.info(
         f"@849 {LOG_ID} OrderNum: {bok_1.b_client_order_num} --- Finished successfully! {len(bok_2s)} items(bok_2s) are reset."
     )
