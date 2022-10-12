@@ -880,7 +880,7 @@ def quote_count(request):
 
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=bok_1.pk_header_id, is_used=False
-    )
+    ).exclude(client_mu_1_minimum_values__isnull=True)
     return Response(
         {
             "code": "does_exist",
