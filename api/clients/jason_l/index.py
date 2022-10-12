@@ -207,7 +207,7 @@ def partial_pricing(payload, client, warehouse):
 
 
 @background
-def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines):
+def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote):
     LOG_ID = "[QUOTING IN BG]"
     fc_log, _ = FC_Log.objects.get_or_create(
         client_booking_id=bok_1["client_booking_id"],
@@ -905,7 +905,7 @@ def push_boks(payload, client, username, method):
         booking_lines.append(bok_2_line)
 
     # Get quote in background
-    quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines)
+    quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote)
 
     # Response
     # Show price page either DMEA and DMEM
