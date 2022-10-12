@@ -298,6 +298,7 @@ def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote):
         bok_1_obj.b_002_b_vehicle_type = (
             best_quote.vehicle.description if best_quote.vehicle else None
         )
+        bok_1_obj.zb_104_text_4 = None
         bok_1_obj.save()
         fc_log.new_quote = best_quotes[0]
         fc_log.save()
@@ -826,6 +827,7 @@ def push_boks(payload, client, username, method):
 
         # Set `auto_repack` flag
         bok_1_obj.b_081_b_pu_auto_pack = True
+        bok_1_obj.zb_104_text_4 = "In Progress"
         bok_1_obj.save()
 
     # Get next business day

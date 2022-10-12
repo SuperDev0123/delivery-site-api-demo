@@ -881,11 +881,17 @@ def quote_count(request):
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=bok_1.pk_header_id, is_used=False
     ).exclude(client_mu_1_minimum_values__isnull=True)
+
+    if bok_1.zb_104_text_4 == "In Progress":
+        quote_status = "in_progress"
+    else:
+        quote_status = "finished"
+
     return Response(
         {
             "code": "does_exist",
             "message": "",
-            "result": {"quote_count": quotes.count()},
+            "result": {"quote_count": quotes.count(), "quote_status": quote_status},
         },
         status=HTTP_200_OK,
     )
