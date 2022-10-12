@@ -130,7 +130,7 @@ def push_webhook(data):
 
 
 @background
-def get_quote(booking):
+def quoting_in_bg(booking):
     LOG_ID = "[ASYNC RE-QUOTE]"
     new_fc_log = FC_Log.objects.create(
         client_booking_id=booking.b_client_booking_ref_num,
@@ -375,7 +375,7 @@ def scanned(payload):
 
         # Get quote in background
         set_booking_quote(booking, None)
-        get_quote(booking)
+        quoting_in_bg(booking)
 
         return {
             "success": True,

@@ -31,6 +31,7 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
+from api.common.thread import background
 from api.common.pallet import get_number_of_pallets, get_palletized_by_ai
 from api.common.booking_quote import set_booking_quote
 from api.fp_apis.utils import (
@@ -205,6 +206,133 @@ def partial_pricing(payload, client, warehouse):
         return json_results
 
 
+@background
+def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines):
+    fc_log, _ = FC_Log.objects.get_or_create(
+        client_booking_id=bok_1["client_booking_id"],
+        old_quote__isnull=True,
+        new_quote__isnull=True,
+    )
+    # fc_log.old_quote = old_quote
+    body = {"booking": booking, "booking_lines": booking_lines}
+    quote_set = None
+
+    if booking_lines:
+        _, success, message, quote_set = pricing_oper(
+            body=body,
+            booking_id=None,
+            is_pricing_only=True,
+            packed_statuses=[Booking_lines.ORIGINAL, Booking_lines.AUTO_PACK],
+        )
+        logger.info(
+            f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
+        )
+
+        if (
+            selected_quote
+            and bok_1.get("shipping_type") == "DMEM"
+            and selected_quote.freight_provider == "Deliver-ME"
+        ):
+            quote_set = quote_set.filter(
+                freight_provider=selected_quote.freight_provider
+            )
+        elif bok_1.get("shipping_type") == "DMEM" and selected_quote:
+            quote_set = quote_set.filter(
+                freight_provider=selected_quote.freight_provider,
+                service_name=selected_quote.service_name,
+            )
+        elif bok_1.get("shipping_type") == "DMEA" and isGood4Linehaul(
+            booking["de_To_Address_PostalCode"], booking_lines
+        ):
+            quote_set = quote_set.filter(freight_provider="Deliver-ME")
+        # All JasonL bookings to State SA are to book with TNT if DMEA no matter what the price
+        elif (
+            bok_1.get("shipping_type") == "DMEA"
+            and bok_1.get("b_057_b_del_address_state")
+            and bok_1.get("b_057_b_del_address_state").upper() == "SA"
+        ):
+            quote_set = quote_set.filter(freight_provider="TNT")
+        else:
+            quote_set = quote_set.exclude(freight_provider__in=["Sendle", "Hunter"])
+
+    # Select best quotes(fastest, lowest)
+    if quote_set and quote_set.exists() and quote_set.count() > 0:
+        # auto_select_pricing_4_bok(
+        #     bok_1=bok_1_obj,
+        #     pricings=quote_set,
+        #     is_from_script=is_from_script,
+        #     auto_select_type=1,
+        #     client=client,
+        # )
+
+        if quote_set.count() > 1:
+            best_quotes = select_best_options(
+                pricings=quote_set,
+                client=client,
+                original_lines_count=original_lines_count,
+            )
+        else:
+            best_quotes = quote_set
+
+        logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
+
+        context = {"client_customer_mark_up": client.client_customer_mark_up}
+
+        # if is_biz:
+        #     json_results = Simple4ProntoQuoteSerializer(
+        #         best_quotes, many=True, context=context
+        #     ).data
+        # else:
+        #     json_results = SimpleQuoteSerializer(
+        #         best_quotes, many=True, context=context
+        #     ).data
+
+        # json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
+
+        # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+        best_quote = best_quotes[0]
+        bok_1_obj.quote = best_quote
+        bok_1_obj.b_003_b_service_name = best_quote.service_name
+        bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+        bok_1_obj.b_002_b_vehicle_type = (
+            best_quote.vehicle.description if best_quote.vehicle else None
+        )
+        bok_1_obj.save()
+        fc_log.new_quote = best_quotes[0]
+        fc_log.save()
+
+        # Send quote info back to Pronto
+        # result = send_info_back(bok_1_obj, best_quote)
+    else:
+        b_client_order_num = bok_1.get("b_client_order_num")
+
+        if b_client_order_num:
+            message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
+            logger.error(message)
+            send_email_to_admins("No FC result", message)
+
+    # # Set Express or Standard
+    # if len(json_results) == 1:
+    #     json_results[0]["service_name"] = "Standard"
+    # elif len(json_results) > 1:
+    #     if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
+    #         json_results[0]["service_name"] = "Express"
+    #         json_results[1]["service_name"] = "Standard"
+
+    #         if json_results[0]["eta"] == json_results[1]["eta"]:
+    #             eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
+    #             json_results[1]["eta"] = eta
+
+    #         json_results = [json_results[1], json_results[0]]
+    #     else:
+    #         json_results[1]["service_name"] = "Express"
+    #         json_results[0]["service_name"] = "Standard"
+
+    #         if json_results[0]["eta"] == json_results[1]["eta"]:
+    #             eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
+    #             json_results[0]["eta"] = eta
+
+
 def push_boks(payload, client, username, method):
     """
     PUSH api (bok_1, bok_2, bok_3)
@@ -367,16 +495,6 @@ def push_boks(payload, client, username, method):
 
     # Prepare population
     if is_biz and not bok_2s:
-        # try:
-        #     bok_1, bok_2s = get_bok_from_pronto_xi(bok_1)
-        # except Exception as e:
-        #     bok_1, bok_2s = get_bok_by_talend(bok_1["b_client_order_num"])
-        #     logger.error(
-        #         f"@887 {LOG_ID} Failed to get Order by using Pronto API. OrderNo: {bok_1['b_client_order_num']}, Error: {str(e)}"
-        #     )
-        #     logger.info(
-        #         f"@888 Now trying to get Order by Talend App (for Archived Order)"
-        #     )
         bok_1, bok_2s = get_bok_by_talend(bok_1)
         bok_2s = sucso_handler(bok_1["b_client_order_num"], bok_2s)
 
@@ -693,10 +811,6 @@ def push_boks(payload, client, username, method):
                     bok_3_serializer = BOK_3_Serializer(data=bok_3)
                     if bok_3_serializer.is_valid():
                         bok_3_serializer.save()
-
-                        # Soft delete `line in pallet`
-                        # line.is_deleted = True
-                        # line.save()
                     else:
                         message = f"Serialiser Error - {bok_3_serializer.errors}"
                         logger.info(f"@8134 {LOG_ID} {message}")
@@ -789,166 +903,51 @@ def push_boks(payload, client, username, method):
         }
         booking_lines.append(bok_2_line)
 
-    fc_log, _ = FC_Log.objects.get_or_create(
-        client_booking_id=bok_1["client_booking_id"],
-        old_quote__isnull=True,
-        new_quote__isnull=True,
-    )
-    # fc_log.old_quote = old_quote
-    body = {"booking": booking, "booking_lines": booking_lines}
-    quote_set = None
-
-    if booking_lines:
-        _, success, message, quote_set = pricing_oper(
-            body=body,
-            booking_id=None,
-            is_pricing_only=True,
-            packed_statuses=[Booking_lines.ORIGINAL, Booking_lines.AUTO_PACK],
-        )
-        logger.info(
-            f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
-        )
-
-        if (
-            selected_quote
-            and bok_1.get("shipping_type") == "DMEM"
-            and selected_quote.freight_provider == "Deliver-ME"
-        ):
-            quote_set = quote_set.filter(
-                freight_provider=selected_quote.freight_provider
-            )
-        elif bok_1.get("shipping_type") == "DMEM" and selected_quote:
-            quote_set = quote_set.filter(
-                freight_provider=selected_quote.freight_provider,
-                service_name=selected_quote.service_name,
-            )
-        elif bok_1.get("shipping_type") == "DMEA" and isGood4Linehaul(
-            booking["de_To_Address_PostalCode"], booking_lines
-        ):
-            quote_set = quote_set.filter(freight_provider="Deliver-ME")
-        # All JasonL bookings to State SA are to book with TNT if DMEA no matter what the price
-        elif (
-            bok_1.get("shipping_type") == "DMEA"
-            and bok_1.get("b_057_b_del_address_state")
-            and bok_1.get("b_057_b_del_address_state").upper() == "SA"
-        ):
-            quote_set = quote_set.filter(freight_provider="TNT")
-        else:
-            quote_set = quote_set.exclude(freight_provider__in=["Sendle", "Hunter"])
-
-    # Select best quotes(fastest, lowest)
-    if quote_set and quote_set.exists() and quote_set.count() > 0:
-        # auto_select_pricing_4_bok(
-        #     bok_1=bok_1_obj,
-        #     pricings=quote_set,
-        #     is_from_script=is_from_script,
-        #     auto_select_type=1,
-        #     client=client,
-        # )
-
-        if quote_set.count() > 1:
-            best_quotes = select_best_options(
-                pricings=quote_set,
-                client=client,
-                original_lines_count=original_lines_count,
-            )
-        else:
-            best_quotes = quote_set
-
-        logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
-
-        context = {"client_customer_mark_up": client.client_customer_mark_up}
-
-        if is_biz:
-            json_results = Simple4ProntoQuoteSerializer(
-                best_quotes, many=True, context=context
-            ).data
-        else:
-            json_results = SimpleQuoteSerializer(
-                best_quotes, many=True, context=context
-            ).data
-
-        json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
-
-        # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-        best_quote = best_quotes[0]
-        bok_1_obj.quote = best_quote
-        bok_1_obj.b_003_b_service_name = best_quote.service_name
-        bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
-        bok_1_obj.b_002_b_vehicle_type = (
-            best_quote.vehicle.description if best_quote.vehicle else None
-        )
-        bok_1_obj.save()
-        fc_log.new_quote = best_quotes[0]
-        fc_log.save()
-
-        # Send quote info back to Pronto
-        # result = send_info_back(bok_1_obj, best_quote)
-    else:
-        b_client_order_num = bok_1.get("b_client_order_num")
-
-        if b_client_order_num:
-            message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
-            logger.error(message)
-            send_email_to_admins("No FC result", message)
-
-    # Set Express or Standard
-    if len(json_results) == 1:
-        json_results[0]["service_name"] = "Standard"
-    elif len(json_results) > 1:
-        if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
-            json_results[0]["service_name"] = "Express"
-            json_results[1]["service_name"] = "Standard"
-
-            if json_results[0]["eta"] == json_results[1]["eta"]:
-                eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
-                json_results[1]["eta"] = eta
-
-            json_results = [json_results[1], json_results[0]]
-        else:
-            json_results[1]["service_name"] = "Express"
-            json_results[0]["service_name"] = "Standard"
-
-            if json_results[0]["eta"] == json_results[1]["eta"]:
-                eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
-                json_results[0]["eta"] = eta
+    # Get quote in background
+    quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines)
 
     # Response
-    if json_results:
-        if is_biz:
-            result = {"success": True}
+    # Show price page either DMEA and DMEM
+    url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
+    result["pricePageUrl"] = url
+    logger.info(f"@8837 {LOG_ID} success: True, 201_created")
+    return result
 
-            # Commented (2021-06-18)
-            # if bok_1["shipping_type"] == "DMEM":
-            #     url = (
-            #         f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
-            #     )
-            # elif bok_1["shipping_type"] == "DMEA":
-            #     url = f"{settings.WEB_SITE_URL}/status/{bok_1['client_booking_id']}/"
+    # if json_results:
+    #     if is_biz:
+    #         result = {"success": True}
 
-            # Show price page either DMEA and DMEM
-            url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
+    #         # Commented (2021-06-18)
+    #         # if bok_1["shipping_type"] == "DMEM":
+    #         #     url = (
+    #         #         f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
+    #         #     )
+    #         # elif bok_1["shipping_type"] == "DMEA":
+    #         #     url = f"{settings.WEB_SITE_URL}/status/{bok_1['client_booking_id']}/"
 
-            result["pricePageUrl"] = url
-            logger.info(f"@8837 {LOG_ID} success: True, 201_created")
-            return result
-        else:
-            logger.info(f"@8838 {LOG_ID} success: True, 201_created")
-            result = {"success": True, "results": json_results}
-            return result
-    else:
-        message = (
-            "Pricing cannot be returned due to incorrect address/lines information."
-        )
-        logger.info(f"@8839 {LOG_ID} {message}")
+    #         # Show price page either DMEA and DMEM
+    #         url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
 
-        # Show price page either DMEA and DMEM
-        url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
+    #         result["pricePageUrl"] = url
+    #         logger.info(f"@8837 {LOG_ID} success: True, 201_created")
+    #         return result
+    #     else:
+    #         logger.info(f"@8838 {LOG_ID} success: True, 201_created")
+    #         result = {"success": True, "results": json_results}
+    #         return result
+    # else:
+    #     message = (
+    #         "Pricing cannot be returned due to incorrect address/lines information."
+    #     )
+    #     logger.info(f"@8839 {LOG_ID} {message}")
 
-        result = {"success": True, "results": json_results}
-        result["pricePageUrl"] = url
-        logger.info(f"@8837 {LOG_ID} success: True, 201_created")
-        return result
+    #     # Show price page either DMEA and DMEM
+    #     url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
+
+    #     result = {"success": True, "results": json_results}
+    #     result["pricePageUrl"] = url
+    #     logger.info(f"@8837 {LOG_ID} success: True, 201_created")
+    #     return result
 
 
 def scanned(payload, client):

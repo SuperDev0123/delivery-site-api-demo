@@ -857,6 +857,37 @@ def manifest_boks(request):
 
 @api_view(["GET"])
 @permission_classes((AllowAny,))
+def quote_count(request):
+    """
+    GET quote count
+    """
+    identifier = request.GET.get("identifier")
+    bok_1 = BOK_1_headers.objects.filter(pk_auto_id=identifier).first()
+
+    if not bok_1:
+        return Response(
+            {
+                "code": "does_not_exist",
+                "message": "Could not find BOK",
+            },
+            status=HTTP_400_BAD_REQUEST,
+        )
+
+    quotes = API_booking_quotes.objects.filter(
+        fk_booking_id=bok_1.pk_header_id, is_used=False
+    )
+    return Response(
+        {
+            "code": "does_exist",
+            "message": "",
+            "result": {"quote_count": quotes.count()},
+        },
+        status=HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@permission_classes((AllowAny,))
 def get_delivery_status(request):
     """
     GET request should have `identifier` param
