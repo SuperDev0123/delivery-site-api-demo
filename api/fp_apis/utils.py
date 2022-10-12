@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from django.conf import settings
+from django.db.models import Sum
 
 from api.models import *
 from api.common import ratio
