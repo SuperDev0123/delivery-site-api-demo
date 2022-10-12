@@ -746,8 +746,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return client_customer_mark_up
 
     def get_cost(self, obj):
-        cost = obj.client_mu_1_minimum_values
-        print("@112 - ", cost)
+        cost = obj.client_mu_1_minimum_values or 0
 
         if obj.freight_provider in SPECIAL_FPS:
             return round(cost, 2)
