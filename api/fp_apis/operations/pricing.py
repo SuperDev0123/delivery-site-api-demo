@@ -257,35 +257,35 @@ def pricing(
                 continue
 
             # Special Pricings
-            # try:
-            #     if (
-            #         not is_pricing_only
-            #         and booking.b_dateBookedDate
-            #         and booking.vx_freight_provider == "Deliver-ME"
-            #     ):
-            #         entire_booking_lines += _booking_lines
-            #         build_special_fp_pricings(booking, _booking_lines, packed_status)
-            # except Exception as e:
-            #     pass
+            try:
+                if (
+                    not is_pricing_only
+                    and booking.b_dateBookedDate
+                    and booking.vx_freight_provider == "Deliver-ME"
+                ):
+                    entire_booking_lines += _booking_lines
+                    build_special_fp_pricings(booking, _booking_lines, packed_status)
+            except Exception as e:
+                pass
 
             # Normal Pricings
-            _threads = build_threads(
-                booking,
-                _booking_lines,
-                is_pricing_only,
-                packed_status,
-                pu_zones,
-                de_zones,
-                client_fps,
-            )
-            threads += _threads
-            entire_booking_lines += _booking_lines
-            build_special_fp_pricings(booking, _booking_lines, packed_status)
+        #     _threads = build_threads(
+        #         booking,
+        #         _booking_lines,
+        #         is_pricing_only,
+        #         packed_status,
+        #         pu_zones,
+        #         de_zones,
+        #         client_fps,
+        #     )
+        #     threads += _threads
+        #     entire_booking_lines += _booking_lines
+        #     build_special_fp_pricings(booking, _booking_lines, packed_status)
 
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
+        # for thread in threads:
+        #     thread.start()
+        # for thread in threads:
+        #     thread.join()
 
         # timeout=PRICING_TIME,
         # logger.info(f"#990 [PRICING] - {PRICING_TIME}s Timeout! stop threads! ;)")
@@ -332,14 +332,14 @@ def _after_process(
     client_fps,
 ):
     # JasonL: update `client sales total`
-    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
-        try:
-            booking.client_sales_total = get_total_sales(booking.b_client_order_num)
-            booking.save()
-        except Exception as e:
-            logger.error(f"Client sales total: {str(e)}")
-            booking.client_sales_total = None
-            pass
+    # if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+    #     try:
+    #         booking.client_sales_total = get_total_sales(booking.b_client_order_num)
+    #         booking.save()
+    #     except Exception as e:
+    #         logger.error(f"Client sales total: {str(e)}")
+    #         booking.client_sales_total = None
+    #         pass
 
     quotes = API_booking_quotes.objects.filter(
         fk_booking_id=booking.pk_booking_id, is_used=False
