@@ -164,7 +164,10 @@ def push_boks(payload, client, username, method):
                     logger.info(
                         f"@8850 {LOG_ID} Order {bok_1['b_client_order_num']} requires new quotes."
                     )
-                    if old_bok_1.b_092_booking_type == "DMEM" and old_bok_1.quote:
+                    if (
+                        old_bok_1.b_092_booking_type == "DMEM"
+                        or old_bok_1.b_092_is_quote_locked
+                    ) and old_bok_1.quote:
                         selected_quote = old_bok_1.quote
 
                     quotes.delete()
@@ -188,8 +191,6 @@ def push_boks(payload, client, username, method):
     bok_1["x_booking_Created_With"] = "DME PUSH API"
     bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
     bok_1["b_092_booking_type"] = bok_1.get("shipping_type")
-
-    # `DMEA` or `DMEM` - set `success` as 3
     bok_1["success"] = dme_constants.BOK_SUCCESS_3
 
     if warehouse_code in WAREHOUSE_MAPPINGS:
@@ -519,20 +520,17 @@ def push_boks(payload, client, username, method):
             f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
         )
 
-        if (
-            selected_quote
-            and bok_1.get("shipping_type") == "DMEM"
-            and selected_quote.freight_provider == "Deliver-ME"
-        ):
-            quote_set = quote_set.filter(
-                freight_provider=selected_quote.freight_provider,
-                packed_status=Booking_lines.ORIGINAL,
-            )
-        elif bok_1.get("shipping_type") == "DMEM" and selected_quote:
-            quote_set = quote_set.filter(
-                freight_provider=selected_quote.freight_provider,
-                service_name=selected_quote.service_name,
-            )
+        if selected_quote:
+            if selected_quote.freight_provider == "Deliver-ME":
+                quote_set = quote_set.filter(
+                    freight_provider=selected_quote.freight_provider,
+                    packed_status=Booking_lines.ORIGINAL,
+                )
+            else:
+                quote_set = quote_set.filter(
+                    freight_provider=selected_quote.freight_provider,
+                    service_name=selected_quote.service_name,
+                )
 
     # Select best quotes(fastest, lowest)
     if quote_set and quote_set.exists() and quote_set.count() > 0:
@@ -605,11 +603,9 @@ def push_boks(payload, client, username, method):
         send_email_to_admins("No FC result", message)
 
         message = (
-            "Pricing cannot be returned due to incorrect address/lines information."
+            f"Pricing cannot be returned due to incorrect address/lines information."
         )
         logger.info(f"@8839 {LOG_ID} {message}")
-
-        # Show price page either DMEA and DMEM
         url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
 
         result = {"success": True, "results": json_results}

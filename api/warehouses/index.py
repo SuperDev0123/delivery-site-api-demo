@@ -152,7 +152,7 @@ def quoting_in_bg(booking):
     if quotes.exists() and quotes.count() > 0:
         quotes = quotes.filter(packed_status=Booking_lines.SCANNED_PACK)
 
-        if booking.booking_type == "DMEM":
+        if booking.booking_type == "DMEM" or booking.is_quote_locked:
             if booking.vx_freight_provider:
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider

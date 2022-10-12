@@ -232,28 +232,30 @@ def bok_quote(bok_1, packed_status):
     )
     json_results = []
 
+    if bok_1.quote and bok_1.b_092_is_quote_locked:
+        quote_set = quote_set.filter(
+            freight_provider=bok_1.b_001_b_freight_provider,
+            service_name=bok_1.b_003_b_service_name,
+            packed_status=bok_1.quote.packed_status,
+        )
+
     # Select best quotes(fastest, lowest)
     if quote_set.exists() and quote_set.count() > 0:
         bok_1_obj = bok_1
-        auto_select_pricing_4_bok(
-            bok_1=bok_1_obj,
-            pricings=quote_set,
-            is_from_script=False,
-            auto_select_type=1,
-            client=client,
-        )
+        # auto_select_pricing_4_bok(
+        #     bok_1=bok_1_obj,
+        #     pricings=quote_set,
+        #     is_from_script=False,
+        #     auto_select_type=1,
+        #     client=client,
+        # )
         best_quotes = select_best_options(pricings=quote_set, client=client)
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
-
-        context = {"client_customer_mark_up": client.client_customer_mark_up}
-        json_results = SimpleQuoteSerializer(
-            best_quotes, many=True, context=context
-        ).data
-        json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
 
         best_quote = best_quotes[0]
         bok_1_obj.b_003_b_service_name = best_quote.service_name
         bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+        bok_1_obj.quote = best_quote
         bok_1_obj.save()
         fc_log.new_quote = best_quotes[0]
         fc_log.save()
@@ -264,29 +266,8 @@ def bok_quote(bok_1, packed_status):
         if bok_1.b_client_order_num:
             send_email_to_admins("No FC result", message)
 
-    # Set Express or Standard
-    if len(json_results) == 1:
-        json_results[0]["service_name"] = "Standard"
-    elif len(json_results) > 1:
-        if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
-            json_results[0]["service_name"] = "Express"
-            json_results[1]["service_name"] = "Standard"
-
-            if json_results[0]["eta"] == json_results[1]["eta"]:
-                eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
-                json_results[1]["eta"] = eta
-
-            json_results = [json_results[1], json_results[0]]
-        else:
-            json_results[1]["service_name"] = "Express"
-            json_results[0]["service_name"] = "Standard"
-
-            if json_results[0]["eta"] == json_results[1]["eta"]:
-                eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
-                json_results[0]["eta"] = eta
-
     # Response
-    if json_results:
+    if quote_set.exists():
         logger.info(f"@8888 {LOG_ID} success: True, 201_created")
     else:
         message = "Pricing cannot be returned due to incorrect address information."

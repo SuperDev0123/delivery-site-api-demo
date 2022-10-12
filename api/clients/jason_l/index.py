@@ -231,15 +231,11 @@ def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote):
         bok_1_obj.zb_104_text_4 = None
         bok_1_obj.save()
 
-        if (
-            selected_quote
-            and bok_1.get("shipping_type") == "DMEM"
-            and selected_quote.freight_provider == "Deliver-ME"
-        ):
+        if selected_quote and selected_quote.freight_provider == "Deliver-ME":
             quote_set = quote_set.filter(
                 freight_provider=selected_quote.freight_provider
             )
-        elif bok_1.get("shipping_type") == "DMEM" and selected_quote:
+        elif selected_quote:
             quote_set = quote_set.filter(
                 freight_provider=selected_quote.freight_provider,
                 service_name=selected_quote.service_name,
@@ -479,7 +475,10 @@ def push_boks(payload, client, username, method):
                         logger.info(
                             f"@8850 {LOG_ID} Order {bok_1['b_client_order_num']} requires new quotes."
                         )
-                        if old_bok_1.b_092_booking_type == "DMEM" and old_bok_1.quote:
+                        if (
+                            old_bok_1.b_092_booking_type == "DMEM"
+                            or old_bok_1.b_092_is_quote_locked
+                        ) and old_bok_1.quote:
                             selected_quote = old_bok_1.quote
 
                         quotes.delete()
@@ -543,8 +542,6 @@ def push_boks(payload, client, username, method):
     bok_1["x_booking_Created_With"] = "DME API"
     bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
     bok_1["b_092_booking_type"] = bok_1.get("shipping_type")
-
-    # `DMEA` or `DMEM` - set `success` as 3
     bok_1["success"] = dme_constants.BOK_SUCCESS_3
 
     if not bok_1.get("b_028_b_pu_company"):
@@ -914,7 +911,6 @@ def push_boks(payload, client, username, method):
     quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote)
 
     # Response
-    # Show price page either DMEA and DMEM
     url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
     result = {"success": True}
     result["pricePageUrl"] = url
@@ -1177,7 +1173,7 @@ def scanned(payload, client):
         if quotes.exists() and quotes.count() > 0:
             quotes = quotes.filter(packed_status=Booking_lines.SCANNED_PACK)
 
-            if booking.booking_type == "DMEM":
+            if booking.booking_type == "DMEM" or boking.is_quote_locked:
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,

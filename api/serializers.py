@@ -508,6 +508,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "pu_service",
             "de_service",
             "booking_type",
+            "is_quote_locked",
             "inv_booked_quoted",
         )
 
