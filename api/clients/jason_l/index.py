@@ -313,6 +313,7 @@ def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote):
 
     bok_1_obj.zb_104_text_4 = None
     bok_1_obj.save()
+    logger.info(f'{LOG_ID} BG JOB finished --- {bok_1.get("b_client_order_num")}')
 
     # # Set Express or Standard
     # if len(json_results) == 1:
