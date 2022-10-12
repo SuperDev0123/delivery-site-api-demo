@@ -228,6 +228,8 @@ def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote):
         logger.info(
             f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
         )
+        bok_1_obj.zb_104_text_4 = None
+        bok_1_obj.save()
 
         if (
             selected_quote
@@ -300,6 +302,8 @@ def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote):
         )
         fc_log.new_quote = best_quotes[0]
         fc_log.save()
+        bok_1_obj.zb_104_text_4 = None
+        bok_1_obj.save()
 
         # Send quote info back to Pronto
         # result = send_info_back(bok_1_obj, best_quote)
@@ -311,8 +315,6 @@ def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote):
             logger.error(message)
             send_email_to_admins("No FC result", message)
 
-    bok_1_obj.zb_104_text_4 = None
-    bok_1_obj.save()
     logger.info(f'{LOG_ID} BG JOB finished --- {bok_1.get("b_client_order_num")}')
 
     # # Set Express or Standard
