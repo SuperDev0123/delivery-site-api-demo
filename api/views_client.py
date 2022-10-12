@@ -235,7 +235,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
                     fk_booking_id=bok_1.pk_header_id,
                     is_used=False,
                 )
-                .exclude(client_mu_1_minimum_values__null=True)
+                .exclude(client_mu_1_minimum_values=0)
             )
             client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
 
