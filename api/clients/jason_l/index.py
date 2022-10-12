@@ -910,6 +910,7 @@ def push_boks(payload, client, username, method):
     # Response
     # Show price page either DMEA and DMEM
     url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
+    result = {"success": True}
     result["pricePageUrl"] = url
     logger.info(f"@8837 {LOG_ID} success: True, 201_created")
     return result
