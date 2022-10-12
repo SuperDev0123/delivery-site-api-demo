@@ -242,6 +242,7 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
 
             if best_quotes:
                 context = {"client_customer_mark_up": client.client_customer_mark_up}
+                logger.info("@111 - ", best_quotes, context)
                 json_results = SimpleQuoteSerializer(
                     best_quotes, many=True, context=context
                 ).data
