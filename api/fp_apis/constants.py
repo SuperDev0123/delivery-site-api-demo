@@ -27,7 +27,12 @@ AVAILABLE_FPS_4_FC = [
     "Toll",
     "Century",
     "ATC",
-    "Northline",
+    "Northline",  # Anchor Packaging
+    "Blacks",  # Anchor Packaging
+    "Blanner",  # Anchor Packaging
+    "Bluestar",  # Anchor Packaging
+    "Hi-Trans",  # Anchor Packaging
+    "VFS",  # Anchor Packaging
 ]
 
 BUILT_IN_PRICINGS = {
@@ -36,6 +41,12 @@ BUILT_IN_PRICINGS = {
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
     "northline": {"service_types": ["standard"]},
+    "blacks": {"service_types": ["Road Service"]},
+    "blanner": {"service_types": ["Road Service"]},
+    "bluestar": {"service_types": ["Road Service"]},
+    "startrack": {"service_types": ["Road Service"]},
+    "hi-trans": {"service_types": ["Road Service"]},
+    "vfs": {"service_types": ["Road Service"]},
     # "tnt": {
     #     "service_types": [
     #         "Overnight - 9:00 Express*",

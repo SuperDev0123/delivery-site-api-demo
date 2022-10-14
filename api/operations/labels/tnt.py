@@ -617,7 +617,7 @@ def build_label(
             if (
                 len(booking.de_To_Address_Street_1 or "")
                 + len(booking.de_To_Address_Street_2 or "")
-                > 40
+                > 25
             ):
                 font_size = 10
 
@@ -845,7 +845,7 @@ def build_label(
                 ],
             )
             Story.append(t1)
-            Story.append(Spacer(1, 5))
+            Story.append(Spacer(1, 2))
 
             special_instruction = booking.pu_pickup_instructions_address or ""
 
@@ -898,7 +898,7 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 5))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [

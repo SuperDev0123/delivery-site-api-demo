@@ -207,7 +207,15 @@ def partial_pricing(payload, client, warehouse):
 
 
 @background
-def quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote):
+def quoting_in_bg(
+    client,
+    bok_1,
+    bok_1_obj,
+    booking,
+    booking_lines,
+    selected_quote,
+    original_lines_count,
+):
     LOG_ID = "[QUOTING IN BG]"
     fc_log, _ = FC_Log.objects.get_or_create(
         client_booking_id=bok_1["client_booking_id"],
@@ -908,7 +916,15 @@ def push_boks(payload, client, username, method):
         booking_lines.append(bok_2_line)
 
     # Get quote in background
-    quoting_in_bg(bok_1, bok_1_obj, booking, booking_lines, selected_quote)
+    quoting_in_bg(
+        client,
+        bok_1,
+        bok_1_obj,
+        booking,
+        booking_lines,
+        selected_quote,
+        original_lines_count,
+    )
 
     # Response
     url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
@@ -1173,7 +1189,7 @@ def scanned(payload, client):
         if quotes.exists() and quotes.count() > 0:
             quotes = quotes.filter(packed_status=Booking_lines.SCANNED_PACK)
 
-            if booking.booking_type == "DMEM" or boking.is_quote_locked:
+            if booking.booking_type == "DMEM" or booking.is_quote_locked:
                 quotes = quotes.filter(
                     freight_provider__iexact=booking.vx_freight_provider,
                     service_name=booking.vx_serviceName,

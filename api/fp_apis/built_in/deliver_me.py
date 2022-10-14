@@ -188,8 +188,10 @@ def get_pricing(booking, booking_lines):
                 fm_fee_cost = 0
                 fm_fee_sell = 0
 
-            if (postal_code >= 3000 and postal_code <= 3207) or (
-                postal_code >= 8000 and postal_code <= 8499
+            if (
+                postal_code == 3800
+                or (postal_code >= 3000 and postal_code <= 3207)
+                or (postal_code >= 8000 and postal_code <= 8499)
             ):  # Melbourne
                 service_name = "Deliver-ME Direct (Into Premises)"
 

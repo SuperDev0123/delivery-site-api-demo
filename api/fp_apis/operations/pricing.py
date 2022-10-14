@@ -132,7 +132,8 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
             postal_code
             and (
                 (  # Metro / CBD Melbourne
-                    (postal_code >= 3000 and postal_code <= 3207)
+                    postal_code == 3800
+                    or (postal_code >= 3000 and postal_code <= 3207)
                     or (postal_code >= 8000 and postal_code <= 8499)
                 )
                 or (  # Metro / CBD Brisbane
@@ -355,6 +356,7 @@ def _after_process(
         # Calculate Surcharges
         for quote in quotes:
             _booking_lines = []
+            quote_fp = None
 
             if quote.freight_provider in SPECIAL_FPS:  # skip Special FPs
                 continue
