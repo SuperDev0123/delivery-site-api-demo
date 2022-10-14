@@ -120,8 +120,8 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
         avail_pu_zones = FP_zones.objects.filter(fk_fp=fp.id)
         avail_de_zones = FP_zones.objects.filter(fk_fp=fp.id)
 
-        # Blacks, Blanner, BlueStar: postal_code filter only
-        if fp.id in [83, 84, 85]:
+        # Blacks, Blanner, BlueStar, Startrack, Hi-Trans, VFS: postal_code filter only
+        if fp.id in [3, 83, 84, 85, 86, 87]:
             if pu_postal_code:
                 avail_pu_zone = avail_pu_zones.filter(
                     postal_code=pu_postal_code
@@ -130,6 +130,7 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
                 avail_de_zone = avail_de_zones.filter(
                     postal_code=de_postal_code
                 ).first()
+
             logger.info(
                 f"{LOG_ID} avail_pu_zones: {avail_pu_zone}, avail_de_zones: {avail_de_zone}"
             )
@@ -462,9 +463,7 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
     qty = 0
     max_weight = 0
     for line in booking_lines:
-        weight = (
-            line.e_qty * _get_weight_amount(line.e_weightUOM) * line.e_weightPerEach
-        )
+        weight = _get_weight_amount(line.e_weightUOM) * line.e_weightPerEach
         qty += line.e_qty
 
         if max_weight < weight:
@@ -508,9 +507,9 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
             if cost.start_qty and cost.start_qty > qty:
                 continue
         else:
-            if cost.end_qty and cost.end_qty < total_weight:
+            if cost.end_qty and cost.end_qty < qty:
                 continue
-            if cost.start_qty and cost.start_qty >= total_weight:
+            if cost.start_qty and cost.start_qty >= qty:
                 continue
 
         if c_weight < max_weight or c_weight < max_cubic_weight:

@@ -356,6 +356,7 @@ def _after_process(
         # Calculate Surcharges
         for quote in quotes:
             _booking_lines = []
+            quote_fp = None
 
             if quote.freight_provider in SPECIAL_FPS:  # skip Special FPs
                 continue

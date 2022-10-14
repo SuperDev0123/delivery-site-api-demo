@@ -14,6 +14,12 @@ from api.fp_apis.built_in import (
     hunter,
     sendle,
     deliver_me,
+    blacks,  # Anchor Packaging
+    blanner,  # Anchor Packaging
+    bluestar,  # Anchor Packaging
+    startrack,  # Anchor Packaging
+    hi_trans,  # Anchor Packaging
+    vfs,  # Anchor Packaging
 )
 
 logger = logging.getLogger(__name__)
@@ -71,6 +77,30 @@ def get_pricing(
             )
         elif fp_name.lower() == "sendle":
             prices = sendle.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "blacks":  # Anchor Packaging
+            prices = blacks.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "blanner":  # Anchor Packaging
+            prices = blanner.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "bluestar":  # Anchor Packaging
+            prices = bluestar.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "startrack":  # Anchor Packaging
+            prices = startrack.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "hi-trans":  # Anchor Packaging
+            prices = hi_trans.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "vfs":  # Anchor Packaging
+            prices = vfs.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones
             )
         elif fp_name.lower() == "deliver-me":

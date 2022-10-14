@@ -24,7 +24,7 @@ def _built_in(booking, fp_name, dme_client, json_data, account_code):
         result["api_results_id"] = json_data["requestId"]
         result["fk_booking_id"] = booking.pk_booking_id
         result["fk_client_id"] = dme_client.company_name
-        result["freight_provider"] = get_service_provider(fp_name.lower())
+        result["freight_provider"] = get_service_provider(fp_name.lower(), False)
         result["fee"] = price["netPrice"]
         result["etd"] = price["etd"]
         result["tax_value_1"] = price["totalTaxes"]
@@ -127,7 +127,7 @@ def _api(booking, fp_name, dme_client, json_data, account_code):
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
             result["fk_client_id"] = dme_client.company_name
-            result["freight_provider"] = get_service_provider(fp_name, False)
+            result["freight_provider"] = get_service_provider(fp_name)
             result["fee"] = price["netPrice"]
             result["tax_value_1"] = price["totalTaxes"]
             result["service_code"] = service_code
