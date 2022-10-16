@@ -19,6 +19,7 @@ def get_fp_fl(fp, client, state, postal_code, suburb, client_fp=None):
 
     _client_fp = client_fp
     if not client_fp:
+        print("@1 - ", client, fp)
         _client_fp = Client_FP.objects.get(client=client, fp=fp)
 
     return _client_fp.fuel_levy or fp.fp_markupfuel_levy_percent
