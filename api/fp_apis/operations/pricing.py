@@ -231,7 +231,6 @@ def pricing(
         ).update(is_used=True)
 
     try:
-        print("@1 - ", booking.b_client_name)
         client = DME_clients.objects.get(company_name__iexact=booking.b_client_name)
         client_fps = Client_FP.objects.filter(client=client, is_active=True)
     except:

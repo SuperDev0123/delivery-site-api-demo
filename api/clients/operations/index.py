@@ -147,7 +147,7 @@ def bok_quote(bok_1, packed_status):
 
     # Get Boks
     bok_2s = bok_1.bok_2s().filter(is_deleted=False, b_093_packed_status=packed_status)
-    client = DME_clients.objects.get(pk=21)
+    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
 
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
