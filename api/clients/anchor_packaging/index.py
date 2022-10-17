@@ -335,6 +335,11 @@ def push_boks(payload, client, username, method):
 
         # Select suitable pallet and get required pallets count
         pallets = Pallet.objects.all()
+
+        # Anchor Packaging special
+        if bok_1_obj.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953":
+            pallets = pallets.filter(pk=10)
+
         palletized, non_palletized = get_palletized_by_ai(bok_2_objs, pallets)
         logger.info(
             f"@8831 {LOG_ID} Palletized: {palletized}\nNon-Palletized: {non_palletized}"

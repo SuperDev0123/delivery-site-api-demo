@@ -36,6 +36,11 @@ def auto_repack(bok_1, repack_status, pallet_id, client):
     if pallet_id == -1:  # Use DME AI for Palletizing
         # Select suitable pallet and get required pallets count
         pallets = Pallet.objects.all()
+
+        # Anchor Packaging special
+        if bok_1_obj.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953":
+            pallets = pallets.filter(pk=10)
+
         palletized, non_palletized = get_palletized_by_ai(bok_2s, pallets)
         logger.info(f"@8831 {LOG_ID} {palletized}\n{non_palletized}")
 
