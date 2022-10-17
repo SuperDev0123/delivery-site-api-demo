@@ -92,7 +92,8 @@ def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
 
 
 def gen_itm(booking, booking_lines, line_index, sscc_cnt):
-    TT = 11
+    is_tiny_label = booking.b_client_name == 'Tempo Big W'
+    TT = '00' if is_tiny_label else '11'
     CCCCCC = "132214"  # DME
     item_index = str(line_index).zfill(3)
     label_code = f"{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}"
@@ -154,6 +155,9 @@ def build_label(
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
     # label_settings = get_label_settings( 146, 104 )[0]
+    
+    is_tiny_label = booking.b_client_name == 'Tempo Big W'
+    
     label_settings = {
         "font_family": "Verdana",
         "font_size_extra_small": "4",
@@ -166,8 +170,8 @@ def build_label(
         "label_dimension_width": "150",
         "label_image_size_length": "85",
         "label_image_size_width": "130",
-        "barcode_dimension_height": "33",
-        "barcode_dimension_width": "0.75",
+        "barcode_dimension_height": "35" if is_tiny_label else "33",
+        "barcode_dimension_width": "0.7" if is_tiny_label else "0.75",
         "barcode_font_size": "18",
         "line_height_extra_small": "3",
         "line_height_small": "5",
@@ -1111,15 +1115,15 @@ def build_label(
                 style=[
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("VALIGN", (0, 0), (0, -1), "TOP"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 3),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (0, -1), 0),
                     ("RIGHTPADDING", (0, 0), (0, -1), 0),
                 ],
             )
 
             Story.append(t1)
-            Story.append(Spacer(1, 5))
+            # Story.append(Spacer(1, 5))
 
             fp_color_code = (
                 Fp_freight_providers.objects.get(fp_company_name="TNT").hex_color_code
@@ -1148,12 +1152,12 @@ def build_label(
                 ],
             )
 
-            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            d = Drawing(20, 20)
-            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
+            # codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
+            # d = Drawing(20, 20)
+            # d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            # d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
 
-            tbl_data1 = [[dme_img, d, t1]]
+            tbl_data1 = [[dme_img, "", t1]]
 
             t1 = Table(
                 tbl_data1,
