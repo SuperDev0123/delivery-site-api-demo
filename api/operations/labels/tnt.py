@@ -92,8 +92,8 @@ def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
 
 
 def gen_itm(booking, booking_lines, line_index, sscc_cnt):
-    is_tiny_label = booking.b_client_name == 'Tempo Big W'
-    TT = '00' if is_tiny_label else '11'
+    is_tiny_label = booking.b_client_name == "Tempo Big W"
+    TT = "00" if is_tiny_label else "11"
     CCCCCC = "132214"  # DME
     item_index = str(line_index).zfill(3)
     label_code = f"{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}"
@@ -155,9 +155,9 @@ def build_label(
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
     # label_settings = get_label_settings( 146, 104 )[0]
-    
-    is_tiny_label = booking.b_client_name == 'Tempo Big W'
-    
+
+    is_tiny_label = booking.b_client_name == "Tempo Big W"
+
     label_settings = {
         "font_family": "Verdana",
         "font_size_extra_small": "4",
@@ -170,8 +170,8 @@ def build_label(
         "label_dimension_width": "150",
         "label_image_size_length": "85",
         "label_image_size_width": "130",
-        "barcode_dimension_height": "35" if is_tiny_label else "33",
-        "barcode_dimension_width": "0.7" if is_tiny_label else "0.75",
+        "barcode_dimension_height": "35",
+        "barcode_dimension_width": "0.75",
         "barcode_font_size": "18",
         "line_height_extra_small": "3",
         "line_height_small": "5",
