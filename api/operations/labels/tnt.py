@@ -83,7 +83,8 @@ def myLaterPages(canvas, doc):
 
 
 def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
-    TT = 11
+    is_tiny_label = booking.b_client_name == "Tempo Big W"
+    TT = "00" if is_tiny_label else "11"
     CCCCCC = "132214"  # DME
     item_index = str(line_index).zfill(3)
     postal_code = str(booking.de_To_Address_PostalCode)
