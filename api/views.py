@@ -4109,7 +4109,7 @@ def download(request):
                     label_url = booking.z_label_url
 
                 if booking.b_client_name == "Tempo Big W":
-                    prefixes.appned(b_clientReference_RA_Numbers)
+                    prefixes.appned(booking.b_clientReference_RA_Numbers)
 
                 file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
                 booking.z_downloaded_shipping_label_timestamp = str(datetime.now())
