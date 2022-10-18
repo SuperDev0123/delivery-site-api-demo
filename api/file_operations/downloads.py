@@ -5,7 +5,7 @@ import zipfile
 from django.http import HttpResponse
 
 
-def download_from_disk(zip_subdir_name, file_paths):
+def download_from_disk(zip_subdir_name, file_paths, prefixes=[]):
     zip_subdir = zip_subdir_name
     zip_filename = "%s.zip" % zip_subdir
 
@@ -16,7 +16,11 @@ def download_from_disk(zip_subdir_name, file_paths):
         if os.path.isfile(file_path):
             file_name = file_path.split("/")[-1]
             file_name = file_name.split("\\")[-1]
-            zf.write(file_path, f"{zip_subdir_name}/{file_name}")
+
+            if prefixes:
+                zf.write(file_path, f"{zip_subdir_name}/{prefixes[index]}_{file_name}")
+            else:
+                zf.write(file_path, f"{zip_subdir_name}/{file_name}")
     zf.close()
 
     response = HttpResponse(s.getvalue(), "application/x-zip-compressed")
