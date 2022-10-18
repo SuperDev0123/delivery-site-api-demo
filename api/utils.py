@@ -49,7 +49,10 @@ from reportlab.lib import colors
 
 from django.conf import settings
 from api.models import *
-from api.common import trace_error
+from api.common import (
+    trace_error,
+    common_times as dme_time_lib,
+)
 from api.common.common_times import (
     next_business_day,
     convert_to_UTC_tz,
@@ -2971,7 +2974,7 @@ def get_eta_de_by(booking, quote):
                 etd_de_by = eta_pu_by + timedelta(hours=4 * 24)
 
         # Workdays
-        weekno = etd_de_by.weekday()
+        weekno = dme_time_lib.convert_to_AU_SYDNEY_tz(etd_de_by).weekday()
         if weekno > 4:
             etd_de_by = etd_de_by + timedelta(days=7 - weekno)
 
