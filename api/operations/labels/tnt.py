@@ -171,7 +171,7 @@ def build_label(
         "label_image_size_length": "85",
         "label_image_size_width": "130",
         "barcode_dimension_height": "35" if is_tiny_label else "33",
-        "barcode_dimension_width": "0.7" if is_tiny_label else "0.75",
+        "barcode_dimension_width": "0.65" if is_tiny_label else "0.75",
         "barcode_font_size": "18",
         "line_height_extra_small": "3",
         "line_height_small": "5",
@@ -1107,7 +1107,7 @@ def build_label(
 
             barcode = gen_barcode(booking, lines, j, sscc_cnt)
 
-            tbl_data = [[code128.Code128(barcode, barWidth=1.1, barHeight=12 * mm)]]
+            tbl_data = [[code128.Code128(barcode, barWidth=0.91, barHeight=21 * mm)]] if is_tiny_label else [[code128.Code128(barcode, barWidth=1.1, barHeight=12 * mm)]]
 
             t1 = Table(
                 tbl_data,
@@ -1115,7 +1115,7 @@ def build_label(
                 style=[
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("VALIGN", (0, 0), (0, -1), "TOP"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (0, -1), 0),
                     ("RIGHTPADDING", (0, 0), (0, -1), 0),
@@ -1123,7 +1123,7 @@ def build_label(
             )
 
             Story.append(t1)
-            # Story.append(Spacer(1, 5))
+            Story.append(Spacer(1, 5))
 
             fp_color_code = (
                 Fp_freight_providers.objects.get(fp_company_name="TNT").hex_color_code
@@ -1166,7 +1166,7 @@ def build_label(
                     float(label_settings["label_dimension_length"]) * (2 / 10) * mm,
                     float(label_settings["label_dimension_length"]) * (5 / 10) * mm,
                 ),
-                rowHeights=(float(label_settings["line_height_large"]) * 4 / 2 * mm),
+                rowHeights=(float(label_settings["line_height_large"]) * 3 / 2 * mm),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
