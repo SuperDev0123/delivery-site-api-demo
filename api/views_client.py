@@ -1151,9 +1151,9 @@ def get_delivery_status(request):
                     booking, booking.api_booking_quote
                 )
                 booking.save()
-                s_06 = booking.get_s_06()
+                s_06 = s_06_Latest_Delivery_Date_TimeSet
 
-            eta = dme_time_lib.convert_to_AU_SYDNEY_tz(s_06).strftime("%d/%m/%Y %H:%M")
+            eta = dme_time_lib.next_business_day(s_06, 1).strftime("%d/%m/%Y %H:%M")
 
         try:
             fp_status_histories = (
@@ -1285,24 +1285,18 @@ def get_delivery_status(request):
     original_lines = map(line_to_dict, booking_lines)
 
     quote = bok_1.quote
-    json_quote, eta = None, None
+    json_quote, eta = None, ""
 
     if quote:
         context = {"client_customer_mark_up": client.client_customer_mark_up}
         quote_data = SimpleQuoteSerializer(quote, context=context).data
         json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
-        eta = (
-            # (
-            #     dme_time_lib.convert_to_AU_SYDNEY_tz(bok_1.b_021_b_pu_avail_from_date)
-            #     + timedelta(days=int(json_quote["eta"].split()[0]))
-            # ).strftime("%d/%m/%Y")
-            dme_time_lib.next_business_day(
+
+        if json_quote and bok_1.b_021_b_pu_avail_from_date:
+            eta = dme_time_lib.next_business_day(
                 dme_time_lib.convert_to_AU_SYDNEY_tz(bok_1.b_021_b_pu_avail_from_date),
                 int(json_quote["eta"].split()[0]),
-            ).strftime("%d/%m/%Y")
-            if json_quote and bok_1.b_021_b_pu_avail_from_date
-            else ""
-        )
+            ).strftime("%d/%m/%Y %H:%M")
 
     try:
         logo_url = DME_clients.objects.get(company_name=booking.b_client_name).logo_url
