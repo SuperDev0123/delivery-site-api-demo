@@ -1140,6 +1140,7 @@ def get_delivery_status(request):
             from api.utils import get_eta_de_by
 
             eta = get_eta_de_by(booking, booking.api_booking_quote)
+            eta = eta.strftime("%d/%m/%Y %H:%M")
         else:
             from api.utils import get_eta_pu_by, get_eta_de_by
 
@@ -1153,8 +1154,7 @@ def get_delivery_status(request):
                 booking.save()
                 s_06 = s_06_Latest_Delivery_Date_TimeSet
 
-            eta = dme_time_lib.next_business_day(s_06, 1).strftime("%d/%m/%Y %H:%M")
-
+            eta = s_06.strftime("%d/%m/%Y %H:%M")
         try:
             fp_status_histories = (
                 FP_status_history.objects.values(
