@@ -1736,7 +1736,8 @@ class BookingsViewSet(viewsets.ViewSet):
                         )
 
             if not first_booking:
-                logger.error("Can not find first booking:", manifest_log, manifest_url)
+                msg = f"Can not find first booking: {manifest_log}, {manifest_url}"
+                logger.error(msg)
                 continue
 
             result["manifest_id"] = manifest_ids[index]
