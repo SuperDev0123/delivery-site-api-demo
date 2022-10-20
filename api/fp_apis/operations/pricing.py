@@ -84,6 +84,92 @@ def _confirm_visible(booking, booking_lines, quotes):
     return quotes
 
 
+def can_use_linehaul(booking):
+    if (
+        booking.pu_Address_State
+        and booking.de_To_Address_State
+        and booking.pu_Address_State.lower() == booking.de_To_Address_State.lower()
+    ):
+        return False
+
+    de_postal = int(booking.de_To_Address_PostalCode or 0)
+    pu_state = booking.pu_Address_State
+    pu_postal = int(booking.pu_Address_PostalCode or 0)
+    pu_suburb = booking.pu_Address_Suburb
+
+    if not de_postal or not pu_postal:
+        return False
+
+    # JasonL & BSD
+    if (
+        booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+        or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+    ) and (
+        (  # Metro / CBD Melbourne
+            de_postal == 3800
+            or (de_postal >= 3000 and de_postal <= 3207)
+            or (de_postal >= 8000 and de_postal <= 8499)
+        )
+        or (  # Metro / CBD Brisbane
+            (de_postal >= 4000 and de_postal <= 4207)
+            or (de_postal >= 9000 and de_postal <= 9499)
+        )
+        # or (  # Metro Adelaide
+        #     (de_postal >= 5000 and de_postal <= 5199)
+        #     or (de_postal >= 5900 and de_postal <= 5999)
+        # )
+    ):
+        return True
+
+    # Anchor Packaging
+    if booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953":
+        # MD1 (NSW) -> Mel | MD1 (NSW) -> BSD
+        if (
+            pu_suburb
+            and pu_suburb.lower() == "chester hill"
+            and (
+                (  # Metro / CBD Melbourne
+                    de_postal == 3800
+                    or (de_postal >= 3000 and de_postal <= 3207)
+                    or (de_postal >= 8000 and de_postal <= 8499)
+                )
+                or (  # Metro / CBD Brisbane
+                    (de_postal >= 4000 and de_postal <= 4207)
+                    or (de_postal >= 9000 and de_postal <= 9499)
+                )
+            )
+        ):
+            return True
+
+        # AFS (VIC) -> Sydney Metro
+        if (
+            pu_suburb
+            and pu_suburb.lower() == "dandenong south"
+            and (
+                (  # Metro / CBD Sydney
+                    (de_postal >= 1000 and de_postal <= 2249)
+                    or (de_postal >= 2760 and de_postal <= 2770)
+                )
+            )
+        ):
+            return True
+
+        # MD2 (QLD) -> Sydney Metro
+        if (
+            pu_suburb
+            and pu_suburb.lower() == "larapinta"
+            and (
+                (  # Metro / CBD Sydney
+                    (de_postal >= 1000 and de_postal <= 2249)
+                    or (de_postal >= 2760 and de_postal <= 2770)
+                )
+            )
+        ):
+            return True
+
+    return False
+
+
 def build_special_fp_pricings(booking, booking_lines, packed_status):
     # Get manually entered surcharges total
     try:
@@ -91,7 +177,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
     except:
         manual_surcharges_total = 0
 
-    postal_code = int(booking.de_To_Address_PostalCode or 0)
+    de_postal_code = int(booking.de_To_Address_PostalCode or 0)
     quote_0 = API_booking_quotes()
     quote_0.api_results_id = ""
     quote_0.fk_booking_id = booking.pk_booking_id
@@ -109,8 +195,8 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
 
     # JasonL (SYD - SYD)
     if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002" and (
-        (postal_code >= 1000 and postal_code <= 2249)
-        or (postal_code >= 2760 and postal_code <= 2770)
+        (de_postal_code >= 1000 and de_postal_code <= 2249)
+        or (de_postal_code >= 2760 and de_postal_code <= 2770)
     ):
         quote_3 = quote_0
         quote_3.pk = None
@@ -127,29 +213,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
         or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
     ):
-        # restrict delivery postal code
-        if (
-            postal_code
-            and (
-                (  # Metro / CBD Melbourne
-                    postal_code == 3800
-                    or (postal_code >= 3000 and postal_code <= 3207)
-                    or (postal_code >= 8000 and postal_code <= 8499)
-                )
-                or (  # Metro / CBD Brisbane
-                    (postal_code >= 4000 and postal_code <= 4207)
-                    or (postal_code >= 9000 and postal_code <= 9499)
-                )
-                # or (  # Metro Adelaide
-                #     (postal_code >= 5000 and postal_code <= 5199)
-                #     or (postal_code >= 5900 and postal_code <= 5999)
-                # )
-            )
-            # Restrict same state
-            and booking.pu_Address_State
-            and booking.de_To_Address_State
-            and booking.pu_Address_State.lower() != booking.de_To_Address_State.lower()
-        ):
+        if can_use_linehaul(booking):
             quote_1 = quote_0
             quote_1.freight_provider = "Deliver-ME"
             result = get_self_pricing(quote_1.freight_provider, booking, booking_lines)

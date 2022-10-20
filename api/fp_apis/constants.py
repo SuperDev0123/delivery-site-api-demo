@@ -33,6 +33,9 @@ AVAILABLE_FPS_4_FC = [
     "Bluestar",  # Anchor Packaging
     "Hi-Trans",  # Anchor Packaging
     "VFS",  # Anchor Packaging
+    "Sadleirs",  # Anchor Packaging
+    "Followmont",  # Anchor Packaging
+    "DXT",  # Anchor Packaging
 ]
 
 BUILT_IN_PRICINGS = {
@@ -47,6 +50,9 @@ BUILT_IN_PRICINGS = {
     "startrack": {"service_types": ["Road Service"]},
     "hi-trans": {"service_types": ["Road Service"]},
     "vfs": {"service_types": ["Road Service"]},
+    "sadleirs": {"service_types": ["Road Service"]},
+    "followmont": {"service_types": ["Road Service"]},
+    "dxt": {"service_types": ["Road Service"]},
     # "tnt": {
     #     "service_types": [
     #         "Overnight - 9:00 Express*",

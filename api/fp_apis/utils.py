@@ -68,7 +68,7 @@ def gen_consignment_num(fp_name, uid, kf_client_id=None, booking=None):
 def get_m3_to_kg_factor(fp_name, data=None):
     if not fp_name:
         return 250
-    if fp_name.lower() == "northline":
+    if fp_name.lower() in ["northline", "sadleirs"]:
         return 333
     elif (
         fp_name.lower() == "hunter"
