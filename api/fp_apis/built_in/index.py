@@ -19,7 +19,10 @@ from api.fp_apis.built_in import (
     bluestar,  # Anchor Packaging
     startrack,  # Anchor Packaging
     hi_trans,  # Anchor Packaging
-    vfs,  # Anchor Packaging
+    vfs,  # Anchor Packaging,
+    sadleirs,  # Anchor Packaging,
+    followmont,  # Anchor Packaging,
+    dxt,  # Anchor Packaging,
 )
 
 logger = logging.getLogger(__name__)
@@ -101,6 +104,18 @@ def get_pricing(
             )
         elif fp_name.lower() == "vfs":  # Anchor Packaging
             prices = vfs.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "sadleirs":  # Anchor Packaging
+            prices = sadleirs.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "followmont":  # Anchor Packaging
+            prices = followmont.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "dxt":  # Anchor Packaging
+            prices = dxt.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones
             )
         elif fp_name.lower() == "deliver-me":

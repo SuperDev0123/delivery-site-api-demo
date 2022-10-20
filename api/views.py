@@ -1736,7 +1736,8 @@ class BookingsViewSet(viewsets.ViewSet):
                         )
 
             if not first_booking:
-                logger.error("Can not find first booking:", manifest_log, manifest_url)
+                msg = f"Can not find first booking: {manifest_log}, {manifest_url}"
+                logger.error(msg)
                 continue
 
             result["manifest_id"] = manifest_ids[index]
@@ -4062,6 +4063,7 @@ def download(request):
     body = literal_eval(request.body.decode("utf8"))
     download_option = body["downloadOption"]
     file_paths = []
+    prefixes = []
     logger.info(f"{LOG_ID} Option: {download_option}")
 
     if download_option not in ["logs", "quote-report"]:
@@ -4106,6 +4108,9 @@ def download(request):
                     label_url = f"{fp_name}/DME{booking.b_bookingID_Visual}.pdf"
                 else:
                     label_url = booking.z_label_url
+
+                if booking.b_client_name == "Tempo Big W":
+                    prefixes.append(booking.b_clientReference_RA_Numbers)
 
                 file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
                 booking.z_downloaded_shipping_label_timestamp = str(datetime.now())
@@ -4215,7 +4220,7 @@ def download(request):
         end_date = body.get("endDate")
         file_paths = [build_quote_report(kf_client_ids, start_date, end_date)]
 
-    response = download_libs.download_from_disk(download_option, file_paths)
+    response = download_libs.download_from_disk(download_option, file_paths, prefixes)
     return response
 
 

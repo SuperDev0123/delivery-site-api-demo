@@ -133,7 +133,10 @@ def get_percentage(vehicle_name):
 def get_pricing(booking, booking_lines):
     LOG_ID = "[Linehaul Pricing]"
     service_name = None
-    postal_code = int(booking.de_To_Address_PostalCode or 0)
+
+    de_postal = int(booking.de_To_Address_PostalCode or 0)
+    pu_suburb = booking.pu_Address_Suburb
+
     inv_cost_quoted, inv_sell_quoted, inv_dme_quoted = 0, 0, 0
     old_inv_cost_quoted, old_inv_sell_quoted, old_inv_dme_quoted = 0, 0, 0
 
@@ -169,11 +172,8 @@ def get_pricing(booking, booking_lines):
             length = width
             width = temp
 
-        # JasonL | Anchor Packaging
-        if (
-            booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
-            or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
-        ):
+        # JasonL
+        if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
             # Final Mile Delivery Fee
             fm_fee_cost = 55
             fm_fee_sell = 65
@@ -189,9 +189,9 @@ def get_pricing(booking, booking_lines):
                 fm_fee_sell = 0
 
             if (
-                postal_code == 3800
-                or (postal_code >= 3000 and postal_code <= 3207)
-                or (postal_code >= 8000 and postal_code <= 8499)
+                de_postal == 3800
+                or (de_postal >= 3000 and de_postal <= 3207)
+                or (de_postal >= 8000 and de_postal <= 8499)
             ):  # Melbourne
                 service_name = "Deliver-ME Direct (Into Premises)"
 
@@ -244,8 +244,8 @@ def get_pricing(booking, booking_lines):
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
-            elif (postal_code >= 4000 and postal_code <= 4207) or (
-                postal_code >= 9000 and postal_code <= 9499
+            elif (de_postal >= 4000 and de_postal <= 4207) or (
+                de_postal >= 9000 and de_postal <= 9499
             ):  # Brisbane
                 service_name = "Deliver-ME Direct (Into Premises)"
 
@@ -300,8 +300,8 @@ def get_pricing(booking, booking_lines):
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
-            elif (postal_code >= 5000 and postal_code <= 5199) or (
-                postal_code >= 5900 and postal_code <= 5999
+            elif (de_postal >= 5000 and de_postal <= 5199) or (
+                de_postal >= 5900 and de_postal <= 5999
             ):  # Adelaide
                 service_name = "Deliver-ME Direct (Into Premises)"
 
@@ -363,8 +363,8 @@ def get_pricing(booking, booking_lines):
             fm_fee_cost = 55
             fm_fee_sell = 65
 
-            if (postal_code >= 3000 and postal_code <= 3207) or (
-                postal_code >= 8000 and postal_code <= 8499
+            if (de_postal >= 3000 and de_postal <= 3207) or (
+                de_postal >= 8000 and de_postal <= 8499
             ):  # Melbourne
                 service_name = "Deliver-ME Direct (Into Premises)"
 
@@ -419,8 +419,8 @@ def get_pricing(booking, booking_lines):
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
-            elif (postal_code >= 4000 and postal_code <= 4207) or (
-                postal_code >= 9000 and postal_code <= 9499
+            elif (de_postal >= 4000 and de_postal <= 4207) or (
+                de_postal >= 9000 and de_postal <= 9499
             ):  # Brisbane
                 service_name = "Deliver-ME Direct (Into Premises)"
 
@@ -475,8 +475,8 @@ def get_pricing(booking, booking_lines):
                         / get_percentage(booking.b_booking_project)
                         + fm_fee_sell
                     ) * line.e_qty
-            elif (postal_code >= 5000 and postal_code <= 5199) or (
-                postal_code >= 5900 and postal_code <= 5999
+            elif (de_postal >= 5000 and de_postal <= 5199) or (
+                de_postal >= 5900 and de_postal <= 5999
             ):  # Adelaide
                 service_name = "Deliver-ME Direct (Into Premises)"
 
@@ -523,6 +523,126 @@ def get_pricing(booking, booking_lines):
                         106.09 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
                     )
                     _value = 18 if 121.25 * cubic_meter < 18 else 121.25 * cubic_meter
+                    one_inv_sell_quoted = _value + fm_fee_sell
+                    inv_sell_quoted += one_inv_sell_quoted * line.e_qty
+                    inv_dme_quoted += (
+                        (one_inv_sell_quoted - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+
+        # Anchor Packaging
+        if booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953":
+            if (
+                de_postal == 3800
+                or (de_postal >= 3000 and de_postal <= 3207)
+                or (de_postal >= 8000 and de_postal <= 8499)
+            ) or pu_suburb.lower() == "dandenong south":  # Melbourne | AFS (VIC) -> Sydney
+                fm_fee_cost = 40
+                fm_fee_sell = 65
+                service_name = "Deliver-ME Direct (Into Premises)"
+
+                if (
+                    is_pallet
+                    and length >= 0.8
+                    and length <= 1.2
+                    and width >= 0.8
+                    and width <= 1.2
+                    and height <= 1.4
+                ):
+                    case = "Pallet Type #1"
+                    inv_cost_quoted += (53.30 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (63.96 + fm_fee_sell) * line.e_qty
+                    inv_dme_quoted += (
+                        (63.96 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
+                    case = "Pallet Type #2"
+                    inv_cost_quoted += (79.95 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (95.95 + fm_fee_sell) * line.e_qty
+                    inv_dme_quoted += (
+                        (95.95 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
+                    case = "Pallet Type #3"
+                    inv_cost_quoted += (79.95 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (95.95 + fm_fee_sell) * line.e_qty
+                    inv_dme_quoted += (
+                        (95.95 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                else:
+                    case = "CBM type"
+                    inv_cost_quoted += (29.74 * cubic_meter + fm_fee_cost) * line.e_qty
+                    _value = 18 if 35.69 * cubic_meter < 18 else 35.69 * cubic_meter
+                    one_inv_sell_quoted = _value + fm_fee_sell
+                    inv_sell_quoted += one_inv_sell_quoted * line.e_qty
+                    inv_dme_quoted += (
+                        (one_inv_sell_quoted - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+            elif (
+                (de_postal >= 4000 and de_postal <= 4207)
+                or (de_postal >= 9000 and de_postal <= 9499)
+            ) or pu_suburb.lower() == "larapinta":  # Brisbane | MD2 (QLD) -> Sydney
+                fm_fee_cost = 65
+                fm_fee_sell = 75
+                service_name = "Deliver-ME Direct (Into Premises)"
+
+                if (
+                    is_pallet
+                    and length >= 0.8
+                    and length <= 1.2
+                    and width >= 0.8
+                    and width <= 1.2
+                    and height <= 1.4
+                ):
+                    case = "Pallet Type #1"
+                    inv_cost_quoted += (94.00 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (104.04 + fm_fee_sell) * line.e_qty
+                    inv_dme_quoted += (
+                        (104.04 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
+                    case = "Pallet Type #2"
+                    inv_cost_quoted += (141.00 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (156.06 + fm_fee_sell) * line.e_qty
+                    inv_dme_quoted += (
+                        (156.06 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
+                    case = "Pallet Type #3"
+                    inv_cost_quoted += (141.00 + fm_fee_cost) * line.e_qty
+                    inv_sell_quoted += (156.06 + fm_fee_sell) * line.e_qty
+                    inv_dme_quoted += (
+                        (156.06 - fm_fee_sell)
+                        * 0.5
+                        / get_percentage(booking.b_booking_project)
+                        + fm_fee_sell
+                    ) * line.e_qty
+                else:
+                    case = "CBM type"
+                    inv_cost_quoted += (
+                        52.46 * cubic_meter * line.e_qty + fm_fee_cost * line.e_qty
+                    )
+                    _value = 18 if 58.06 * cubic_meter < 18 else 58.06 * cubic_meter
                     one_inv_sell_quoted = _value + fm_fee_sell
                     inv_sell_quoted += one_inv_sell_quoted * line.e_qty
                     inv_dme_quoted += (

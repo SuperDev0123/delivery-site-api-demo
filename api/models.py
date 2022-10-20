@@ -2100,7 +2100,10 @@ class Bookings(models.Model):
         return _total
 
     def get_s_06(self):
+        from api.common.common_times import next_business_day
+
         LOG_ID = "[GET_s_06]"
+        _s_06 = None
 
         if (
             not self.s_06_Latest_Delivery_Date_TimeSet
@@ -2110,9 +2113,11 @@ class Bookings(models.Model):
             logger.error(f"{LOG_ID} No ETA: {self.b_bookingID_Visual}")
 
         if self.s_06_Latest_Delivery_Date_Time_Override:
-            return self.s_06_Latest_Delivery_Date_Time_Override
+            _s_06 = self.s_06_Latest_Delivery_Date_Time_Override
         elif self.s_06_Latest_Delivery_Date_TimeSet:
-            return self.s_06_Latest_Delivery_Date_TimeSet
+            _s_06 = self.s_06_Latest_Delivery_Date_TimeSet
+
+        return next_business_day(_s_06, 1)
 
     def save(self, *args, **kwargs):
         self.z_ModifiedTimestamp = datetime.now()
