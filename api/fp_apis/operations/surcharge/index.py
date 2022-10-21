@@ -15,6 +15,13 @@ from api.fp_apis.operations.surcharge.allied import allied
 from api.fp_apis.operations.surcharge.hunter import hunter
 from api.fp_apis.operations.surcharge.camerons import camerons
 from api.fp_apis.operations.surcharge.northline import northline
+from api.fp_apis.operations.surcharge.hitrans import hitrans
+from api.fp_apis.operations.surcharge.blacks import blacks
+from api.fp_apis.operations.surcharge.blenner import blenner
+from api.fp_apis.operations.surcharge.bluestar import bluestar
+from api.fp_apis.operations.surcharge.vfs import vfs
+from api.fp_apis.operations.surcharge.toll import toll
+from api.fp_apis.operations.surcharge.startrack import startrack
 
 
 logger = logging.getLogger(__name__)
@@ -236,6 +243,8 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
         "pu_tail_lift": booking["pu_tail_lift"],
         "de_tail_lift": booking["del_tail_lift"],
         "is_jason_l": booking["client_id"] == "1af6bcd2-6148-11eb-ae93-0242ac130002",
+        "lines_data": lines_data,
+        "quote_obj": quote_obj,
     }
 
     surcharges, surcharge_opt_funcs = [], []
@@ -250,6 +259,20 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
         surcharge_opt_funcs = camerons()
     elif fp.fp_company_name.lower() == "northline":
         surcharge_opt_funcs = northline()
+    elif fp.fp_company_name.lower() == "hi-trans":
+        surcharge_opt_funcs = hitrans()
+    elif fp.fp_company_name.lower() == "blacks":
+        surcharge_opt_funcs = blacks()
+    elif fp.fp_company_name.lower() == "blenner":
+        surcharge_opt_funcs = blenner()
+    elif fp.fp_company_name.lower() == "bluestar":
+        surcharge_opt_funcs = bluestar()
+    elif fp.fp_company_name.lower() == "vfs":
+        surcharge_opt_funcs = vfs()
+    elif fp.fp_company_name.lower() == "toll":
+        surcharge_opt_funcs = toll()
+    elif fp.fp_company_name.lower() == "startrack":
+        surcharge_opt_funcs = startrack()
 
     if surcharge_opt_funcs:
         for opt_func in surcharge_opt_funcs["order"]:
