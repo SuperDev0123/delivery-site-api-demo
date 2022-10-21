@@ -136,6 +136,7 @@ def get_pricing(booking, booking_lines):
 
     de_postal = int(booking.de_To_Address_PostalCode or 0)
     pu_suburb = booking.pu_Address_Suburb
+    percentage = booking.v_project_percentage
 
     inv_cost_quoted, inv_sell_quoted, inv_dme_quoted = 0, 0, 0
     old_inv_cost_quoted, old_inv_sell_quoted, old_inv_dme_quoted = 0, 0, 0
@@ -209,7 +210,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (91.11 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
@@ -219,7 +220,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (136.67 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
@@ -229,7 +230,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (136.67 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
@@ -241,7 +242,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
             elif (de_postal >= 4000 and de_postal <= 4207) or (
@@ -263,7 +264,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (134.94 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
@@ -273,7 +274,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (202.41 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
@@ -283,7 +284,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (202.41 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
@@ -297,7 +298,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
             elif (de_postal >= 5000 and de_postal <= 5199) or (
@@ -319,7 +320,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (213.64 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
@@ -329,7 +330,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (320.45 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
@@ -339,7 +340,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (320.45 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
@@ -353,7 +354,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
 
@@ -382,7 +383,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (125 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
@@ -392,7 +393,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (187.50 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
@@ -402,7 +403,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (187.50 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
@@ -416,7 +417,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
             elif (de_postal >= 4000 and de_postal <= 4207) or (
@@ -438,7 +439,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (181.82 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
@@ -448,7 +449,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (272.73 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
@@ -458,7 +459,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (272.73 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
@@ -472,7 +473,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
             elif (de_postal >= 5000 and de_postal <= 5199) or (
@@ -494,7 +495,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (217.27 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
@@ -504,7 +505,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (325.91 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
@@ -514,7 +515,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (325.91 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
@@ -528,7 +529,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
 
@@ -557,7 +558,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (63.96 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
@@ -567,7 +568,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (95.95 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
@@ -577,7 +578,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (95.95 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
@@ -589,7 +590,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
             elif (
@@ -614,7 +615,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (104.04 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.2 and width <= 1.6 and height <= 1.4:
@@ -624,7 +625,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (156.06 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 elif length <= 1.2 and width > 1.6 and width <= 1.85 and height <= 1.4:
@@ -634,7 +635,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (156.06 - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
                 else:
@@ -648,7 +649,7 @@ def get_pricing(booking, booking_lines):
                     inv_dme_quoted += (
                         (one_inv_sell_quoted - fm_fee_sell)
                         * 0.5
-                        / get_percentage(booking.b_booking_project)
+                        / (percentage or get_percentage(booking.b_booking_project))
                         + fm_fee_sell
                     ) * line.e_qty
 
