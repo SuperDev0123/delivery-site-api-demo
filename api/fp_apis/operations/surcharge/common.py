@@ -171,7 +171,23 @@ SURCHARGE_NAME_DESC = {
         "Tail Lift Requirement": "When a consignment involving pallets or other heavy consignments requires the use of a tail lift or tilt tray truck.",
         "Over-length Goodss": "Where the length of the consignment matches the following dimensions.",
     },
-    "STARTRACK": {
+    "DXT": {
+        "Additional Labour": "Consignments requiring additional labour for services may incur Ad-hoc charges",
+        "Dangerous Goods": "",
+        "Hand Load/Unloda": "",
+        "Home Delivery/Residential": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
+        "Dead Weight": "Base charge plus kilo charge",
+        "Oversize Charge": "",
+    },
+    "FOLLOWMONT": {
+        "Additional Labour": "Consignments requiring additional labour for services may incur Ad-hoc charges",
+        "Dangerous Goods": "",
+        "Hand Load/Unloda": "",
+        "Home Delivery/Residential": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
+        "Dead Weight": "Base charge plus kilo charge",
+        "Oversize Charge": "",
+    },
+    "SADLIERS": {
         "Additional Labour": "Consignments requiring additional labour for services may incur Ad-hoc charges",
         "Dangerous Goods": "",
         "Hand Load/Unloda": "",

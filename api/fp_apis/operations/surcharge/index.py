@@ -22,6 +22,9 @@ from api.fp_apis.operations.surcharge.bluestar import bluestar
 from api.fp_apis.operations.surcharge.vfs import vfs
 from api.fp_apis.operations.surcharge.toll import toll
 from api.fp_apis.operations.surcharge.startrack import startrack
+from api.fp_apis.operations.surcharge.dxt import dxt
+from api.fp_apis.operations.surcharge.followmont import followmont
+from api.fp_apis.operations.surcharge.sadliers import sadliers
 
 
 logger = logging.getLogger(__name__)
@@ -273,6 +276,12 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
         surcharge_opt_funcs = toll()
     elif fp.fp_company_name.lower() == "startrack":
         surcharge_opt_funcs = startrack()
+    elif fp.fp_company_name.lower() == "dxt":
+        surcharge_opt_funcs = dxt()
+    elif fp.fp_company_name.lower() == "followmont":
+        surcharge_opt_funcs = followmont()
+    elif fp.fp_company_name.lower() == "sadliers":
+        surcharge_opt_funcs = sadliers()
 
     if surcharge_opt_funcs:
         for opt_func in surcharge_opt_funcs["order"]:
