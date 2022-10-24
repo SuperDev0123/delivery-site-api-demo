@@ -109,17 +109,18 @@ def tracking(request, fp_name):
                     booking.z_pod_url = f"{fp_name.lower()}_au/{pod_file_name}"
 
                 if consignmentTrackDetails["signatures"]:
-                    posData = consignmentTrackDetails["signatures"][0]["signatureImage"]
+                    if "signatureImage" in consignmentTrackDetails["signatures"][0]:
+                        _fp_name = fp_name.lower()
+                        pos_file_name = f"allied_POS_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
+                        full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pos_file_name}"
 
-                    _fp_name = fp_name.lower()
-                    pos_file_name = f"allied_POS_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
-                    full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pos_file_name}"
+                        f = open(full_path, "wb")
+                        f.write(base64.b64decode(posData))
+                        f.close()
 
-                    f = open(full_path, "wb")
-                    f.write(base64.b64decode(posData))
-                    f.close()
-
-                    booking.z_pod_signed_url = f"{fp_name.lower()}_au/{pos_file_name}"
+                        booking.z_pod_signed_url = (
+                            f"{fp_name.lower()}_au/{pos_file_name}"
+                        )
 
                 if consignmentTrackDetails["scheduledDeliveryDate"]:
                     scheduledDeliveryDate = consignmentTrackDetails[
