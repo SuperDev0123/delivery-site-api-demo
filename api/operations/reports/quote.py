@@ -55,7 +55,7 @@ def build_quote_report(kf_client_ids, start_date, end_date):
 
     # Write Header
     fileHandler.write(
-        "BookingID, pk_booking_id, BookedDate, FP, OrderNo, QTY, Cubic(M3), Weight(Kg) Quoted $, Booked $, Pallet Sized Booked $, Vehicle(Project), Manual BOOK?\n"
+        "BookingID, pk_booking_id, BookedDate, FP, OrderNo, QTY, Cubic(M3), Weight(Kg), Utilized Cubic Meter(M3), Utilized Weight(Kg), Quoted $, Booked $, Pallet Sized Booked $, Vehicle(Project), Manual BOOK?\n"
     )
 
     # Write Each Line
@@ -66,15 +66,14 @@ def build_quote_report(kf_client_ids, start_date, end_date):
             price = 0
         booking_lines = []
         sscc_lines = []
-        sscc_lines_qty = 0
+        total_qty_1, total_qty_2 = 0, 0
         for line in lines:
             if booking.pk_booking_id == line.fk_booking_id:
                 booking_lines.append(line)
                 if line.sscc and not "NO" in line.sscc:
                     sscc_lines.append(line)
-                    sscc_lines_qty += line.e_qty
+                    total_qty_1 += line.e_qty
         _lines = []
-        qty = 0
         if sscc_lines:
             _lines = sscc_lines
         else:
@@ -86,10 +85,13 @@ def build_quote_report(kf_client_ids, start_date, end_date):
                 if line.e_item != "Auto repacked item":
                     if has_scanned and line.packed_status != "scanned":
                         continue
-                    qty += line.e_qty
+                    total_qty_2 += line.e_qty
                     _lines.append(line)
         cubic_meter = 0
         total_weight = 0
+        util_cbm = 0
+        util_kgs = 0
+        dim_ratio = _get_dim_amount(line.e_dimUOM)
         for line in _lines:
             cubic_meter += get_cubic_meter(
                 line.e_dimLength,
@@ -101,6 +103,8 @@ def build_quote_report(kf_client_ids, start_date, end_date):
             total_weight += (
                 _get_weight_amount(line.e_weightUOM) * line.e_weightPerEach * line.e_qty
             )
+            util_cbm += line.e_util_cbm or 0
+            util_kgs += line.e_util_kg or 0
 
         if booking.vx_freight_provider in SPECIAL_FPS:
             eachLineText = (
@@ -116,9 +120,15 @@ def build_quote_report(kf_client_ids, start_date, end_date):
                 + comma
                 + (booking.b_client_order_num or "")
                 + comma
-                + str(sscc_lines_qty or qty)
+                + str(total_qty_1 or total_qty_2)
                 + comma
                 + f"{round(cubic_meter, 3)}"
+                + comma
+                + f"{round(total_weight, 3)}"
+                + comma
+                + f"{round(util_cbm, 3)}"
+                + comma
+                + f"{round(util_kgs, 3)}"
                 + comma
                 + f"${booking.inv_sell_quoted}"
                 + comma
@@ -144,11 +154,15 @@ def build_quote_report(kf_client_ids, start_date, end_date):
                 + comma
                 + (booking.b_client_order_num or "")
                 + comma
-                + str(sscc_lines_qty or qty)
+                + str(total_qty_1 or total_qty_2)
                 + comma
                 + f"{round(cubic_meter, 3)}"
                 + comma
-                + f"{round(total_weight, 2)}"
+                + f"{round(total_weight, 3)}"
+                + comma
+                + f"{round(util_cbm, 3)}"
+                + comma
+                + f"{round(util_kgs, 3)}"
                 + comma
                 + f"${booking.inv_sell_quoted}"
                 + comma
