@@ -46,10 +46,10 @@ def handle_zero(line, client=None):
                 line["l_003_item"] += f" (ZERO Dims - {', '.join(zero_dims)})"
                 line["l_004_dim_UOM"] = "m"
                 line["l_008_weight_UOM"] = "kg"
-                line["l_005_dim_length"] = line["l_005_dim_length"] or 1
-                line["l_006_dim_width"] = line["l_006_dim_width"] or 0.8
-                line["l_007_dim_height"] = line["l_007_dim_height"] or 1
-                line["l_009_weight_per_each"] = line["l_009_weight_per_each"] or 50
+                line["l_005_dim_length"] = line["l_005_dim_length"] or 0.1
+                line["l_006_dim_width"] = line["l_006_dim_width"] or 0.1
+                line["l_007_dim_height"] = line["l_007_dim_height"] or 0.1
+                line["l_009_weight_per_each"] = line["l_009_weight_per_each"] or 1
         else:
             line["l_003_item"] += f" (ZERO Dims - {', '.join(zero_dims)})"
             line["l_004_dim_UOM"] = "m"
