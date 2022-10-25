@@ -4,6 +4,7 @@ from django.conf import settings
 from api.models import Bookings, Booking_lines
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.constants import SPECIAL_FPS
+from api.fp_apis.utils import get_m3_to_kg_factor
 from api.common.common_times import convert_to_AU_SYDNEY_tz, get_sydney_now_time
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 
@@ -55,7 +56,7 @@ def build_quote_report(kf_client_ids, start_date, end_date):
 
     # Write Header
     fileHandler.write(
-        "BookingID, pk_booking_id, BookedDate, FP, OrderNo, QTY, Cubic(M3), Weight(Kg), Utilized Cubic Meter(M3), Utilized Weight(Kg), Quoted $, Booked $, Pallet Sized Booked $, Vehicle(Project), Manual BOOK?\n"
+        "BookingID, pk_booking_id, BookedDate, FP, OrderNo, QTY, Weight(Kg), Cubic(M3), Utilized Cubic Meter(M3), Utilized Weight(Kg), Quoted $, Booked $, Pallet Sized Booked $, Vehicle(Project), Manual BOOK?\n"
     )
 
     # Write Each Line
@@ -87,8 +88,10 @@ def build_quote_report(kf_client_ids, start_date, end_date):
                         continue
                     total_qty_2 += line.e_qty
                     _lines.append(line)
-        cubic_meter = 0
+
         total_weight = 0
+        cubic_meter = 0
+        total_cubic_weight = 0
         util_cbm = 0
         util_kgs = 0
         dim_ratio = _get_dim_amount(line.e_dimUOM)
@@ -103,6 +106,8 @@ def build_quote_report(kf_client_ids, start_date, end_date):
             total_weight += (
                 _get_weight_amount(line.e_weightUOM) * line.e_weightPerEach * line.e_qty
             )
+            _m3_to_kg_factor = m3_to_kg_factor(booking.vx_freight_provider)
+            total_cubic_weight += cubic_meter * _m3_to_kg_factor
             util_cbm += line.e_util_cbm or 0
             util_kgs += line.e_util_kg or 0
 
@@ -122,9 +127,11 @@ def build_quote_report(kf_client_ids, start_date, end_date):
                 + comma
                 + str(total_qty_1 or total_qty_2)
                 + comma
+                + f"{round(total_weight, 3)}"
+                + comma
                 + f"{round(cubic_meter, 3)}"
                 + comma
-                + f"{round(total_weight, 3)}"
+                + f"{round(total_cubic_weight, 3)}"
                 + comma
                 + f"{round(util_cbm, 3)}"
                 + comma
@@ -156,9 +163,11 @@ def build_quote_report(kf_client_ids, start_date, end_date):
                 + comma
                 + str(total_qty_1 or total_qty_2)
                 + comma
+                + f"{round(total_weight, 3)}"
+                + comma
                 + f"{round(cubic_meter, 3)}"
                 + comma
-                + f"{round(total_weight, 3)}"
+                + f"{round(total_cubic_weight, 3)}"
                 + comma
                 + f"{round(util_cbm, 3)}"
                 + comma
