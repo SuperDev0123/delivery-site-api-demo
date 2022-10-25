@@ -106,7 +106,7 @@ def build_quote_report(kf_client_ids, start_date, end_date):
             total_weight += (
                 _get_weight_amount(line.e_weightUOM) * line.e_weightPerEach * line.e_qty
             )
-            _m3_to_kg_factor = m3_to_kg_factor(booking.vx_freight_provider)
+            _m3_to_kg_factor = get_m3_to_kg_factor(booking.vx_freight_provider)
             total_cubic_weight += cubic_meter * _m3_to_kg_factor
             util_cbm += line.e_util_cbm or 0
             util_kgs += line.e_util_kg or 0
