@@ -25,7 +25,7 @@ def dg(param):
         return {
             "name": "Dangerous Goods",
             "description": "Dangerous Goods consignments incurr a 25% surcharge ontop of the freight rate + $15 Basic Charge",
-            "value": param["quote_obj"]["fee"] * 0.25 + 15,
+            "value": param["quote_obj"].fee * 0.25 + 15,
         }
     else:
         return None
