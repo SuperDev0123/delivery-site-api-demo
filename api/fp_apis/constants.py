@@ -29,7 +29,7 @@ AVAILABLE_FPS_4_FC = [
     "ATC",
     "Northline",  # Anchor Packaging
     "Blacks",  # Anchor Packaging
-    "Blanner",  # Anchor Packaging
+    "Blenner",  # Anchor Packaging
     "Bluestar",  # Anchor Packaging
     "Hi-Trans",  # Anchor Packaging
     "VFS",  # Anchor Packaging
@@ -45,7 +45,7 @@ BUILT_IN_PRICINGS = {
     "toll": {"service_types": ["standard", "express"]},
     "northline": {"service_types": ["standard"]},
     "blacks": {"service_types": ["Road Service"]},
-    "blanner": {"service_types": ["Road Service"]},
+    "blenner": {"service_types": ["Road Service"]},
     "bluestar": {"service_types": ["Road Service"]},
     "startrack": {"service_types": ["Road Service"]},
     "hi-trans": {"service_types": ["Road Service"]},

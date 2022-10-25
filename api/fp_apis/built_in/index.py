@@ -15,7 +15,7 @@ from api.fp_apis.built_in import (
     sendle,
     deliver_me,
     blacks,  # Anchor Packaging
-    blanner,  # Anchor Packaging
+    blenner,  # Anchor Packaging
     bluestar,  # Anchor Packaging
     startrack,  # Anchor Packaging
     hi_trans,  # Anchor Packaging
@@ -86,8 +86,8 @@ def get_pricing(
             prices = blacks.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones
             )
-        elif fp_name.lower() == "blanner":  # Anchor Packaging
-            prices = blanner.get_pricing(
+        elif fp_name.lower() == "blenner":  # Anchor Packaging
+            prices = blenner.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones
             )
         elif fp_name.lower() == "bluestar":  # Anchor Packaging
