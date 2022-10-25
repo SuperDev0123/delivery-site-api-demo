@@ -40,7 +40,7 @@ def dg(param):
         return {
             "name": "Dangerous Goods",
             "description": "",
-            "value": param["quote_obj"]["client_mu_1_minimum_values"] + 133.0,
+            "value": param["quote_obj"].client_mu_1_minimum_values + 133.0,
         }
     else:
         return None
