@@ -108,8 +108,10 @@ def tracking(request, fp_name):
 
                     booking.z_pod_url = f"{fp_name.lower()}_au/{pod_file_name}"
 
-                if consignmentTrackDetails["signatures"]:
-                    if "signatureImage" in consignmentTrackDetails["signatures"][0]:
+                signatures = consignmentTrackDetails["signatures"]
+                if signatures:
+                    if "signatureImage" in signatures[0]:
+                        posData = signatures[0]["signatureImage"]
                         _fp_name = fp_name.lower()
                         pos_file_name = f"allied_POS_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
                         full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pos_file_name}"
