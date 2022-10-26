@@ -19,11 +19,13 @@ def get_number_of_pallets(booking_lines, pallet):
         logger.info(f"No Pallet")
         return None, None
 
-    pallet_height = 2.1
     pallet_weight = 500
     m3_to_kg_factor = 250
-    pallet_length = max(pallet.length, pallet.width) / 1000
-    pallet_width = min(pallet.length, pallet.width) / 1000
+    dim_list = [2.1, pallet.length / 1000, pallet.width / 1000] 
+    dim_list.sort()
+    pallet_height = dim_list[0]
+    pallet_width = dim_list[1]
+    pallet_length = dim_list[2]
     pallet_cube = pallet_length * pallet_width * pallet_height * 0.8
 
     (
@@ -38,9 +40,12 @@ def get_number_of_pallets(booking_lines, pallet):
     for item in booking_lines:
         line_length = _get_dim_amount(item.l_004_dim_UOM) * item.l_005_dim_length
         line_width = _get_dim_amount(item.l_004_dim_UOM) * item.l_006_dim_width
-        length = max(line_length, line_width)
-        width = min(line_length, line_width)
-        height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
+        line_height = _get_dim_amount(item.l_004_dim_UOM) * item.l_007_dim_height
+        dim_list = [line_length, line_width, line_height]
+        dim_list.sort()
+        length = dim_list[2]
+        width = dim_list[1]
+        height = dim_list[0]
 
         if (
             length <= pallet_length
@@ -105,30 +110,17 @@ def lines_to_dict(bok_2s):
         dims = [item_length, item_width, item_height]
         dims.sort()
 
-        if dims[0] <= dim_min_limit and dims[2] >= dim_max_limit:
-            lines_data.append(
-                {
-                    "w": dims[1],
-                    "h": dims[0],
-                    "d": dims[2],
-                    "q": item_quantity,
-                    "vr": 0,
-                    "wg": item_weight,
-                    "id": index,
-                }
-            )
-        else:
-            lines_data.append(
-                {
-                    "w": item_width,
-                    "h": item_height,
-                    "d": item_length,
-                    "q": item_quantity,
-                    "vr": 1,
-                    "wg": item_weight,
-                    "id": index,
-                }
-            )
+        lines_data.append(
+            {
+                "w": dims[1],
+                "h": dims[0],
+                "d": dims[2],
+                "q": item_quantity,
+                "vr": 0,
+                "wg": item_weight,
+                "id": index,
+            }
+        )
 
     return lines_data
 
@@ -136,11 +128,14 @@ def lines_to_dict(bok_2s):
 def vehicles_to_dict(vehicles):
     vehicles_dict = []
     for vehicle in vehicles:
+        dim_amount = _get_dim_amount(vehicle.dim_UOM)
+        dims = [dim_amount * vehicle.max_width, dim_amount * vehicle.max_height, dim_amount * vehicle.max_length]
+        dims.sort()
         vehicles_dict.append(
             {
-                "w": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_width,
-                "h": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_height,
-                "d": _get_dim_amount(vehicle.dim_UOM) * vehicle.max_length,
+                "w": dims[1],
+                "h": dims[0],
+                "d": dims[2],
                 "max_wg": vehicle.max_mass,
                 "id": vehicle.id,
             }
