@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
-    LOG_ID = "[BIP BLANNER]"  # BUILT-IN PRICING
+    LOG_ID = "[BIP BLENNER]"  # BUILT-IN PRICING
     fp = Fp_freight_providers.objects.get(fp_company_name__iexact=fp_name)
     service_types = BUILT_IN_PRICINGS[fp_name]["service_types"]
 

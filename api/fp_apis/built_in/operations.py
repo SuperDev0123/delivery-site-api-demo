@@ -120,7 +120,7 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
         avail_pu_zones = FP_zones.objects.filter(fk_fp=fp.id)
         avail_de_zones = FP_zones.objects.filter(fk_fp=fp.id)
 
-        # Blacks, Blanner, BlueStar, Startrack, Hi-Trans, VFS: postal_code filter only
+        # Blacks, Blenner, BlueStar, Startrack, Hi-Trans, VFS: postal_code filter only
         if fp.id in [3, 83, 84, 85, 86, 87]:
             if pu_postal_code:
                 avail_pu_zone = avail_pu_zones.filter(
@@ -502,14 +502,14 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
 
         if cost.UOM_charge.upper() in PALLETS:
-            if cost.end_qty and cost.end_qty <= qty:
+            if cost.end_qty and cost.end_qty < qty:
                 continue
             if cost.start_qty and cost.start_qty > qty:
                 continue
         else:
             if cost.end_qty and cost.end_qty < qty:
                 continue
-            if cost.start_qty and cost.start_qty >= qty:
+            if cost.start_qty and cost.start_qty > qty:
                 continue
 
         if c_weight < max_weight or c_weight < max_cubic_weight:

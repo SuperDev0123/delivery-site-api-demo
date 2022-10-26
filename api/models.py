@@ -1322,12 +1322,6 @@ class Bookings(models.Model):
         null=True,
         default=None,
     )
-    v_service_Delivery_Days_Percentage_Days_TO_PU = models.FloatField(
-        verbose_name=_("Service DE days Percentage Days To PU"),
-        default=0,
-        blank=True,
-        null=True,
-    )
     v_serviceTime_End = models.TimeField(
         verbose_name=_("Service Time End"), blank=True, null=True, default=None
     )
@@ -1872,6 +1866,7 @@ class Bookings(models.Model):
     b_booking_project = models.CharField(
         max_length=250, blank=True, null=True, default=None
     )
+    v_project_percentage = models.FloatField(default=0, blank=True, null=True)
     b_project_opened = models.DateTimeField(blank=True, null=True, default=None)
     b_project_inventory_due = models.DateTimeField(blank=True, null=True, default=None)
     b_project_wh_unpack = models.DateTimeField(blank=True, null=True, default=None)
