@@ -746,9 +746,15 @@ def push_boks(payload, client, username, method):
             line["l_002_qty"] = item["quantity"]
             line["l_003_item"] = line_obj.l_003_item
             line["l_004_dim_UOM"] = line_obj.l_004_dim_UOM
-            line["l_005_dim_length"] = line_obj.l_005_dim_length
-            line["l_006_dim_width"] = line_obj.l_006_dim_width
-            line["l_007_dim_height"] = line_obj.l_007_dim_height
+            dim_list = [
+                line_obj.l_005_dim_length,
+                line_obj.l_006_dim_width,
+                line_obj.l_007_dim_height,
+            ]
+            dim_list.sort()
+            line["l_005_dim_length"] = dim_list[0]
+            line["l_006_dim_width"] = dim_list[1]
+            line["l_007_dim_height"] = dim_list[2]
             line["l_009_weight_per_each"] = line_obj.l_009_weight_per_each
             line["l_008_weight_UOM"] = line_obj.l_008_weight_UOM
             line["is_deleted"] = False
