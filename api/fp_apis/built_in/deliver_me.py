@@ -136,7 +136,11 @@ def get_pricing(booking, booking_lines):
 
     de_postal = int(booking.de_To_Address_PostalCode or 0)
     pu_suburb = booking.pu_Address_Suburb
-    percentage = booking.v_project_percentage
+
+    try:
+        percentage = booking.v_project_percentage
+    except Exception as e:
+        percentage = 1
 
     inv_cost_quoted, inv_sell_quoted, inv_dme_quoted = 0, 0, 0
     old_inv_cost_quoted, old_inv_sell_quoted, old_inv_dme_quoted = 0, 0, 0
