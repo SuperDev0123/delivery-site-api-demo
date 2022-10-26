@@ -21,7 +21,7 @@ def get_number_of_pallets(booking_lines, pallet):
 
     pallet_weight = 500
     m3_to_kg_factor = 250
-    dim_list = [2.1, pallet.length / 1000, pallet.width / 1000] 
+    dim_list = [2.1, pallet.length / 1000, pallet.width / 1000]
     dim_list.sort()
     pallet_height = dim_list[0]
     pallet_width = dim_list[1]
@@ -129,7 +129,11 @@ def vehicles_to_dict(vehicles):
     vehicles_dict = []
     for vehicle in vehicles:
         dim_amount = _get_dim_amount(vehicle.dim_UOM)
-        dims = [dim_amount * vehicle.max_width, dim_amount * vehicle.max_height, dim_amount * vehicle.max_length]
+        dims = [
+            dim_amount * vehicle.max_width,
+            dim_amount * vehicle.max_height,
+            dim_amount * vehicle.max_length,
+        ]
         dims.sort()
         vehicles_dict.append(
             {

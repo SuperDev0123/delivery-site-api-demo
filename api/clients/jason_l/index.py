@@ -752,9 +752,9 @@ def push_boks(payload, client, username, method):
                 line_obj.l_007_dim_height,
             ]
             dim_list.sort()
-            line["l_005_dim_length"] = dim_list[0]
+            line["l_005_dim_length"] = dim_list[2]
             line["l_006_dim_width"] = dim_list[1]
-            line["l_007_dim_height"] = dim_list[2]
+            line["l_007_dim_height"] = dim_list[0]
             line["l_009_weight_per_each"] = line_obj.l_009_weight_per_each
             line["l_008_weight_UOM"] = line_obj.l_008_weight_UOM
             line["is_deleted"] = False
