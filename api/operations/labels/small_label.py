@@ -290,7 +290,7 @@ def build_label(
                 [
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
-                        % (13, booking.de_To_Address_Suburb or ""),
+                        % (13 if len(booking.de_To_Address_Suburb) < 13 else 10, booking.de_To_Address_Suburb or ""),
                         style_left,
                     ),
                     Paragraph(
