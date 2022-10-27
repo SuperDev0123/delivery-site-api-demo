@@ -14,6 +14,15 @@ from api.fp_apis.built_in import (
     hunter,
     sendle,
     deliver_me,
+    blacks,  # Anchor Packaging
+    blenner,  # Anchor Packaging
+    bluestar,  # Anchor Packaging
+    startrack,  # Anchor Packaging
+    hi_trans,  # Anchor Packaging
+    vfs,  # Anchor Packaging,
+    sadleirs,  # Anchor Packaging,
+    followmont,  # Anchor Packaging,
+    dxt,  # Anchor Packaging,
 )
 
 logger = logging.getLogger(__name__)
@@ -71,6 +80,42 @@ def get_pricing(
             )
         elif fp_name.lower() == "sendle":
             prices = sendle.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "blacks":  # Anchor Packaging
+            prices = blacks.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "blenner":  # Anchor Packaging
+            prices = blenner.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "bluestar":  # Anchor Packaging
+            prices = bluestar.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "startrack":  # Anchor Packaging
+            prices = startrack.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "hi-trans":  # Anchor Packaging
+            prices = hi_trans.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "vfs":  # Anchor Packaging
+            prices = vfs.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "sadleirs":  # Anchor Packaging
+            prices = sadleirs.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "followmont":  # Anchor Packaging
+            prices = followmont.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
+        elif fp_name.lower() == "dxt":  # Anchor Packaging
+            prices = dxt.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones
             )
         elif fp_name.lower() == "deliver-me":

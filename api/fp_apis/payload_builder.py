@@ -281,6 +281,10 @@ def get_book_payload(booking, fp_name):
     maxHeight = 0
     maxWidth = 0
     maxLength = 0
+    if booking.b_client_warehouse_code in ["BIO - RIC", "BIO - HAZ"]:
+        consignment_id = gen_consignment_num("startrack", None, None, booking)
+
+    sequence = 0
     for line in booking_lines:
         width = _convert_UOM(line.e_dimWidth, line.e_dimUOM, "dim", fp_name)
         height = _convert_UOM(line.e_dimHeight, line.e_dimUOM, "dim", fp_name)
@@ -305,6 +309,16 @@ def get_book_payload(booking, fp_name):
                 item["packagingType"] = (
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )
+
+                if booking.b_client_warehouse_code in ["BIO - RIC", "BIO - HAZ"]:
+                    sequence_no = str(sequence + 1).zfill(5)
+                    article_id = f"{consignment_id}{item['itemId']}{sequence_no}"
+                    barcode_id = article_id
+                    item["trackingDetails"] = {
+                        "consignment_id": consignment_id,
+                        "article_id": article_id,
+                        "barcode_id": barcode_id,
+                    }
             elif fp_name == "auspost":
                 item["itemId"] = "7E55"  # PARCEL POST + SIGNATURE
             elif fp_name == "hunter":
@@ -337,6 +351,7 @@ def get_book_payload(booking, fp_name):
                 ).save()
                 item["packageCode"] = labelCode
 
+            sequence += 1
             items.append(item)
 
             if line.e_weightPerEach:
@@ -449,8 +464,14 @@ def get_book_payload(booking, fp_name):
             payload["customerReference"] = booking.clientRefNumbers
 
         payload["isDangerousGoods"] = False
-        payload["payer"] = "Receiver"
-        payload["receiver_Account"] = "30021385"
+
+        # JasonL
+        if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+            payload["payer"] = "Sender"
+            payload["receiver_Account"] = ""
+        else:
+            payload["payer"] = "Receiver"
+            payload["receiver_Account"] = "30021385"
     elif fp_name == "capital":  # Capital
         payload["serviceType"] = "EC"
     elif fp_name == "dhl":  # DHL
@@ -574,8 +595,8 @@ def get_getlabel_payload(booking, fp_name):
             "instruction"
         ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
-    de_street_1 = "" or de_To_Address_Street_1 or de_To_Address_Street_2
-    de_street_2 = "" or de_To_Address_Street_2
+    de_street_1 = de_To_Address_Street_1 or de_To_Address_Street_2 or ""
+    de_street_2 = de_To_Address_Street_2 or ""
 
     if not de_street_1 and not de_street_2:
         message = f"DE street info is required. BookingId: {booking.b_bookingID_Visual}"
@@ -904,7 +925,7 @@ def get_pricing_payload(
     }
 
     payload["pickupAddress"]["postalAddress"] = {
-        "address1": "" or pu_Address_Street_1,
+        "address1": pu_Address_Street_1 or "NO ADDRESS",
         "address2": "" or pu_Address_street_2,
         "country": "" or booking.pu_Address_Country,
         "postCode": "" or booking.pu_Address_PostalCode,
@@ -921,7 +942,7 @@ def get_pricing_payload(
     }
 
     payload["dropAddress"]["postalAddress"] = {
-        "address1": "" or de_To_Address_Street_1,
+        "address1": de_To_Address_Street_1 or "NO ADDRESS",
         "address2": "" or de_To_Address_Street_2,
         "country": "" or booking.de_To_Address_Country,
         "postCode": "" or booking.de_To_Address_PostalCode,

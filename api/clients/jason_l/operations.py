@@ -369,8 +369,8 @@ def get_address(order_num):
         address["street_1"] = address["street_2"]
         address["street_2"] = ""
 
-    if not address["street_1"]:
-        errors.append("Stop Error: Delivery street 1 missing or misspelled")
+    # if not address["street_1"]:
+    #     errors.append("Stop Error: Delivery street 1 missing or misspelled")
 
     # Auto replacement
     if (
@@ -960,3 +960,69 @@ def isGood4Linehaul(postal_code, booking_lines):
             return True
 
     return False
+
+
+def get_total_sales(order_num):
+    LOG_ID = "[FETCH BOK BY TALEND]"
+
+    # - Split `order_num` and `suffix` -
+    _order_num, suffix = order_num, ""
+    iters = _order_num.split("-")
+
+    if len(iters) > 1:
+        _order_num, suffix = iters[0], iters[1]
+
+    message = f"@380 {LOG_ID} OrderNum: {_order_num}, Suffix: {suffix}"
+    logger.info(message)
+    # ---
+
+    if settings.ENV != "local":  # Only on DEV or PROD
+        logger.info(f"@381 {LOG_ID} Running .sh script...")
+        subprocess.run(
+            [
+                "/home/ubuntu/jason_l/solines/src/run.sh",
+                "--context_param",
+                f"param1={_order_num}",
+                "--context_param",
+                f"param2={suffix}",
+            ]
+        )
+        logger.info(f"@382 {LOG_ID} Finish running .sh")
+
+    if settings.ENV == "local":
+        file_path = "/Users/juli/Documents/talend_sample_data/solines.csv"
+    else:
+        file_path = "/home/ubuntu/jason_l/solines/src/solines.csv"
+
+    csv_file = open(file_path)
+    logger.info(f"@383 {LOG_ID} File({file_path}) opened!")
+
+    line_cnt = 0
+    first_line = 0
+    for line in csv_file:
+        first_line = line
+        line_cnt += 1
+
+    if line_cnt < 2:
+        logger.info(f"@384 {LOG_ID} No enough information!")
+        return None, None
+
+    value = first_line.split("|")[24]
+    value = value.replace("\n", "") if value else value
+    logger.info(f"@311 {LOG_ID} first_line: {first_line}\nTotal Sales: {value}")
+    return 0 if not value else float(value)
+
+
+def get_value_by_formula(booking_lines):
+    value = 60
+
+    for booking_line in booking_lines:
+        if not booking_line.e_type_of_packaging:
+            continue
+
+        if booking_line.e_type_of_packaging.upper() in PALLETS:
+            value += booking_line.e_qty * 60
+        else:
+            value += booking_line.e_qty * 5
+
+    return value

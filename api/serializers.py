@@ -41,6 +41,7 @@ from api.models import (
     Dme_utl_fp_statuses,
     FP_status_history,
     DMEBookingCSNote,
+    BOK_1_headers,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -357,6 +358,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "qtys_in_stock",  # Child booking related field
             "children",  # Child booking related field
             "cs_notes_cnt",
+            "client_sales_total",  # JasonL client_sales_total
         )
         fields = read_only_fields + (
             "id",
@@ -506,6 +508,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "pu_service",
             "de_service",
             "booking_type",
+            "is_quote_locked",
             "inv_booked_quoted",
         )
 
@@ -531,6 +534,9 @@ class BookingLineSerializer(serializers.ModelSerializer):
             "e_dimLength",
             "e_dimWidth",
             "e_dimHeight",
+            "e_util_height",
+            "e_util_cbm",
+            "e_util_kg",
             "e_Total_KG_weight",
             "e_1_Total_dimCubicMeter",
             "total_2_cubic_mass_factor_calc",
@@ -602,6 +608,27 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
+    service_desc = serializers.SerializerMethodField()
+
+    def get_service_desc(self, obj):
+        if obj.freight_provider == "Customer Collect":
+            return ""
+        elif obj.service_name and "(Into Premises)" in obj.service_name:
+            return obj.service_name
+
+        booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+        if (booking.deToCompanyName.lower() in ["jl fitouts"]) or (
+            obj.freight_provider
+            in [
+                "Deliver-ME",
+                "WeFleet",
+                "In House Fleet",
+                "All Purpose Transport",
+            ]
+        ):
+            return f"{obj.service_name or ''} (Into Premises)"
+        else:
+            return f"{obj.service_name or ''} (To Door, ground level)"
 
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields_to_exclude' arg up to the superclass
@@ -694,6 +721,23 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
     cost_dollar = serializers.SerializerMethodField(read_only=True)
     fuel_levy_base_cl = serializers.SerializerMethodField(read_only=True)
     vehicle_name = serializers.SerializerMethodField(read_only=True)
+    service_desc = serializers.SerializerMethodField()
+
+    def get_service_desc(self, obj):
+        if obj.freight_provider == "Customer Collect":
+            return ""
+        elif obj.service_name and "(Into Premises)" in obj.service_name:
+            return obj.service_name
+
+        if obj.freight_provider in [
+            "Deliver-ME",
+            "WeFleet",
+            "In House Fleet",
+            "All Purpose Transport",
+        ]:
+            return f"{obj.service_name or ''} (Into Premises)"
+        else:
+            return f"{obj.service_name or ''} (To Door, ground level)"
 
     def get_cost_id(self, obj):
         return obj.pk
@@ -703,7 +747,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
         return client_customer_mark_up
 
     def get_cost(self, obj):
-        cost = obj.client_mu_1_minimum_values
+        cost = obj.client_mu_1_minimum_values or 0
 
         if obj.freight_provider in SPECIAL_FPS:
             return round(cost, 2)
@@ -758,6 +802,7 @@ class SimpleQuoteSerializer(serializers.ModelSerializer):
             "client_customer_mark_up",
             "eta",
             "service_name",
+            "service_desc",
             "fp_name",
             "cost_dollar",
             "fuel_levy_base_cl",
@@ -772,6 +817,27 @@ class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
     cost = serializers.SerializerMethodField(read_only=True)
     eta = serializers.SerializerMethodField(read_only=True)
     fp_name = serializers.SerializerMethodField(read_only=True)
+    service_desc = serializers.SerializerMethodField()
+
+    def get_service_desc(self, obj):
+        if obj.freight_provider == "Customer Collect":
+            return ""
+        elif obj.service_name and "(Into Premises)" in obj.service_name:
+            return obj.service_name
+
+        bok_1 = BOK_1_headers.objects.get(pk_header_id=obj.fk_booking_id)
+        if (bok_1.b_054_b_del_company.lower() in ["jl fitouts"]) or (
+            obj.freight_provider
+            in [
+                "Deliver-ME",
+                "WeFleet",
+                "In House Fleet",
+                "All Purpose Transport",
+            ]
+        ):
+            return f"{obj.service_name or ''} (Into Premises)"
+        else:
+            return f"{obj.service_name or ''} (To Door, ground level)"
 
     def get_cost_id(self, obj):
         return obj.pk
@@ -801,6 +867,7 @@ class Simple4ProntoQuoteSerializer(serializers.ModelSerializer):
             "cost",
             "eta",
             "service_name",
+            "service_desc",
             "fp_name",
         )
 

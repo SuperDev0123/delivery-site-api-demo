@@ -37,7 +37,7 @@ def get_quote_again(booking):
         packed_statuses=packed_statuses,
     )
     logger.info(
-        f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
+        f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes}"
     )
 
     # Select best quotes(fastest, lowest)

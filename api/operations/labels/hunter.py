@@ -27,6 +27,7 @@ from api.models import Booking_lines
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.operations.api_booking_confirmation_lines import index as api_bcl
+from api.clients.operations.index import extract_product_code
 
 logger = logging.getLogger(__name__)
 
@@ -525,7 +526,7 @@ def buildSenderSection(
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    booking_line.e_item or "N/A",
+                    extract_product_code(booking_line.e_item),
                 ),
                 style_left,
             ),
@@ -1241,7 +1242,7 @@ def buildReceiverSection(
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    booking_line.e_item if booking_line.e_item else "N/A",
+                    extract_product_code(booking_line.e_item),
                 ),
                 style_left,
             ),
@@ -2002,7 +2003,7 @@ def buildPodSection(
                 "<font size=%s>%s</font>"
                 % (
                     label_settings["font_size_medium"],
-                    booking_line.e_item if booking_line.e_item else "N/A",
+                    extract_product_code(booking_line.e_item),
                 ),
                 style_left,
             ),

@@ -27,6 +27,7 @@ from api.models import Booking_lines, FPRouting, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.operations.api_booking_confirmation_lines import index as api_bcl
+from api.common.ratio import _get_dim_amount, _get_weight_amount
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,16 @@ style_uppercase = ParagraphStyle(
     textTransform="uppercase",
 )
 
+style_uppercase_lg = ParagraphStyle(
+    name="uppercase",
+    parent=styles["Normal"],
+    alignment=TA_LEFT,
+    leading=12,
+    spaceBefore=0,
+    spaceAfter=0,
+    textTransform="uppercase",
+)
+
 styles.add(ParagraphStyle(name="Justify", alignment=TA_JUSTIFY))
 
 
@@ -72,7 +83,8 @@ def myLaterPages(canvas, doc):
 
 
 def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
-    TT = 11
+    is_tiny_label = booking.b_client_name == "Tempo Big W"
+    TT = "00" if is_tiny_label else "11"
     CCCCCC = "132214"  # DME
     item_index = str(line_index).zfill(3)
     postal_code = str(booking.de_To_Address_PostalCode)
@@ -81,7 +93,8 @@ def gen_barcode(booking, booking_lines, line_index, sscc_cnt):
 
 
 def gen_itm(booking, booking_lines, line_index, sscc_cnt):
-    TT = 11
+    is_tiny_label = booking.b_client_name == "Tempo Big W"
+    TT = "00" if is_tiny_label else "11"
     CCCCCC = "132214"  # DME
     item_index = str(line_index).zfill(3)
     label_code = f"{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}"
@@ -143,6 +156,9 @@ def build_label(
         lines = Booking_lines.objects.filter(fk_booking_id=booking.pk_booking_id)
 
     # label_settings = get_label_settings( 146, 104 )[0]
+
+    is_tiny_label = booking.b_client_name == "Tempo Big W"
+
     label_settings = {
         "font_family": "Verdana",
         "font_size_extra_small": "4",
@@ -152,10 +168,10 @@ def build_label(
         "font_size_large": "10",
         "font_size_extra_large": "13",
         "label_dimension_length": "100",
-        "label_dimension_width": "160",
+        "label_dimension_width": "150",
         "label_image_size_length": "85",
         "label_image_size_width": "130",
-        "barcode_dimension_height": "33",
+        "barcode_dimension_height": "35",
         "barcode_dimension_width": "0.75",
         "barcode_font_size": "18",
         "line_height_extra_small": "3",
@@ -262,7 +278,7 @@ def build_label(
         )
     else:
         logger.info(
-            f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}, {routing_group}"
+            f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}"
         )
 
     totalQty = 0
@@ -597,7 +613,7 @@ def build_label(
             if (
                 len(booking.de_To_Address_Street_1 or "")
                 + len(booking.de_To_Address_Street_2 or "")
-                > 40
+                > 25
             ):
                 font_size = 10
 
@@ -609,7 +625,7 @@ def build_label(
                             font_size,
                             booking.de_to_Contact_F_LName or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_lg,
                     )
                 ]
             )
@@ -625,7 +641,7 @@ def build_label(
                                 font_size,
                                 booking.deToCompanyName or "",
                             ),
-                            style_uppercase,
+                            style_uppercase_lg,
                         )
                     ]
                 )
@@ -638,7 +654,7 @@ def build_label(
                             font_size,
                             booking.de_To_Address_Street_1 or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_lg,
                     )
                 ]
             )
@@ -650,20 +666,21 @@ def build_label(
                             font_size,
                             booking.de_To_Address_Street_2 or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_lg,
                     )
                 ]
             )
             tbl_data2.append(
                 [
                     Paragraph(
-                        "<font size=%s><b>%s %s</b></font> "
+                        "<font size=%s><b>%s %s %s</b></font> "
                         % (
                             font_size,
                             booking.de_To_Address_Suburb or "",
                             booking.de_To_Address_PostalCode or "",
+                            booking.de_To_Address_State or "",
                         ),
-                        style_uppercase,
+                        style_uppercase_lg,
                     ),
                 ]
             )
@@ -673,7 +690,7 @@ def build_label(
                 colWidths=(float(label_settings["label_image_size_length"]) * mm - 20),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (-1, -1), 0),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -726,13 +743,14 @@ def build_label(
                 tbl_data2 = [
                     [
                         Paragraph(
-                            "<font size=%s>%s, %s, %s, %s %s</font>"
+                            "<font size=%s>%s, %s, %s, %s, %s, %s</font>"
                             % (
                                 8,
-                                booking.pu_Contact_F_L_Name or "",
+                                booking.puCompany or "",
                                 booking.pu_Address_Street_1 or "",
                                 booking.pu_Address_street_2 or "",
                                 booking.pu_Address_Suburb or "",
+                                booking.pu_Address_PostalCode or "",
                                 booking.pu_Address_State or "",
                             ),
                             style_uppercase,
@@ -743,12 +761,13 @@ def build_label(
                 tbl_data2 = [
                     [
                         Paragraph(
-                            "<font size=%s>%s, %s, %s, %s</font>"
+                            "<font size=%s>%s, %s, %s, %s, %s</font>"
                             % (
                                 8,
-                                booking.pu_Contact_F_L_Name or "",
+                                booking.puCompany or "",
                                 booking.pu_Address_Street_1 or "",
                                 booking.pu_Address_Suburb or "",
+                                booking.pu_Address_PostalCode or "",
                                 booking.pu_Address_State or "",
                             ),
                             style_uppercase,
@@ -812,7 +831,7 @@ def build_label(
                 ],
             )
             Story.append(t1)
-            Story.append(Spacer(1, 5))
+            Story.append(Spacer(1, 2))
 
             special_instruction = booking.pu_pickup_instructions_address or ""
 
@@ -865,7 +884,7 @@ def build_label(
             )
 
             Story.append(shell_table)
-            Story.append(Spacer(1, 5))
+            Story.append(Spacer(1, 2))
 
             tbl_data1 = [
                 [
@@ -947,8 +966,8 @@ def build_label(
                         "<font size=%s>%s %s</font> "
                         % (
                             label_settings["font_size_normal"],
-                            booking.de_To_Address_State or "",
                             booking.de_To_Address_PostalCode or "",
+                            booking.de_To_Address_State or "",
                         ),
                         style_uppercase,
                     ),
@@ -1043,8 +1062,8 @@ def build_label(
                         "<font size=%s>%s %s</font> "
                         % (
                             label_settings["font_size_normal"],
-                            booking.pu_Address_State or "",
                             booking.pu_Address_PostalCode or "",
+                            booking.pu_Address_State or "",
                         ),
                         style_uppercase,
                     ),
@@ -1089,7 +1108,7 @@ def build_label(
 
             barcode = gen_barcode(booking, lines, j, sscc_cnt)
 
-            tbl_data = [[code128.Code128(barcode, barWidth=1.1, barHeight=12 * mm)]]
+            tbl_data = [[code128.Code128(barcode, barWidth=0.91, barHeight=21 * mm)]] if is_tiny_label else [[code128.Code128(barcode, barWidth=1.1, barHeight=12 * mm)]]
 
             t1 = Table(
                 tbl_data,
@@ -1097,8 +1116,8 @@ def build_label(
                 style=[
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("VALIGN", (0, 0), (0, -1), "TOP"),
-                    ("TOPPADDING", (0, 0), (-1, -1), 3),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
                     ("LEFTPADDING", (0, 0), (0, -1), 0),
                     ("RIGHTPADDING", (0, 0), (0, -1), 0),
                 ],
@@ -1134,12 +1153,12 @@ def build_label(
                 ],
             )
 
-            codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            d = Drawing(20, 20)
-            d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
-            d.add(QrCodeWidget(value=codeString, barWidth=20*mm, barHeight=20*mm))
+            # codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
+            # d = Drawing(20, 20)
+            # d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
+            # d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
 
-            tbl_data1 = [[dme_img, d, t1]]
+            tbl_data1 = [[dme_img, "", t1]]
 
             t1 = Table(
                 tbl_data1,
@@ -1148,7 +1167,7 @@ def build_label(
                     float(label_settings["label_dimension_length"]) * (2 / 10) * mm,
                     float(label_settings["label_dimension_length"]) * (5 / 10) * mm,
                 ),
-                rowHeights=(float(label_settings["line_height_large"]) * 4 / 2 * mm),
+                rowHeights=(float(label_settings["line_height_large"]) * 3 / 2 * mm),
                 style=[
                     ("TOPPADDING", (0, 0), (-1, -1), 0),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 0),

@@ -153,7 +153,7 @@ def quick_pricing(payload):
     booking = {
         "kf_client_id": client.dme_account_num,
         "client_warehouse_code": "No - Warehouse",
-        "b_client_name": "Pricing-Only",
+        "b_client_name": client.company_name,
         "pk_booking_id": pk_header_id,
         "puPickUpAvailFrom_Date": next_biz_day,
         "b_clientReference_RA_Numbers": "initial_RA_num",
@@ -279,6 +279,7 @@ def push_boks(payload, client):
             _bok_2["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
             _bok_2["pk_booking_lines_id"] = str(uuid.uuid1())
             _bok_2["success"] = bok_1["success"]
+            _bok_2["b_093_packed_status"] = BOK_2_lines.ORIGINAL
             l_001 = "Carton" or _bok_2.get("l_001_type_of_packaging")
             _bok_2["l_001_type_of_packaging"] = l_001
 

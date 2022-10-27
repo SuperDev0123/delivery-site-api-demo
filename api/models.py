@@ -9,12 +9,10 @@ from django.db import models, transaction
 from django.db.models import Max
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.utils.translation import gettext as _
-from django_base64field.fields import Base64Field
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from api.helpers.cubic import get_cubic_meter, getM3ToKgFactor
-
 from api.common import trace_error, constants as dme_constants
 
 
@@ -193,6 +191,7 @@ class Client_warehouses(models.Model):
         default=None,
     )
     main_warehouse = models.BooleanField(default=False)
+    connote_number = models.IntegerField(default=0)
 
     class Meta:
         db_table = "dme_client_warehouses"
@@ -219,7 +218,7 @@ class Client_employees(models.Model):
     email = models.EmailField(
         verbose_name=_("email address"), max_length=64, unique=True, null=True
     )
-    phone = models.IntegerField(verbose_name=_("phone number"), blank=True, null=True)
+    phone = models.CharField(max_length=16, blank=True, null=True, default=None)
     warehouse_id = models.IntegerField(
         verbose_name=_("Warehouse ID"), default=1, blank=True, null=True
     )
@@ -366,6 +365,7 @@ class Fp_freight_providers(models.Model):
     hex_color_code = models.CharField(max_length=6, blank=True, null=True)
     category = models.CharField(max_length=64, blank=True, null=True, default=None)
     last_vehicle_number = models.IntegerField(default=0, blank=True, null=True)
+    last_atl_number = models.IntegerField(default=0, blank=True, null=True)
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -565,18 +565,13 @@ class API_booking_quotes(models.Model):
     tax_value_3 = models.FloatField(
         verbose_name=_("Tax Value 3"), blank=True, null=True
     )
-    tax_id_4 = models.CharField(
-        verbose_name=_("Tax ID 4"), max_length=10, blank=True, null=True
-    )
-    tax_value_4 = models.FloatField(
-        verbose_name=_("Tax Value 4"), blank=True, null=True
-    )
     tax_id_5 = models.CharField(
         verbose_name=_("Tax ID 5"), max_length=10, blank=True, null=True
     )
     tax_value_5 = models.FloatField(
         verbose_name=_("Tax Value 5"), blank=True, null=True
     )
+    lowest_quote_flag = models.BooleanField(blank=True, null=True, default=None)
     b_client_markup2_percentage = models.FloatField(
         verbose_name=_("Client Markup2 Percent"), blank=True, null=True
     )
@@ -1327,12 +1322,6 @@ class Bookings(models.Model):
         null=True,
         default=None,
     )
-    v_service_Delivery_Days_Percentage_Days_TO_PU = models.FloatField(
-        verbose_name=_("Service DE days Percentage Days To PU"),
-        default=0,
-        blank=True,
-        null=True,
-    )
     v_serviceTime_End = models.TimeField(
         verbose_name=_("Service Time End"), blank=True, null=True, default=None
     )
@@ -1862,6 +1851,7 @@ class Bookings(models.Model):
     inv_sell_quoted_override = models.FloatField(blank=True, default=None, null=True)
     inv_sell_actual = models.FloatField(blank=True, default=0, null=True)
     inv_booked_quoted = models.FloatField(blank=True, default=0, null=True)
+    client_sales_total = models.FloatField(blank=True, default=None, null=True)
     b_del_to_signed_name = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )
@@ -1876,6 +1866,7 @@ class Bookings(models.Model):
     b_booking_project = models.CharField(
         max_length=250, blank=True, null=True, default=None
     )
+    v_project_percentage = models.FloatField(default=0, blank=True, null=True)
     b_project_opened = models.DateTimeField(blank=True, null=True, default=None)
     b_project_inventory_due = models.DateTimeField(blank=True, null=True, default=None)
     b_project_wh_unpack = models.DateTimeField(blank=True, null=True, default=None)
@@ -1925,10 +1916,12 @@ class Bookings(models.Model):
     booking_type = models.CharField(
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
+    is_quote_locked = models.BooleanField(default=False, null=True)
     selected = models.BooleanField(default=None, null=True)
     packed_status = models.CharField(
         max_length=16, default=None, null=True, choices=PACKED_STATUS_CHOICES
     )
+    fp_atl_number = models.IntegerField(default=0, blank=True, null=True)
 
     class Meta:
         db_table = "dme_bookings"
@@ -2049,8 +2042,9 @@ class Bookings(models.Model):
             )
 
             for booking_line_data in booking_lines_data:
-                if booking_line_data.gap_ra:
-                    gap_ras.append(booking_line_data.gap_ra)
+                gap_ra = booking_line_data.gap_ra
+                if gap_ra and not gap_ra in gap_ras:
+                    gap_ras.append(gap_ra)
 
             return ", ".join(gap_ras)
         except Exception as e:
@@ -2101,7 +2095,10 @@ class Bookings(models.Model):
         return _total
 
     def get_s_06(self):
+        from api.common.common_times import next_business_day
+
         LOG_ID = "[GET_s_06]"
+        _s_06 = None
 
         if (
             not self.s_06_Latest_Delivery_Date_TimeSet
@@ -2111,9 +2108,11 @@ class Bookings(models.Model):
             logger.error(f"{LOG_ID} No ETA: {self.b_bookingID_Visual}")
 
         if self.s_06_Latest_Delivery_Date_Time_Override:
-            return self.s_06_Latest_Delivery_Date_Time_Override
+            _s_06 = self.s_06_Latest_Delivery_Date_Time_Override
         elif self.s_06_Latest_Delivery_Date_TimeSet:
-            return self.s_06_Latest_Delivery_Date_TimeSet
+            _s_06 = self.s_06_Latest_Delivery_Date_TimeSet
+
+        return next_business_day(_s_06, 1)
 
     def save(self, *args, **kwargs):
         self.z_ModifiedTimestamp = datetime.now()
@@ -2294,6 +2293,15 @@ class Booking_lines(models.Model):
     zbl_102_text_2 = models.CharField(
         max_length=64, blank=True, null=True, default=None
     )  # JasonL - ProductCode
+    e_util_height = models.FloatField(
+        verbose_name=_("Utilised Height"), blank=True, null=True
+    )
+    e_util_cbm = models.FloatField(
+        verbose_name=_("Utilised Cubic Meter"), blank=True, null=True
+    )
+    e_util_kg = models.FloatField(
+        verbose_name=_("Utilised Cubic KG"), blank=True, null=True
+    )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
@@ -2348,8 +2356,9 @@ class Booking_lines(models.Model):
             )
 
             for booking_line_data in booking_lines_data:
-                if booking_line_data.gap_ra:
-                    _gap_ras.append(booking_line_data.gap_ra)
+                gap_ra = booking_line_data.gap_ra
+                if gap_ra and not gap_ra in _gap_ras:
+                    _gap_ras.append(gap_ra)
 
             return ", ".join(_gap_ras)
         except Exception as e:
@@ -2394,6 +2403,10 @@ class Booking_lines(models.Model):
             "vx_freight_provider"
         )
         if bookings:
+            from api.fp_apis.utils import get_m3_to_kg_factor
+            from api.common.constants import PALLETS, SKIDS
+            from api.common.ratio import _get_dim_amount, _get_weight_amount
+
             m3ToKgFactor = getM3ToKgFactor(
                 bookings[0].vx_freight_provider,
                 self.e_dimLength,
@@ -2407,6 +2420,49 @@ class Booking_lines(models.Model):
             self.total_2_cubic_mass_factor_calc = math.ceil(
                 self.e_1_Total_dimCubicMeter * m3ToKgFactor
             )
+
+            # Check if `Pallet` or `Skid`
+            is_pallet = (
+                self.e_type_of_packaging.upper() in PALLETS
+                or self.e_type_of_packaging.upper() in SKIDS
+            )
+
+            need_update = True
+            if not is_pallet:
+                need_update = False
+            # Check if height is less than 1.4m
+            dim_ratio = _get_dim_amount(self.e_dimUOM)
+            height = self.e_dimHeight * dim_ratio
+            if height > 1.4:
+                need_update = False
+
+            self.e_util_height = 1.4 if need_update else height
+            self.e_util_height = self.e_util_height / dim_ratio
+
+            # Calc cubic mass factor
+            weight_ratio = _get_weight_amount(self.e_weightUOM)
+            item_dead_weight = self.e_weightPerEach * weight_ratio
+            e_cubic_2_mass_factor = get_m3_to_kg_factor(
+                bookings[0].vx_freight_provider,
+                {
+                    "is_pallet": is_pallet,
+                    "item_length": self.e_dimLength * dim_ratio,
+                    "item_width": self.e_dimWidth * dim_ratio,
+                    "item_height": self.e_util_height * dim_ratio,
+                    "item_dead_weight": item_dead_weight,
+                },
+            )
+            # Calc
+            self.e_util_cbm = get_cubic_meter(
+                self.e_dimLength,
+                self.e_dimWidth,
+                self.e_util_height,
+                self.e_dimUOM,
+                1,
+            )
+            self.e_util_cbm = round(self.e_util_cbm * self.e_qty, 3)
+            self.e_util_kg = self.e_util_cbm * e_cubic_2_mass_factor
+            self.e_util_kg = round(self.e_util_kg * self.e_qty, 3)
 
         if self.pk:
             cls = self.__class__
@@ -2445,7 +2501,7 @@ class Booking_lines(models.Model):
 
 
 # @receiver(pre_save, sender=Booking_lines)
-# def pre_save_booking(sender, instance, **kwargs):
+# def pre_save_booking_line(sender, instance, **kwargs):
 #     from api.signal_handlers.booking_line import pre_save_handler
 
 #     pre_save_handler(instance)
@@ -3059,7 +3115,9 @@ class BOK_1_headers(models.Model):
     b_092_booking_type = models.CharField(
         max_length=4, default=None, null=True, choices=BOOKING_TYPE_CHOICES
     )
+    b_092_is_quote_locked = models.BooleanField(default=False, null=True)
     b_093_b_promo_code = models.CharField(max_length=32, default=None, null=True)
+    b_094_client_sales_total = models.FloatField(blank=True, default=None, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)

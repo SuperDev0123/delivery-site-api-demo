@@ -27,6 +27,7 @@ from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.utils import gen_consignment_num
 from api.operations.api_booking_confirmation_lines import index as api_bcl
+from api.common.ratio import _get_dim_amount, _get_weight_amount
 
 logger = logging.getLogger(__name__)
 
@@ -655,16 +656,23 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                 ],
             )
 
+            if booking_line.e_dimUOM:
+                _dim_amount = _get_dim_amount(booking_line.e_dimUOM)
+
+            _length = _dim_amount * (booking_line.e_dimLength or 0)
+            _width = _dim_amount * (booking_line.e_dimWidth or 0)
+            _height = _dim_amount * (booking_line.e_dimHeight or 0)
+
             tbl_data1 = [
                 [
                     Paragraph(
-                        "<font size=%s>Item %s: %s x %s x %s = %s M<super rise=8 size=8>3</super></font>"
+                        "<font size=%s>Item %s: %sx%sx%s = %s M<super rise=8 size=8>3</super></font>"
                         % (
                             label_settings["font_size_medium"],
                             j,
-                            booking_line.e_dimWidth or "",
-                            booking_line.e_dimHeight or "",
-                            booking_line.e_dimLength or "",
+                            _length,
+                            _width,
+                            _height,
                             booking_line.e_1_Total_dimCubicMeter or "",
                         ),
                         style_left,
@@ -738,8 +746,8 @@ def build_label(booking, filepath, lines, label_index, sscc, one_page_label):
                         "<font size=%s>Instruction: %s %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.de_to_PickUp_Instructions_Address,
-                            booking.de_to_Pick_Up_Instructions_Contact,
+                            booking.de_to_PickUp_Instructions_Address or "",
+                            booking.de_to_Pick_Up_Instructions_Contact or "",
                         ),
                         style_left,
                     )

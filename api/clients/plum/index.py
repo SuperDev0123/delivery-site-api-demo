@@ -1179,6 +1179,13 @@ def scanned(payload, client):
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
             pdf.pdf_merge(label_urls, entire_label_url)
             booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
+            # Set consignment number
+            booking.v_FPBookingNumber = gen_consignment_num(
+                booking.vx_freight_provider,
+                booking.b_bookingID_Visual,
+                booking.kf_client_id,
+                booking,
+            )
             booking.save()
 
         # Should get pricing again when if fully picked

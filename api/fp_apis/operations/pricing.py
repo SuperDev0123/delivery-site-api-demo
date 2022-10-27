@@ -1,14 +1,13 @@
 import json
 import logging
-import asyncio
-import requests_async
+import requests
+import threading
 from datetime import datetime
 
 from django.conf import settings
 from api.common import trace_error
 from api.common.build_object import Struct
 from api.common.convert_price import interpolate_gaps, apply_markups
-from api.common.booking_quote import set_booking_quote
 from api.serializers import ApiBookingQuotesSerializer
 from api.models import (
     Bookings,
@@ -35,7 +34,9 @@ from api.fp_apis.constants import (
     BUILT_IN_PRICINGS,
     DME_LEVEL_API_URL,
     AVAILABLE_FPS_4_FC,
+    HEADER_FOR_NODE,
 )
+from api.clients.jason_l.operations import get_total_sales, get_value_by_formula
 from api.fp_apis.utils import _convert_UOM
 
 
@@ -83,6 +84,92 @@ def _confirm_visible(booking, booking_lines, quotes):
     return quotes
 
 
+def can_use_linehaul(booking):
+    if (
+        booking.pu_Address_State
+        and booking.de_To_Address_State
+        and booking.pu_Address_State.lower() == booking.de_To_Address_State.lower()
+    ):
+        return False
+
+    de_postal = int(booking.de_To_Address_PostalCode or 0)
+    pu_state = booking.pu_Address_State
+    pu_postal = int(booking.pu_Address_PostalCode or 0)
+    pu_suburb = booking.pu_Address_Suburb
+
+    if not de_postal or not pu_postal:
+        return False
+
+    # JasonL & BSD
+    if (
+        booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+        or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+    ) and (
+        (  # Metro / CBD Melbourne
+            de_postal == 3800
+            or (de_postal >= 3000 and de_postal <= 3207)
+            or (de_postal >= 8000 and de_postal <= 8499)
+        )
+        or (  # Metro / CBD Brisbane
+            (de_postal >= 4000 and de_postal <= 4207)
+            or (de_postal >= 9000 and de_postal <= 9499)
+        )
+        # or (  # Metro Adelaide
+        #     (de_postal >= 5000 and de_postal <= 5199)
+        #     or (de_postal >= 5900 and de_postal <= 5999)
+        # )
+    ):
+        return True
+
+    # Anchor Packaging
+    if booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953":
+        # MD1 (NSW) -> Mel | MD1 (NSW) -> BSD
+        if (
+            pu_suburb
+            and pu_suburb.lower() == "chester hill"
+            and (
+                (  # Metro / CBD Melbourne
+                    de_postal == 3800
+                    or (de_postal >= 3000 and de_postal <= 3207)
+                    or (de_postal >= 8000 and de_postal <= 8499)
+                )
+                or (  # Metro / CBD Brisbane
+                    (de_postal >= 4000 and de_postal <= 4207)
+                    or (de_postal >= 9000 and de_postal <= 9499)
+                )
+            )
+        ):
+            return True
+
+        # AFS (VIC) -> Sydney Metro
+        if (
+            pu_suburb
+            and pu_suburb.lower() == "dandenong south"
+            and (
+                (  # Metro / CBD Sydney
+                    (de_postal >= 1000 and de_postal <= 2249)
+                    or (de_postal >= 2760 and de_postal <= 2770)
+                )
+            )
+        ):
+            return True
+
+        # MD2 (QLD) -> Sydney Metro
+        if (
+            pu_suburb
+            and pu_suburb.lower() == "larapinta"
+            and (
+                (  # Metro / CBD Sydney
+                    (de_postal >= 1000 and de_postal <= 2249)
+                    or (de_postal >= 2760 and de_postal <= 2770)
+                )
+            )
+        ):
+            return True
+
+    return False
+
+
 def build_special_fp_pricings(booking, booking_lines, packed_status):
     # Get manually entered surcharges total
     try:
@@ -90,7 +177,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
     except:
         manual_surcharges_total = 0
 
-    postal_code = int(booking.de_To_Address_PostalCode or 0)
+    de_postal_code = int(booking.de_To_Address_PostalCode or 0)
     quote_0 = API_booking_quotes()
     quote_0.api_results_id = ""
     quote_0.fk_booking_id = booking.pk_booking_id
@@ -108,59 +195,25 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
 
     # JasonL (SYD - SYD)
     if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002" and (
-        (postal_code >= 1000 and postal_code <= 2249)
-        or (postal_code >= 2760 and postal_code <= 2770)
+        (de_postal_code >= 1000 and de_postal_code <= 2249)
+        or (de_postal_code >= 2760 and de_postal_code <= 2770)
     ):
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=booking.pk_booking_id,
-            is_used=False,
-            freight_provider="Century",
-        )
-
-        quote_3 = quotes.first() if quotes else quote_0
+        quote_3 = quote_0
         quote_3.pk = None
         quote_3.freight_provider = "In House Fleet"
         quote_3.service_name = None
-
-        if quotes:
-            quote_3.client_mu_1_minimum_values -= 1
-        else:
-            quote_3.client_mu_1_minimum_values = 75
-
+        value_by_formula = get_value_by_formula(booking_lines)
+        logger.info(f"[In House Fleet] value_by_formula: {value_by_formula}")
+        quote_3.client_mu_1_minimum_values = value_by_formula
         quote_3.save()
 
-    # Plum & JasonL & BSD & Cadrys & Ariston Wire & Anchor Packagin & Pricing Only
+    # JasonL & BSD & Anchor Packaging
     if (
-        booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
-        or booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+        booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
         or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
-        or booking.kf_client_id == "f821586a-d476-434d-a30b-839a04e10115"
-        or booking.kf_client_id == "15732b05-d597-419b-8dc5-90e633d9a7e9"
         or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
-        or booking.kf_client_id == "461162D2-90C7-BF4E-A905-0242ac130003"
     ):
-        # restrict delivery postal code
-        if (
-            postal_code
-            and (
-                (  # Metro / CBD Melbourne
-                    (postal_code >= 3000 and postal_code <= 3207)
-                    or (postal_code >= 8000 and postal_code <= 8499)
-                )
-                or (  # Metro / CBD Brisbane
-                    (postal_code >= 4000 and postal_code <= 4207)
-                    or (postal_code >= 9000 and postal_code <= 9499)
-                )
-                # or (  # Metro Adelaide
-                #     (postal_code >= 5000 and postal_code <= 5199)
-                #     or (postal_code >= 5900 and postal_code <= 5999)
-                # )
-            )
-            # Restrict same state
-            and booking.pu_Address_State
-            and booking.de_To_Address_State
-            and booking.pu_Address_State.lower() != booking.de_To_Address_State.lower()
-        ):
+        if can_use_linehaul(booking):
             quote_1 = quote_0
             quote_1.freight_provider = "Deliver-ME"
             result = get_self_pricing(quote_1.freight_provider, booking, booking_lines)
@@ -170,10 +223,21 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
             quote_1.service_name = result["price"]["service_name"]
             quote_1.save()
 
+    # Plum & JasonL & BSD & Cadrys & Ariston Wire & Anchor Packaging & Pricing Only
+    if (
+        booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
+        or booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+        or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+        or booking.kf_client_id == "f821586a-d476-434d-a30b-839a04e10115"
+        or booking.kf_client_id == "15732b05-d597-419b-8dc5-90e633d9a7e9"
+        or booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953"
+        or booking.kf_client_id == "461162D2-90C7-BF4E-A905-0242ac130003"
+    ):
         quote_2 = quote_0
         quote_2.pk = None
         quote_2.fee = 0
         quote_2.client_mu_1_minimum_values = 0
+        quote_2.service_name = None
         quote_2.freight_provider = "Customer Collect"
         quote_2.tax_value_5 = None
         quote_2.save()
@@ -195,6 +259,7 @@ def pricing(
     LOG_ID = "[PRICING]"
     booking_lines = []
     booking = None
+    logger.info(f"{LOG_ID} {booking_id} {packed_statuses}")
 
     # Only quote
     if is_pricing_only and not booking_id:
@@ -211,7 +276,6 @@ def pricing(
 
         # Delete all pricing info if exist for this booking
         pk_booking_id = booking.pk_booking_id
-        # set_booking_quote(booking, None)
         # DME_Error.objects.filter(fk_booking_id=pk_booking_id).delete()
 
     if not booking.puPickUpAvailFrom_Date:
@@ -238,6 +302,8 @@ def pricing(
         client_fps = []
 
     try:
+        threads = []
+        entire_booking_lines = []
         for packed_status in packed_statuses:
             _booking_lines = []
             if not booking_lines:
@@ -262,32 +328,42 @@ def pricing(
             #         and booking.b_dateBookedDate
             #         and booking.vx_freight_provider == "Deliver-ME"
             #     ):
+            #         entire_booking_lines += _booking_lines
             #         build_special_fp_pricings(booking, _booking_lines, packed_status)
-            # except:
-            #     build_special_fp_pricings(booking, _booking_lines, packed_status)
-            #     _loop_process(
-            #         booking,
-            #         _booking_lines,
-            #         is_pricing_only,
-            #         packed_status,
-            #         client,
-            #         pu_zones,
-            #         de_zones,
-            #         client_fps,
-            #     )
+            # except Exception as e:
+            #     pass
 
             # Normal Pricings
-            _loop_process(
+            _threads = build_threads(
                 booking,
                 _booking_lines,
                 is_pricing_only,
                 packed_status,
-                client,
                 pu_zones,
                 de_zones,
                 client_fps,
             )
+            threads += _threads
+            entire_booking_lines += _booking_lines
             build_special_fp_pricings(booking, _booking_lines, packed_status)
+
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        # timeout=PRICING_TIME,
+        # logger.info(f"#990 [PRICING] - {PRICING_TIME}s Timeout! stop threads! ;)")
+
+        _after_process(
+            booking,
+            entire_booking_lines,
+            is_pricing_only,
+            client,
+            pu_zones,
+            de_zones,
+            client_fps,
+        )
 
         # JasonL + SA -> ignore Allied
         if (
@@ -311,35 +387,27 @@ def pricing(
         return booking, False, str(e), []
 
 
-def _loop_process(
+def _after_process(
     booking,
     booking_lines,
     is_pricing_only,
-    packed_status,
     client,
     pu_zones,
     de_zones,
     client_fps,
 ):
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(
-            _pricing_process(
-                booking,
-                booking_lines,
-                is_pricing_only,
-                packed_status,
-                pu_zones,
-                de_zones,
-                client_fps,
-            )
-        )
-    finally:
-        loop.close()
+    # JasonL: update `client sales total`
+    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        try:
+            booking.client_sales_total = get_total_sales(booking.b_client_order_num)
+            booking.save()
+        except Exception as e:
+            logger.error(f"Client sales total: {str(e)}")
+            booking.client_sales_total = None
+            pass
 
     quotes = API_booking_quotes.objects.filter(
-        fk_booking_id=booking.pk_booking_id, is_used=False, packed_status=packed_status
+        fk_booking_id=booking.pk_booking_id, is_used=False
     )
     fp_names = [quote.freight_provider for quote in quotes]
     fps = Fp_freight_providers.objects.filter(fp_company_name__in=fp_names)
@@ -351,7 +419,18 @@ def _loop_process(
 
         # Calculate Surcharges
         for quote in quotes:
+            _booking_lines = []
+            quote_fp = None
+
             if quote.freight_provider in SPECIAL_FPS:  # skip Special FPs
+                continue
+
+            for booking_line in booking_lines:
+                if booking_line.packed_status != quote.packed_status:
+                    continue
+                _booking_lines.append(booking_line)
+
+            if not _booking_lines:
                 continue
 
             for fp in fps:
@@ -359,42 +438,21 @@ def _loop_process(
                     quote_fp = fp
                     break
 
-            gen_surcharges(booking, booking_lines, quote, client, quote_fp, "booking")
+            gen_surcharges(booking, _booking_lines, quote, client, quote_fp, "booking")
+
+            # Confirm visible
+            quotes = _confirm_visible(booking, _booking_lines, quotes)
 
         # Apply Markups (FP Markup and Client Markup)
-        quotes = apply_markups(quotes, client, fps, client_fps)
-
-        # Confirm visible
-        quotes = _confirm_visible(booking, booking_lines, quotes)
-
-
-async def _pricing_process(
-    booking,
-    booking_lines,
-    is_pricing_only,
-    packed_status,
-    pu_zones,
-    de_zones,
-    client_fps,
-):
-    try:
-        await asyncio.wait_for(
-            pricing_workers(
-                booking,
-                booking_lines,
-                is_pricing_only,
-                packed_status,
-                pu_zones,
-                de_zones,
-                client_fps,
-            ),
-            timeout=PRICING_TIME,
-        )
-    except asyncio.TimeoutError:
-        logger.info(f"#990 [PRICING] - {PRICING_TIME}s Timeout! stop threads! ;)")
+        de_addr = {
+            "state": booking.de_To_Address_State,
+            "postal_code": booking.de_To_Address_PostalCode,
+            "suburb": booking.de_To_Address_Suburb,
+        }
+        quotes = apply_markups(quotes, client, fps, client_fps, de_addr)
 
 
-async def pricing_workers(
+def build_threads(
     booking,
     booking_lines,
     is_pricing_only,
@@ -404,8 +462,10 @@ async def pricing_workers(
     client_fps,
 ):
     # Schedule n pricing works *concurrently*:
-    _workers = set()
-    logger.info("#910 [PRICING] - Building Pricing workers...")
+    threads = []
+    logger.info(
+        f"#910 [PRICING] - Building Pricing threads for [{packed_status.upper()}]"
+    )
 
     if client_fps:
         client_fps = list(client_fps.values_list("fp__fp_company_name", flat=True))
@@ -480,47 +540,56 @@ async def pricing_workers(
 
                     if _fp_name == "auspost" and services:
                         for service in services:
-                            _worker = _api_pricing_worker_builder(
+                            thread = threading.Thread(
+                                target=_api_pricing_worker_builder,
+                                args=(
+                                    _fp_name,
+                                    booking,
+                                    booking_lines,
+                                    is_pricing_only,
+                                    packed_status,
+                                    account_detail,
+                                    service.fp_delivery_service_code,
+                                    service.fp_delivery_time_description,
+                                ),
+                            )
+                            threads.append(thread)
+                    else:
+                        thread = threading.Thread(
+                            target=_api_pricing_worker_builder,
+                            args=(
                                 _fp_name,
                                 booking,
                                 booking_lines,
                                 is_pricing_only,
                                 packed_status,
                                 account_detail,
-                                service.fp_delivery_service_code,
-                                service.fp_delivery_time_description,
-                            )
-                            _workers.add(_worker)
-                    else:
-                        _worker = _api_pricing_worker_builder(
-                            _fp_name,
-                            booking,
-                            booking_lines,
-                            is_pricing_only,
-                            packed_status,
-                            account_detail,
+                            ),
                         )
-                        _workers.add(_worker)
+                        threads.append(thread)
 
         if _fp_name in BUILT_IN_PRICINGS:
             logger.info(f"#908 [BUILT_IN PRICING] - {_fp_name}")
-            _worker = _built_in_pricing_worker_builder(
-                _fp_name,
-                booking,
-                booking_lines,
-                is_pricing_only,
-                packed_status,
-                pu_zones,
-                de_zones,
+            thread = threading.Thread(
+                target=_built_in_pricing_worker_builder,
+                args=(
+                    _fp_name,
+                    booking,
+                    booking_lines,
+                    is_pricing_only,
+                    packed_status,
+                    pu_zones,
+                    de_zones,
+                ),
             )
-            _workers.add(_worker)
+            threads.append(thread)
 
     logger.info("#911 [PRICING] - Pricing workers will start soon")
-    await asyncio.gather(*_workers)
+    return threads
     logger.info("#919 [PRICING] - Pricing workers finished all")
 
 
-async def _api_pricing_worker_builder(
+def _api_pricing_worker_builder(
     _fp_name,
     booking,
     booking_lines,
@@ -548,7 +617,7 @@ async def _api_pricing_worker_builder(
     logger.info(f"### [PRICING] ({_fp_name.upper()}) Payload: {payload}")
 
     try:
-        response = await requests_async.post(url, params={}, json=payload)
+        response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
         logger.info(
             f"### [PRICING] Response ({_fp_name.upper()}): {response.status_code}"
         )
@@ -610,7 +679,7 @@ async def _api_pricing_worker_builder(
         logger.info(f"@402 [PRICING] Exception: {str(e)}")
 
 
-async def _built_in_pricing_worker_builder(
+def _built_in_pricing_worker_builder(
     _fp_name,
     booking,
     booking_lines,

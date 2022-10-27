@@ -119,22 +119,43 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
     else:
         avail_pu_zones = FP_zones.objects.filter(fk_fp=fp.id)
         avail_de_zones = FP_zones.objects.filter(fk_fp=fp.id)
-        if pu_state:
-            avail_pu_zones = avail_pu_zones.filter(state__iexact=pu_state)
-        if pu_postal_code:
-            avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
-        if pu_suburb:
-            avail_pu_zones = avail_pu_zones.filter(suburb__iexact=pu_suburb)
-        if de_state:
-            avail_de_zones = avail_de_zones.filter(state__iexact=de_state)
-        if de_postal_code:
-            avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
-        if de_suburb:
-            avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
 
-    logger.info(
-        f"{LOG_ID} avail_pu_zones: {avail_pu_zones}, avail_de_zones: {avail_de_zones}"
-    )
+        # Blacks, Blenner, BlueStar, Startrack, Hi-Trans, VFS: postal_code filter only
+        if fp.id in [3, 83, 84, 85, 86, 87]:
+            if pu_postal_code:
+                avail_pu_zone = avail_pu_zones.filter(
+                    postal_code=pu_postal_code
+                ).first()
+            if de_postal_code:
+                avail_de_zone = avail_de_zones.filter(
+                    postal_code=de_postal_code
+                ).first()
+
+            logger.info(
+                f"{LOG_ID} avail_pu_zones: {avail_pu_zone}, avail_de_zones: {avail_de_zone}"
+            )
+
+            if not avail_pu_zone or not avail_de_zone:
+                return []
+
+            return rules.filter(pu_zone=avail_pu_zone.zone, de_zone=avail_de_zone.zone)
+        else:
+            if pu_state:
+                avail_pu_zones = avail_pu_zones.filter(state__iexact=pu_state)
+            if pu_postal_code:
+                avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
+            if pu_suburb:
+                avail_pu_zones = avail_pu_zones.filter(suburb__iexact=pu_suburb)
+            if de_state:
+                avail_de_zones = avail_de_zones.filter(state__iexact=de_state)
+            if de_postal_code:
+                avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
+            if de_suburb:
+                avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
+
+            logger.info(
+                f"{LOG_ID} avail_pu_zones: {avail_pu_zones}, avail_de_zones: {avail_de_zones}"
+            )
 
     if fp.fp_company_name in ["Northline", "Camerons"] and (
         not avail_pu_zones or not avail_de_zones
@@ -440,23 +461,25 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
     rule_ids = []
 
     qty = 0
-    total_weight = 0
+    max_weight = 0
     for line in booking_lines:
-        weight = (
-            line.e_qty * _get_weight_amount(line.e_weightUOM) * line.e_weightPerEach
-        )
-        total_weight += weight
+        weight = _get_weight_amount(line.e_weightUOM) * line.e_weightPerEach
         qty += line.e_qty
 
-    total_cubic_weight = 0
+        if max_weight < weight:
+            max_weight = weight
+
+    max_cubic_weight = 0
     m3_to_kg_factor = get_m3_to_kg_factor(fp.fp_company_name)
     for line in booking_lines:
-        total_cubic_weight += round(
+        weight = (
             get_cubic_meter(
                 line.e_dimLength, line.e_dimWidth, line.e_dimHeight, line.e_dimUOM
             )
             * m3_to_kg_factor
         )
+        if max_cubic_weight < weight:
+            max_cubic_weight = weight
 
     for rule in rules:
         cost = rule.cost
@@ -479,17 +502,17 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
             c_weight = _get_weight_amount(cost.weight_UOM) * cost.price_up_to_weight
 
         if cost.UOM_charge.upper() in PALLETS:
-            if cost.end_qty and cost.end_qty <= qty:
+            if cost.end_qty and cost.end_qty < qty:
                 continue
             if cost.start_qty and cost.start_qty > qty:
                 continue
         else:
-            if cost.end_qty and cost.end_qty < total_weight:
+            if cost.end_qty and cost.end_qty < qty:
                 continue
-            if cost.start_qty and cost.start_qty >= total_weight:
+            if cost.start_qty and cost.start_qty > qty:
                 continue
 
-        if c_weight and (total_weight > c_weight or total_cubic_weight > c_weight):
+        if c_weight < max_weight or c_weight < max_cubic_weight:
             continue
 
         rule_ids.append(rule.id)

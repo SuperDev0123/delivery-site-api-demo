@@ -27,7 +27,15 @@ AVAILABLE_FPS_4_FC = [
     "Toll",
     "Century",
     "ATC",
-    "Northline",
+    "Northline",  # Anchor Packaging
+    "Blacks",  # Anchor Packaging
+    "Blenner",  # Anchor Packaging
+    "Bluestar",  # Anchor Packaging
+    "Hi-Trans",  # Anchor Packaging
+    "VFS",  # Anchor Packaging
+    "Sadleirs",  # Anchor Packaging
+    "Followmont",  # Anchor Packaging
+    "DXT",  # Anchor Packaging
 ]
 
 BUILT_IN_PRICINGS = {
@@ -36,6 +44,15 @@ BUILT_IN_PRICINGS = {
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["standard", "express"]},
     "northline": {"service_types": ["standard"]},
+    "blacks": {"service_types": ["Road Service"]},
+    "blenner": {"service_types": ["Road Service"]},
+    "bluestar": {"service_types": ["Road Service"]},
+    "startrack": {"service_types": ["Road Service"]},
+    "hi-trans": {"service_types": ["Road Service"]},
+    "vfs": {"service_types": ["Road Service"]},
+    "sadleirs": {"service_types": ["Road Service"]},
+    "followmont": {"service_types": ["Road Service"]},
+    "dxt": {"service_types": ["Road Service"]},
     # "tnt": {
     #     "service_types": [
     #         "Overnight - 9:00 Express*",
@@ -126,7 +143,7 @@ FP_CREDENTIALS = {
                 "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
                 "accountPassword": "x81775935aece65541c9",
             },
-            "BIO - HTW": {
+            "BIO - RIC": {
                 "accountCode": "10160226",
                 "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
                 "accountPassword": "x81775935aece65541c9",
@@ -313,3 +330,6 @@ SPECIAL_FPS = [
     "Customer Collect",
     "In House Fleet",
 ]
+
+# security header for DME_NODE
+HEADER_FOR_NODE = {"X-SECURITY-TOKEN": "DELIVER-ME-API"}

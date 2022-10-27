@@ -110,6 +110,7 @@ from api.operations.booking.refs import (
 )
 from api.operations.genesis.index import update_shared_booking
 from api.operations.email_senders import send_email_to_admins
+from api.fps.index import get_fp_fl
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -921,9 +922,11 @@ class BookingsViewSet(viewsets.ViewSet):
         bookings = queryset.only(*BOOKING_FIELDS_4_ALLBOOKING_TABLE)
 
         filtered_booking_ids = []
+        filtered_booking_visual_ids = []
         filtered_consignments = []
         for booking in queryset:
             filtered_booking_ids.append(booking.id)
+            filtered_booking_visual_ids.append(booking.b_bookingID_Visual)
             filtered_consignments.append(booking.v_FPBookingNumber)
 
         # Count
@@ -1066,6 +1069,7 @@ class BookingsViewSet(viewsets.ViewSet):
             {
                 "bookings": result,
                 "filtered_booking_ids": filtered_booking_ids,
+                "filtered_booking_visual_ids": filtered_booking_visual_ids,
                 "filtered_consignments": filtered_consignments,
                 "count": bookings_cnt,
                 "page_cnt": page_cnt,
@@ -1559,6 +1563,7 @@ class BookingsViewSet(viewsets.ViewSet):
                         if booking.b_client_name == "Jason L":
                             if field_content in SPECIAL_FPS:
                                 booking.booking_type = "DMEM"
+                                booking.is_quote_locked = True
 
                     booking.save()
             return JsonResponse(
@@ -1694,28 +1699,25 @@ class BookingsViewSet(viewsets.ViewSet):
             )
         )
 
+        # Client filter
         if clientname != "dme":
             bookings_with_manifest = bookings_with_manifest.filter(
                 b_client_name=clientname
             )
 
-        manifest_dates = []
-        for booking in bookings_with_manifest:
-            if not booking.manifest_timestamp in manifest_dates:
-                manifest_dates.append(booking.manifest_timestamp)
-
         results = []
         report_fps = []
         client_ids = []
         index = 0
-        for manifest_date in manifest_dates:
+        for manifest_log in manifest_logs:
             result = {"freight_providers": [], "vehicles": [], "cnt_4_each_fp": {}}
             daily_count = 0
             first_booking = None
             b_bookingID_Visuals = []
 
             for booking in bookings_with_manifest:
-                if booking.manifest_timestamp == manifest_date:
+                manifest_url = "startrack_au/" + manifest_log.manifest_url
+                if booking.z_manifest_url == manifest_url:
                     first_booking = booking
                     daily_count += 1
                     b_bookingID_Visuals.append(booking.b_bookingID_Visual)
@@ -1733,20 +1735,26 @@ class BookingsViewSet(viewsets.ViewSet):
                             else f"{booking.vx_freight_provider} Vehicle"
                         )
 
+            if not first_booking:
+                msg = f"Can not find first booking: {manifest_log}, {manifest_url}"
+                logger.error(msg)
+                continue
+
             result["manifest_id"] = manifest_ids[index]
             result["count"] = daily_count
             result["z_manifest_url"] = first_booking.z_manifest_url
             result["warehouse_name"] = first_booking.fk_client_warehouse.name
-            result["manifest_date"] = manifest_date
+            result["manifest_date"] = manifest_log.z_createdTimeStamp
             result["b_bookingID_Visuals"] = b_bookingID_Visuals
             result["kf_client_id"] = first_booking.kf_client_id
-
             results.append(result)
 
             if first_booking.vx_freight_provider not in report_fps:
                 report_fps.append(first_booking.vx_freight_provider)
+
             if first_booking.kf_client_id not in client_ids:
                 client_ids.append(first_booking.kf_client_id)
+
             index += 1
 
         clients = DME_clients.objects.filter(dme_account_num__in=client_ids).only(
@@ -2637,6 +2645,8 @@ class BookingViewSet(viewsets.ViewSet):
                 "x_manual_booked_flag",
                 "api_booking_quote",
                 "b_dateBookedDate",
+                "client_sales_total",
+                "is_quote_locked",
             )
             .order_by("id")
             .last()
@@ -2853,6 +2863,7 @@ class BookingViewSet(viewsets.ViewSet):
             "x_manual_booked_flag": booking.x_manual_booked_flag,
             "api_booking_quote_id": booking.api_booking_quote_id,
             "b_dateBookedDate": booking.b_dateBookedDate,
+            "client_sales_total": booking.client_sales_total,
             "no_of_sscc": len(result_with_sscc),
             "url": booking.z_label_url,
             "pdf": pdf_data,
@@ -3309,9 +3320,9 @@ class StatusHistoryViewSet(viewsets.ViewSet):
                 )
 
                 if not status_last:
-                    logger.info(
-                        f"{LOG_ID} Booking: {booking}, FP: {fp}, b_status_API: {b_status_API}"
-                    )
+                    error_msg = f"{LOG_ID} New FP status! Booking: {booking}, FP: {fp}, b_status_API: {b_status_API}"
+                    logger.error(error_msg)
+                    send_email_to_admins("New FP status", error_msg)
                     return Response(
                         {"success": False}, status=status.HTTP_400_BAD_REQUEST
                     )
@@ -4032,7 +4043,13 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
             fp = Fp_freight_providers.objects.get(
                 fp_company_name__iexact=booking.vx_freight_provider
             )
-            res["fuel_levy_base_cl"] = without_surcharge * fp.fp_markupfuel_levy_percent
+            res["fuel_levy_base_cl"] = without_surcharge * get_fp_fl(
+                fp,
+                client,
+                booking.de_To_Address_State,
+                booking.de_To_Address_PostalCode,
+                booking.de_To_Address_Suburb,
+            )
             res["cost_dollar"] = without_surcharge - res["fuel_levy_base_cl"]
             res = [res]
 
@@ -4046,6 +4063,7 @@ def download(request):
     body = literal_eval(request.body.decode("utf8"))
     download_option = body["downloadOption"]
     file_paths = []
+    prefixes = []
     logger.info(f"{LOG_ID} Option: {download_option}")
 
     if download_option not in ["logs", "quote-report"]:
@@ -4085,9 +4103,16 @@ def download(request):
     elif download_option == "label":
         for booking in bookings:
             if booking.z_label_url and len(booking.z_label_url) > 0:
-                file_paths.append(
-                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-                )
+                if "http" in booking.z_label_url:
+                    fp_name = f"{booking.vx_freight_provider.lower()}_au"
+                    label_url = f"{fp_name}/DME{booking.b_bookingID_Visual}.pdf"
+                else:
+                    label_url = booking.z_label_url
+
+                if booking.b_client_name == "Tempo Big W":
+                    prefixes.append(booking.b_clientReference_RA_Numbers)
+
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
                 booking.z_downloaded_shipping_label_timestamp = str(datetime.now())
                 booking.save()
     elif download_option == "pod":
@@ -4148,9 +4173,13 @@ def download(request):
                 booking.z_downloaded_connote_timestamp = timezone.now()
                 booking.save()
             if booking.z_label_url and len(booking.z_label_url) > 0:
-                file_paths.append(
-                    f"{settings.STATIC_PUBLIC}/pdfs/{booking.z_label_url}"
-                )
+                if "http" in booking.z_label_url:
+                    fp_name = f"{booking.vx_freight_provider.lower()}_au"
+                    label_url = f"{fp_name}/DME{booking.b_bookingID_Visual}.pdf"
+                else:
+                    label_url = booking.z_label_url
+
+                file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
                 booking.z_downloaded_shipping_label_timestamp = timezone.now()
                 booking.save()
     elif download_option == "zpl":
@@ -4191,7 +4220,7 @@ def download(request):
         end_date = body.get("endDate")
         file_paths = [build_quote_report(kf_client_ids, start_date, end_date)]
 
-    response = download_libs.download_from_disk(download_option, file_paths)
+    response = download_libs.download_from_disk(download_option, file_paths, prefixes)
     return response
 
 
@@ -4554,7 +4583,9 @@ def build_label(request):
                     _lines.append(line1)
 
             sscc_lines[line.sscc] = _lines
-    logger.info(f"{LOG_ID} \nsscc_list:{sscc_list}\nsscc_lines: {sscc_lines}")
+    logger.info(
+        f"{LOG_ID} \nsscc_list: {sscc_list}\nsscc_lines: {sscc_lines}\nTotal QTY: {total_qty}"
+    )
 
     try:
         # Build label with SSCC - one sscc should have one page label
@@ -4594,13 +4625,28 @@ def build_label(request):
         booking.z_label_url = (
             f"{settings.WEB_SITE_URL}/label/{booking.b_client_booking_ref_num}/"
         )
-        booking.z_downloaded_shipping_label_timestamp = datetime.utcnow()
 
         # Jason L
         if not booking.b_dateBookedDate and booking.b_status != "Picked":
             status_history.create(booking, "Picked", request.user.username)
 
+        # Set consignment number
+        booking.v_FPBookingNumber = gen_consignment_num(
+            booking.vx_freight_provider,
+            booking.b_bookingID_Visual,
+            booking.kf_client_id,
+            booking,
+        )
         booking.save()
+
+        # BioPak: update with json
+        # if (
+        #     booking.b_client_name.lower() == "biopak"
+        #     and booking.b_client_warehouse_code in ["BIO - RIC"]
+        # ):
+        #     from api.fp_apis.update_by_json import update_biopak_with_booked_booking
+
+        #     update_biopak_with_booked_booking(booking.pk, "label")
     except Exception as e:
         trace_error.print()
         logger.error(f"{LOG_ID} Error: {str(e)}")

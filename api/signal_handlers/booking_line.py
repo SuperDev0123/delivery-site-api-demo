@@ -48,18 +48,18 @@ def post_save_handler(instance, created, update_fields):
             create_shared_lines(booking)
 
         logger.info(f"{LOG_ID} Created new or updated important field.")
-        # Reset selected Quote and connected Quotes
-        if booking.booking_type != "DMEA":
-            set_booking_quote(booking, None)
-            quotes = API_booking_quotes.objects.filter(
-                fk_booking_id=booking.pk_booking_id,
-                is_used=False,
-            )
-            for quote in quotes:
-                quote.is_used = True
-                quote.save()
-        elif booking.booking_type == "DMEA":
-            get_quote_again(booking)
+        # # Reset selected Quote and connected Quotes
+        # if booking.booking_type != "DMEA":
+        #     set_booking_quote(booking, None)
+        #     quotes = API_booking_quotes.objects.filter(
+        #         fk_booking_id=booking.pk_booking_id,
+        #         is_used=False,
+        #     )
+        #     for quote in quotes:
+        #         quote.is_used = True
+        #         quote.save()
+        # elif booking.booking_type == "DMEA":
+        #     get_quote_again(booking)
 
 
 def post_delete_handler(instance):
@@ -68,18 +68,18 @@ def post_delete_handler(instance):
     if not booking:
         return
 
-    # Reset selected Quote and connected Quotes
-    if booking.booking_type != "DMEA":
-        set_booking_quote(booking, None)
-        quotes = API_booking_quotes.objects.filter(
-            fk_booking_id=booking.pk_booking_id,
-            is_used=False,
-        )
-        for quote in quotes:
-            quote.is_used = True
-            quote.save()
-    elif booking.booking_type == "DMEA":
-        get_quote_again(booking)
+    # # Reset selected Quote and connected Quotes
+    # if booking.booking_type != "DMEA":
+    #     set_booking_quote(booking, None)
+    #     quotes = API_booking_quotes.objects.filter(
+    #         fk_booking_id=booking.pk_booking_id,
+    #         is_used=False,
+    #     )
+    #     for quote in quotes:
+    #         quote.is_used = True
+    #         quote.save()
+    # elif booking.booking_type == "DMEA":
+    #     get_quote_again(booking)
 
     # Client_Process_Mgr
     cl_procs = Client_Process_Mgr.objects.filter(fk_booking_id=booking.pk)

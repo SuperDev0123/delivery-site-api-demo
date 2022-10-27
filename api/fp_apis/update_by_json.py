@@ -4,8 +4,9 @@ import logging
 
 from django.conf import settings
 
-from api.models import Bookings
+from api.models import Bookings, DME_clients
 from api.common import sftp, trace_error
+from api.clients.biopak.index import reprint_label
 
 if settings.ENV == "local":
     production = False  # Local
@@ -26,7 +27,7 @@ sftp_server_infos = {
 }
 
 
-def build_json(booking):
+def build_json(booking, type):
     json_content = {
         "b_clientReference_RA_Numbers": booking.b_clientReference_RA_Numbers,
         "consignment_number": booking.v_FPBookingNumber,
@@ -35,12 +36,24 @@ def build_json(booking):
         "status": booking.b_status,
         "warehouse_code": booking.fk_client_warehouse.client_warehouse_code,
         "freight_provider": booking.vx_freight_provider,
+        "shipment_id": booking.fk_fp_pickup_id,
     }
+
+    if type == "label" and booking.b_client_warehouse_code in [
+        "BIO - RIC",
+        "BIO - HAZ",
+    ]:
+        params = {"clientReferences": booking.b_clientReference_RA_Numbers}
+        client = DME_clients.objects.get(company_name="BioPak")
+        result = reprint_label(params, client)
+
+        if result["success"]:
+            json_content["label"] = result["labels"][0]
 
     return json.dumps(json_content)
 
 
-def update_biopak_with_booked_booking(booking_id):
+def update_biopak_with_booked_booking(booking_id, type="book"):
     LOG_ID = "[BIOPAK UPDATE VIA JSON]"
 
     if not settings.ENV == "prod":
@@ -48,8 +61,11 @@ def update_biopak_with_booked_booking(booking_id):
 
     try:
         booking = Bookings.objects.get(pk=booking_id)
+        prefix = "track" if type == "book" else "label"
         json_file_name = (
-            booking.b_clientReference_RA_Numbers
+            prefix
+            + "__"
+            + booking.b_clientReference_RA_Numbers
             + "__"
             + booking.pk_booking_id
             + ".json"
@@ -63,7 +79,7 @@ def update_biopak_with_booked_booking(booking_id):
         #     local_filepath_archive = "./static/jsons/archive/"
 
         json_file = open(local_filepath + json_file_name, "w")
-        json_content = build_json(booking)
+        json_content = build_json(booking, type)
         json_file.write(json_content)
         json_file.close()
 

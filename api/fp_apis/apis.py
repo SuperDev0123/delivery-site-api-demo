@@ -42,7 +42,12 @@ from api.fp_apis.operations.tracking import (
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.fp_apis.utils import auto_select_pricing
-from api.fp_apis.constants import FP_CREDENTIALS, S3_URL, DME_LEVEL_API_URL
+from api.fp_apis.constants import (
+    FP_CREDENTIALS,
+    S3_URL,
+    DME_LEVEL_API_URL,
+    HEADER_FOR_NODE,
+)
 from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.constants import SPECIAL_FPS
 from api.helpers.string import *
@@ -63,7 +68,7 @@ def tracking(request, fp_name):
 
         logger.info(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
-        response = requests.post(url, params={}, json=payload)
+        response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
 
         if fp_name.lower() in ["tnt"]:
             res_content = response.content.decode("utf8")
@@ -103,18 +108,21 @@ def tracking(request, fp_name):
 
                     booking.z_pod_url = f"{fp_name.lower()}_au/{pod_file_name}"
 
-                if consignmentTrackDetails["signatures"]:
-                    posData = consignmentTrackDetails["signatures"][0]["signatureImage"]
+                signatures = consignmentTrackDetails["signatures"]
+                if signatures:
+                    if "signatureImage" in signatures[0]:
+                        posData = signatures[0]["signatureImage"]
+                        _fp_name = fp_name.lower()
+                        pos_file_name = f"allied_POS_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
+                        full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pos_file_name}"
 
-                    _fp_name = fp_name.lower()
-                    pos_file_name = f"allied_POS_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
-                    full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pos_file_name}"
+                        f = open(full_path, "wb")
+                        f.write(base64.b64decode(posData))
+                        f.close()
 
-                    f = open(full_path, "wb")
-                    f.write(base64.b64decode(posData))
-                    f.close()
-
-                    booking.z_pod_signed_url = f"{fp_name.lower()}_au/{pos_file_name}"
+                        booking.z_pod_signed_url = (
+                            f"{fp_name.lower()}_au/{pos_file_name}"
+                        )
 
                 if consignmentTrackDetails["scheduledDeliveryDate"]:
                     scheduledDeliveryDate = consignmentTrackDetails[
@@ -253,7 +261,9 @@ def rebook(request, fp_name):
 
             logger.info(f"### Payload ({fp_name} rebook): {payload}")
             url = DME_LEVEL_API_URL + "/booking/rebookconsignment"
-            response = requests.post(url, params={}, json=payload)
+            response = requests.post(
+                url, params={}, json=payload, headers=HEADER_FOR_NODE
+            )
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
             s0 = json.dumps(
@@ -406,7 +416,9 @@ def edit_book(request, fp_name):
 
             logger.info(f"### Payload ({fp_name} edit book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
-            response = requests.post(url, params={}, json=payload)
+            response = requests.post(
+                url, params={}, json=payload, headers=HEADER_FOR_NODE
+            )
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
             s0 = json.dumps(
@@ -550,7 +562,9 @@ def cancel_book(request, fp_name):
 
                 logger.info(f"### Payload ({fp_name} cancel book): {payload}")
                 url = DME_LEVEL_API_URL + "/booking/cancelconsignment"
-                response = requests.delete(url, params={}, json=payload)
+                response = requests.delete(
+                    url, params={}, json=payload, headers=HEADER_FOR_NODE
+                )
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
                 s0 = json.dumps(
@@ -671,7 +685,9 @@ def get_label(request, fp_name):
                     f"### Payload ({fp_name} create_label): {json.dumps(payload, indent=2, sort_keys=True, default=str)}"
                 )
                 url = DME_LEVEL_API_URL + "/labelling/createlabel"
-                response = requests.post(url, params={}, json=payload)
+                response = requests.post(
+                    url, params={}, json=payload, headers=HEADER_FOR_NODE
+                )
                 res_content = response.content.decode("utf8").replace("'", '"')
                 json_data = json.loads(res_content)
                 # # Deactivated on 2021-11-26
@@ -720,7 +736,9 @@ def get_label(request, fp_name):
                 )
             ):
                 t.sleep(5)  # Delay to wait label is created
-                response = requests.post(url, params={}, json=payload)
+                response = requests.post(
+                    url, params={}, json=payload, headers=HEADER_FOR_NODE
+                )
                 res_content = response.content.decode("utf8").replace("'", '"')
 
                 if _fp_name in ["sendle"]:
@@ -823,7 +841,7 @@ def get_label(request, fp_name):
             error_msg = res_content
 
             if _fp_name in ["tnt"]:
-                error_msg = res_content
+                error_msg = json_data["errorMessage"]
 
             _set_error(booking, error_msg)
             return JsonResponse(
@@ -856,12 +874,14 @@ def create_order(request, fp_name):
         payload = get_create_order_payload(bookings, fp_name)
         logger.info(f"Payload(Create Order for ST): {payload}")
         url = DME_LEVEL_API_URL + "/order/create"
-        response = requests.post(url, params={}, json=payload)
+        response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
 
         had_504_res = False
         while response.status_code == 504:
             had_504_res = True
-            response = requests.post(url, params={}, json=payload)
+            response = requests.post(
+                url, params={}, json=payload, headers=HEADER_FOR_NODE
+            )
 
         res_content = response.content.decode("utf8").replace("'", '"')
         json_data = json.loads(res_content)
@@ -922,7 +942,11 @@ def get_order_summary(request, fp_name):
         try:
             booking = Bookings.objects.get(id=booking_ids[0])
             payload = get_get_order_summary_payload(booking, fp_name)
-            headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
+            headers = {
+                "Accept": "application/pdf",
+                "Content-Type": "application/json",
+                **HEADER_FOR_NODE,
+            }
 
             logger.info(f"### Payload ({fp_name} Get Order Summary): {payload}")
             url = DME_LEVEL_API_URL + "/order/summary"
@@ -1016,7 +1040,7 @@ def pod(request, fp_name):
         logger.info(f"### Payload ({fp_name} POD): {payload}")
 
         url = DME_LEVEL_API_URL + "/pod/fetchpod"
-        response = requests.post(url, params={}, json=payload)
+        response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
         res_content = response.content.decode("utf8").replace("'", '"')
         json_data = json.loads(res_content)
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
@@ -1083,7 +1107,9 @@ def reprint(request, fp_name):
 
             logger.info(f"### Payload ({fp_name} REPRINT): {payload}")
             url = DME_LEVEL_API_URL + "/labelling/reprint"
-            response = requests.post(url, params={}, json=payload)
+            response = requests.post(
+                url, params={}, json=payload, headers=HEADER_FOR_NODE
+            )
 
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
@@ -1177,10 +1203,13 @@ def pricing(request):
     if is_pricing_only:
         API_booking_quotes.objects.filter(fk_booking_id=booking.pk_booking_id).delete()
     else:
-        if booking.booking_type == "DMEM":
+        if booking.api_booking_quote and (
+            booking.booking_type == "DMEM" or booking.is_quote_locked
+        ):
             results = results.filter(
                 freight_provider__iexact=booking.vx_freight_provider,
                 service_name=booking.vx_serviceName,
+                packed_status=booking.api_booking_quote.packed_status,
             )
         else:
             results = results.exclude(freight_provider="Sendle")
@@ -1200,7 +1229,11 @@ def update_servce_code(request, fp_name):
 
     try:
         payload = get_get_accounts_payload(_fp_name)
-        headers = {"Accept": "application/pdf", "Content-Type": "application/json"}
+        headers = {
+            "Accept": "application/pdf",
+            "Content-Type": "application/json",
+            **HEADER_FOR_NODE,
+        }
         logger.info(f"### Payload ({fp_name.upper()} Get Accounts): {payload}")
         url = DME_LEVEL_API_URL + "/servicecode/getaccounts"
         response = requests.post(url, json=payload, headers=headers)
@@ -1255,7 +1288,7 @@ def get_etd(booking):
 
         logger.info(f"### Payload ({fp_name} ETD): {payload}")
         url = DME_LEVEL_API_URL + "/pricing/getetd"
-        response = requests.post(url, params={}, json=payload)
+        response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
 
         res_content = response.content.decode("utf8").replace("'", '"')
         json_data = json.loads(res_content)

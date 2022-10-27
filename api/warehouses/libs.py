@@ -45,13 +45,13 @@ def get_address(bok_1):
 
 
 def get_lines(bok_2s):
+    from api.clients.operations.index import extract_product_code
+
     _lines = []
 
     for bok_2 in bok_2s:
         product_code = bok_2.l_003_item
-
-        if "ZERO Dims -" in product_code:
-            product_code = product_code[: product_code.index("ZERO Dims -") - 2]
+        product_code = extract_product_code(product_code)
 
         _lines.append(
             {
@@ -80,7 +80,7 @@ def build_push_payload(bok_1, bok_2s):
         "orderNumber": bok_1.b_client_order_num,
         "warehouseName": bok_1.b_028_b_pu_company,
         "warehouseCode": bok_1.b_client_warehouse_code,
-        "freightProvider": CARRIER_MAPPING[bok_1.quote.freight_provider],
+        "freightProvider": CARRIER_MAPPING[bok_1.quote.freight_provider.lower()],
         "clientName": client.company_name,
         "address": get_address(bok_1),
         "deliveryInstructions": deliveryInstructions,

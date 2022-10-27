@@ -11,7 +11,7 @@ from api.models import Fp_freight_providers
 logger = logging.getLogger(__name__)
 SYDNEY_TZ = pytz.timezone("Australia/Sydney")
 UTC_TZ = pytz.timezone("UTC")
-TIME_DIFFERENCE = 10  # Difference between UTC and AU(Sydney) time
+TIME_DIFFERENCE = 11  # Difference between UTC and AU(Sydney) time
 
 
 def get_sydney_now_time(return_type="char"):
@@ -116,19 +116,19 @@ def next_business_day(
     AU_HOLIDAYS = holidays.AU()
     ONE_DAY = timedelta(days=1)
     _next_day = start_day
+    fp = None
 
     if fp_name:
-        fp = Fp_freight_providers.objects.only("service_cutoff_time").get(
-            fp_company_name__iexact=fp_name
-        )
-        default_service_cutoff_time = datetime.strptime("13:00", "%H:%M").time()
-        service_cutoff_time = (
-            fp.service_cutoff_time
-            if fp and fp.service_cutoff_time
-            else default_service_cutoff_time
-        )
-        if service_cutoff_time < time:
-            _next_day += ONE_DAY
+        fps = Fp_freight_providers.objects.only("service_cutoff_time")
+        fp = fps.get(fp_company_name__iexact=fp_name)
+
+    if fp and fp.service_cutoff_time:
+        service_cutoff_time = fp.service_cutoff_time
+    else:
+        service_cutoff_time = datetime.strptime("13:00", "%H:%M").time()
+
+    if service_cutoff_time < time:
+        _next_day += ONE_DAY
 
     for i in range(0, int(business_days)):
         _next_day += ONE_DAY

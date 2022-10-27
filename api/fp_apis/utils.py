@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from django.conf import settings
+from django.db.models import Sum
 
 from api.models import *
 from api.common import ratio
@@ -9,6 +10,7 @@ from api.common.booking_quote import set_booking_quote
 from api.fp_apis.constants import FP_CREDENTIALS, FP_UOM, SPECIAL_FPS
 from api.operations.email_senders import send_email_to_admins
 from api.helpers.etd import get_etd
+from api.fps.startrack import gen_consignment as gen_consignment_num_st
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ def _convert_UOM(value, uom, type, fp_name):
         raise Exception(message)
 
 
-def gen_consignment_num(fp_name, uid, kf_client_id=None):
+def gen_consignment_num(fp_name, uid, kf_client_id=None, booking=None):
     """
     generate consignment
 
@@ -57,12 +59,16 @@ def gen_consignment_num(fp_name, uid, kf_client_id=None):
         kf_client_id == "461162D2-90C7-BF4E-A905-000000000004" and _fp_name == "hunter"
     ):
         return f"PLX{str(uid)}"
+    elif _fp_name == "startrack":
+        return gen_consignment_num_st(booking)
     else:
         return f"DME{str(uid)}"
 
 
 def get_m3_to_kg_factor(fp_name, data=None):
-    if fp_name.lower() == "northline":
+    if not fp_name:
+        return 250
+    if fp_name.lower() in ["northline", "sadleirs"]:
         return 333
     elif (
         fp_name.lower() == "hunter"
@@ -275,20 +281,42 @@ def _get_lowest_price(pricings, client=None):
     return lowest_pricing.get("pricing")
 
 
-def select_best_options(pricings, client=None):
-    logger.info(f"#860 Select best options from {len(pricings)} pricings")
+def select_best_options(pricings, client=None, original_lines_count=None):
+    LOG_ID = "[SELECT BEST OPTION]"
+    logger.info(f"{LOG_ID} From {len(pricings)} pricings: {pricings}")
 
     if not pricings:
         return []
 
-    lowest_pricing = _get_lowest_price(pricings, client)
-    fastest_pricing = _get_fastest_price(pricings)
+    # JasonL
+    _quotes = pricings
+    if (
+        original_lines_count
+        and client
+        and client.dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+    ):
+        send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
+        auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
 
-    if lowest_pricing and fastest_pricing:
-        if lowest_pricing.pk == fastest_pricing.pk:
-            return [lowest_pricing]
+        logger.info(
+            f"{LOG_ID} Lines count: {original_lines_count}, Original quotes: {send_as_is_quotes}, Auto Quotes: {auto_pack_quotes}"
+        )
+        if original_lines_count < 3:
+            _quotes = send_as_is_quotes
         else:
-            return [lowest_pricing, fastest_pricing]
+            _quotes = auto_pack_quotes
+
+    lowest_pricing = _get_lowest_price(_quotes, client)
+    fastest_pricing = _get_fastest_price(_quotes)
+
+    if lowest_pricing or fastest_pricing:
+        if lowest_pricing and fastest_pricing:
+            if lowest_pricing.pk == fastest_pricing.pk:
+                return [lowest_pricing]
+            else:
+                return [lowest_pricing, fastest_pricing]
+        else:
+            return [lowest_pricing or fastest_pricing]
     else:
         return []
 
@@ -336,12 +364,30 @@ def auto_select_pricing(booking, pricings, auto_select_type, client=None):
 def auto_select_pricing_4_bok(
     bok_1, pricings, is_from_script=False, auto_select_type=1, client=None
 ):
+    LOG_ID = "AUTO SELECT"
     if len(pricings) == 0:
         logger.info("#855 - Could not find proper pricing")
         return None
 
+    # JasonL
+    _quotes = pricings
+    if bok_1.fk_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        bok_2_lines_cnt = (
+            bok_1.bok_2s()
+            .filter(b_093_packed_status=BOK_2_lines.ORIGINAL, is_deleted=False)
+            .aggregate(Sum("l_002_qty"))
+        )["l_002_qty__sum"]
+        send_as_is_quotes = _quotes.filter(packed_status=BOK_2_lines.ORIGINAL)
+        auto_pack_quotes = _quotes.filter(packed_status=BOK_2_lines.AUTO_PACK)
+
+        logger.info(f"{LOG_ID} Lines count: {bok_2_lines_cnt}")
+        if bok_2_lines_cnt < 3:
+            _quotes = send_as_is_quotes
+        else:
+            _quotes = auto_pack_quotes
+
     non_air_freight_pricings = []
-    for pricing in pricings:
+    for pricing in _quotes:
         if not pricing.service_name or (
             pricing.service_name and pricing.service_name != "Air Freight"
         ):
@@ -363,21 +409,23 @@ def auto_select_pricing_4_bok(
                 break
     else:
         if int(auto_select_type) == 1:  # Lowest
+            logger.info(f"{LOG_ID} LOWEST")
             if deliverable_pricings:
                 filtered_pricing = _get_lowest_price(deliverable_pricings, client)
             elif non_air_freight_pricings:
                 filtered_pricing = _get_lowest_price(non_air_freight_pricings, client)
         else:  # Fastest
+            logger.info(f"{LOG_ID} FASTEST")
             if deliverable_pricings:
                 filtered_pricing = _get_fastest_price(deliverable_pricings)
             elif non_air_freight_pricings:
                 filtered_pricing = _get_fastest_price(non_air_freight_pricings)
 
     if filtered_pricing:
-        logger.info(f"#854 Filtered Pricing - {filtered_pricing}")
+        logger.info(f"{LOG_ID} Filtered Pricing - {filtered_pricing}")
         bok_1.quote = filtered_pricing
         bok_1.save()
         return True
     else:
-        logger.info("#855 - Could not find proper pricing")
+        logger.info(f"{LOG_ID} Could not find proper pricing")
         return False

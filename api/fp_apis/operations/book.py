@@ -19,6 +19,7 @@ from api.fp_apis.operations.common import _set_error
 from api.fp_apis.constants import (
     DME_LEVEL_API_URL,
     S3_URL,
+    HEADER_FOR_NODE,
 )
 
 
@@ -72,7 +73,7 @@ def book(fp_name, booking, booker):
 
     logger.info(f"### Payload ({fp_name} book): {payload}")
     url = DME_LEVEL_API_URL + "/booking/bookconsignment"
-    response = requests.post(url, params={}, json=payload)
+    response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
     res_content = (
         response.content.decode("utf8").replace("'t", " not").replace("'", '"')
     )
@@ -97,7 +98,9 @@ def book(fp_name, booking, booker):
             t.sleep(180)
             logger.info(f"### Payload ({fp_name} book): {payload}")
             url = DME_LEVEL_API_URL + "/booking/bookconsignment"
-            response = requests.post(url, params={}, json=payload)
+            response = requests.post(
+                url, params={}, json=payload, headers=HEADER_FOR_NODE
+            )
             res_content = response.content.decode("utf8").replace("'", '"')
             json_data = json.loads(res_content)
             s0 = json.dumps(
@@ -117,9 +120,8 @@ def book(fp_name, booking, booker):
             request_payload["trackingId"] = json_data["consignmentNumber"]
 
             if booking.vx_freight_provider.lower() in ["startrack", "auspost"]:
-                booking.v_FPBookingNumber = json_data["items"][0]["tracking_details"][
-                    "consignment_id"
-                ]
+                tracking_details = json_data["items"][0]["tracking_details"]
+                booking.v_FPBookingNumber = tracking_details["consignment_id"]
             elif booking.vx_freight_provider.lower() == "hunter":
                 booking.v_FPBookingNumber = json_data["consignmentNumber"]
                 booking.jobNumber = json_data["jobNumber"]
@@ -211,6 +213,7 @@ def book(fp_name, booking, booker):
                         email_template_name = "Return Booking"
 
                     send_booking_status_email(booking.pk, email_template_name, booker)
+
             # Save Label for Startrack and AusPost
             elif _fp_name in ["startrack", "auspost"] and is_get_label:
                 api_bcl.create(booking, json_data["items"])
@@ -223,8 +226,9 @@ def book(fp_name, booking, booker):
                     booking.v_FPBookingNumber = str(json_data["orderNumber"])
                     booking.save()
 
+            # BioPak: update with json
             if booking.b_client_name.lower() == "biopak":
-                update_biopak_with_booked_booking(booking.pk)
+                update_biopak_with_booked_booking(booking.pk, "book")
 
             message = f"Successfully booked({booking.v_FPBookingNumber})"
             return True, message

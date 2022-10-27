@@ -5,7 +5,6 @@ import json
 import logging
 import requests
 import zipfile
-import asyncio
 from datetime import datetime, date, timedelta
 from base64 import b64decode, b64encode
 
@@ -51,6 +50,7 @@ from api.clients.plum import index as plum
 from api.clients.tempo import index as tempo
 from api.clients.bsd import index as bsd
 from api.clients.jason_l import index as jason_l
+from api.clients.biopak import index as biopak
 from api.clients.anchor_packaging import index as anchor_packaging
 from api.clients.jason_l.operations import (
     create_or_update_product as jasonL_create_or_update_product,
@@ -229,8 +229,13 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
             bok_3s = BOK_3_lines_data.objects.filter(
                 fk_header_id=bok_1.pk_header_id, is_deleted=False
             )
-            quote_set = API_booking_quotes.objects.prefetch_related("vehicle").filter(
-                fk_booking_id=bok_1.pk_header_id, is_used=False
+            quote_set = (
+                API_booking_quotes.objects.prefetch_related("vehicle")
+                .filter(
+                    fk_booking_id=bok_1.pk_header_id,
+                    is_used=False,
+                )
+                .exclude(client_mu_1_minimum_values__isnull=True)
             )
             client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
 
@@ -389,12 +394,14 @@ class BOK_1_ViewSet(viewsets.ModelViewSet):
         try:
             cost_id = request.data["costId"]
             identifier = request.data["identifier"]
+            isLocking = request.data["isLocking"]
 
             bok_1 = BOK_1_headers.objects.get(client_booking_id=identifier)
             quote = API_booking_quotes.objects.get(pk=cost_id)
             bok_1.b_001_b_freight_provider = quote.freight_provider
             bok_1.b_003_b_service_name = quote.service_name
             bok_1.vx_serviceType_XXX = quote.service_code
+            bok_1.b_092_is_quote_locked = isLocking
             bok_1.quote = quote
             bok_1.save()
 
@@ -664,6 +671,7 @@ def push_boks(request):
     user = request.user
     logger.info(f"@800 {LOG_ID} Requester: {user.username}")
     logger.info(f"@801 {LOG_ID} Payload: {request.data}")
+    time1 = t.time()
 
     try:
         client = get_client(user)
@@ -712,6 +720,10 @@ def push_boks(request):
             result = standard.push_boks(request.data, client)
 
         logger.info(f"@828 {LOG_ID} Push BOKS success!, 201_created")
+        time2 = t.time()
+        logger.info(
+            f"\n#838 {LOG_ID} Requester: {user.username}\nSpent time: {str(int(round(time2 - time1)))}s\n"
+        )
         return JsonResponse(result, status=HTTP_201_CREATED)
     except Exception as e:
         logger.info(f"@829 {LOG_ID} Exception: {str(e)}")
@@ -746,13 +758,17 @@ def scanned(request):
         message = f"Successfully scanned."
         logger.info(f"#838 {LOG_ID} {message}")
         time2 = t.time()
-        logger.info(f"\n#838 {LOG_ID} Requester: {user.username}\nPayload: {request.data}\nSpent time: {str(int(round(time2 - time1)))}s\n")
+        logger.info(
+            f"\n#838 {LOG_ID} Requester: {user.username}\nSpent time: {str(int(round(time2 - time1)))}s\n"
+        )
         return JsonResponse(result, status=HTTP_200_OK)
     except Exception as e:
         logger.info(f"@839 {LOG_ID} Exception: {str(e)}")
         trace_error.print()
         time2 = t.time()
-        logger.info(f"\n#838 {LOG_ID} Requester: {user.username}\nPayload: {request.data}\nSpent time: {str(int(round(time2 - time1)))}s\n")
+        logger.info(
+            f"\n#838 {LOG_ID} Requester: {user.username}\nSpent time: {str(int(round(time2 - time1)))}s\n"
+        )
         res_json = {"success": False, "message": str(e)}
         return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
@@ -803,6 +819,8 @@ def reprint_label(request):
             result = plum.reprint_label(params=request.GET, client=client)
         # elif dme_account_num == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
         #     result = jason_l.reprint_label(params=request.GET, client=client)
+        elif dme_account_num == "7EAA4B16-484B-3944-902E-BC936BFEF535":  # BioPak
+            result = biopak.reprint_label(params=request.GET, client=client)
 
         logger.info(f"#858 {LOG_ID} {json.dumps(result, indent=4)[:64]}")
         return Response(result)
@@ -842,6 +860,43 @@ def manifest_boks(request):
         trace_error.print()
         res_json = {"success": False, "message": str(e)}
         return Response(res_json, status=HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET"])
+@permission_classes((AllowAny,))
+def quote_count(request):
+    """
+    GET quote count
+    """
+    identifier = request.GET.get("identifier")
+    bok_1 = BOK_1_headers.objects.filter(pk_auto_id=identifier).first()
+
+    if not bok_1:
+        return Response(
+            {
+                "code": "does_not_exist",
+                "message": "Could not find BOK",
+            },
+            status=HTTP_400_BAD_REQUEST,
+        )
+
+    quotes = API_booking_quotes.objects.filter(
+        fk_booking_id=bok_1.pk_header_id, is_used=False
+    ).exclude(client_mu_1_minimum_values__isnull=True)
+
+    if bok_1.zb_104_text_4 == "In Progress":
+        quote_status = "in_progress"
+    else:
+        quote_status = "finished"
+
+    return Response(
+        {
+            "code": "does_exist",
+            "message": "",
+            "result": {"quote_count": quotes.count(), "quote_status": quote_status},
+        },
+        status=HTTP_200_OK,
+    )
 
 
 @api_view(["GET"])
@@ -947,6 +1002,7 @@ def get_delivery_status(request):
             "vx_serviceName": booking.vx_serviceName,
             "z_pod_signed_url": booking.z_pod_signed_url,
             "z_pod_url": booking.z_pod_url,
+            "pusher": booking.x_booking_Created_With,
         }
 
         def serialize_lines(lines, need_product=False):
@@ -1084,6 +1140,7 @@ def get_delivery_status(request):
             from api.utils import get_eta_de_by
 
             eta = get_eta_de_by(booking, booking.api_booking_quote)
+            eta = eta.strftime("%d/%m/%Y %H:%M")
         else:
             from api.utils import get_eta_pu_by, get_eta_de_by
 
@@ -1095,10 +1152,9 @@ def get_delivery_status(request):
                     booking, booking.api_booking_quote
                 )
                 booking.save()
-                s_06 = booking.get_s_06()
+                s_06 = s_06_Latest_Delivery_Date_TimeSet
 
-            eta = dme_time_lib.convert_to_AU_SYDNEY_tz(s_06).strftime("%d/%m/%Y %H:%M")
-
+            eta = s_06.strftime("%d/%m/%Y %H:%M")
         try:
             fp_status_histories = (
                 FP_status_history.objects.values(
@@ -1207,6 +1263,7 @@ def get_delivery_status(request):
         "b_063_b_del_email": bok_1.b_063_b_del_email,
         "b_064_b_del_phone_main": bok_1.b_064_b_del_phone_main,
         "b_000_3_consignment_number": bok_1.b_000_3_consignment_number,
+        "pusher": bok_1.x_booking_Created_With,
     }
 
     def line_to_dict(line):
@@ -1228,24 +1285,18 @@ def get_delivery_status(request):
     original_lines = map(line_to_dict, booking_lines)
 
     quote = bok_1.quote
-    json_quote, eta = None, None
+    json_quote, eta = None, ""
 
     if quote:
         context = {"client_customer_mark_up": client.client_customer_mark_up}
         quote_data = SimpleQuoteSerializer(quote, context=context).data
         json_quote = dme_time_lib.beautify_eta([quote_data], [quote], client)[0]
-        eta = (
-            # (
-            #     dme_time_lib.convert_to_AU_SYDNEY_tz(bok_1.b_021_b_pu_avail_from_date)
-            #     + timedelta(days=int(json_quote["eta"].split()[0]))
-            # ).strftime("%d/%m/%Y")
-            dme_time_lib.next_business_day(
+
+        if json_quote and bok_1.b_021_b_pu_avail_from_date:
+            eta = dme_time_lib.next_business_day(
                 dme_time_lib.convert_to_AU_SYDNEY_tz(bok_1.b_021_b_pu_avail_from_date),
                 int(json_quote["eta"].split()[0]),
-            ).strftime("%d/%m/%Y")
-            if json_quote and bok_1.b_021_b_pu_avail_from_date
-            else ""
-        )
+            ).strftime("%d/%m/%Y %H:%M")
 
     try:
         logo_url = DME_clients.objects.get(company_name=booking.b_client_name).logo_url

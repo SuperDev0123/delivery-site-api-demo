@@ -32,7 +32,6 @@ from api.common import (
     status_history,
 )
 from api.common.pallet import get_number_of_pallets, get_palletized_by_ai
-from api.common.booking_quote import set_booking_quote
 from api.fp_apis.utils import (
     select_best_options,
     auto_select_pricing_4_bok,
@@ -42,7 +41,6 @@ from api.fp_apis.utils import (
 # from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations.email_senders import send_email_to_admins
-from api.operations.labels.index import build_label, get_barcode
 from api.operations.booking_line import index as line_oper
 from api.clients.operations.index import get_warehouse, check_port_code
 from api.helpers.cubic import get_cubic_meter
@@ -76,7 +74,9 @@ def push_boks(payload, client, username, method):
 
     if not bok_1["b_053_b_del_address_type"] in ["business", "residential"]:
         bok_1["b_053_b_del_address_type"] == "business"
-        bok_1["shipping_type"] = "DMEM"
+
+    if not "DME" in bok_1["shipping_type"]:
+        bok_1["shipping_type"] = None
 
     # Validate
     error_msg = None
@@ -166,7 +166,10 @@ def push_boks(payload, client, username, method):
                     logger.info(
                         f"@8850 {LOG_ID} Order {bok_1['b_client_order_num']} requires new quotes."
                     )
-                    if old_bok_1.b_092_booking_type == "DMEM" and old_bok_1.quote:
+                    if (
+                        old_bok_1.b_092_booking_type == "DMEM"
+                        or old_bok_1.b_092_is_quote_locked
+                    ) and old_bok_1.quote:
                         selected_quote = old_bok_1.quote
 
                     quotes.delete()
@@ -190,8 +193,6 @@ def push_boks(payload, client, username, method):
     bok_1["x_booking_Created_With"] = "DME PUSH API"
     bok_1["success"] = dme_constants.BOK_SUCCESS_2  # Default success code
     bok_1["b_092_booking_type"] = bok_1.get("shipping_type")
-
-    # `DMEA` or `DMEM` - set `success` as 3
     bok_1["success"] = dme_constants.BOK_SUCCESS_3
 
     if warehouse_code in WAREHOUSE_MAPPINGS:
@@ -306,7 +307,7 @@ def push_boks(payload, client, username, method):
             line["l_008_weight_UOM"] = _item["l_008_weight_UOM"].upper()
             line["b_093_packed_status"] = BOK_2_lines.ORIGINAL
 
-            line = line_oper.handle_zero(line)
+            line = line_oper.handle_zero(line, client)
             bok_2_serializer = BOK_2_Serializer(data=line)
             if bok_2_serializer.is_valid():
                 bok_2_obj = bok_2_serializer.save()
@@ -325,269 +326,278 @@ def push_boks(payload, client, username, method):
         bok_1["pk_header_id"], "Imported / Integrated", username
     )
 
-    # `auto_repack` logic
-    carton_cnt = 0
-    for bok_2_obj in bok_2_objs:
-        carton_cnt += bok_2_obj.l_002_qty
+    if bok_1["b_092_booking_type"]:
+        # `auto_repack` logic
+        carton_cnt = 0
+        for bok_2_obj in bok_2_objs:
+            carton_cnt += bok_2_obj.l_002_qty
 
-    if carton_cnt > 2:
-        message = "Auto repacking..."
-        logger.info(f"@8130 {LOG_ID} {message}")
+        if carton_cnt > 2:
+            message = "Auto repacking..."
+            logger.info(f"@8130 {LOG_ID} {message}")
 
-        # Select suitable pallet and get required pallets count
-        pallets = Pallet.objects.all()
-        palletized, non_palletized = get_palletized_by_ai(bok_2_objs, pallets)
-        logger.info(
-            f"@8831 {LOG_ID} Palletized: {palletized}\nNon-Palletized: {non_palletized}"
+            # Select suitable pallet and get required pallets count
+            pallets = Pallet.objects.all()
+            palletized, non_palletized = get_palletized_by_ai(bok_2_objs, pallets)
+            logger.info(
+                f"@8831 {LOG_ID} Palletized: {palletized}\nNon-Palletized: {non_palletized}"
+            )
+
+            # Create one PAL bok_2
+            for item in non_palletized:  # Non Palletized
+                line_obj = item["line_obj"]
+                line = {}
+                line["fk_header_id"] = line_obj.fk_header_id
+                line["v_client_pk_consigment_num"] = line_obj.v_client_pk_consigment_num
+                line["pk_booking_lines_id"] = line_obj.pk_booking_lines_id
+                line["success"] = line_obj.success
+                line["l_001_type_of_packaging"] = "PAL"
+                line["l_002_qty"] = item["quantity"]
+                line["l_003_item"] = line_obj.l_003_item
+                line["l_004_dim_UOM"] = line_obj.l_004_dim_UOM
+                line["l_005_dim_length"] = line_obj.l_005_dim_length
+                line["l_006_dim_width"] = line_obj.l_006_dim_width
+                line["l_007_dim_height"] = line_obj.l_007_dim_height
+                line["l_009_weight_per_each"] = line_obj.l_009_weight_per_each
+                line["l_008_weight_UOM"] = line_obj.l_008_weight_UOM
+                line["is_deleted"] = line_obj.is_deleted
+                line["b_093_packed_status"] = BOK_2_lines.AUTO_PACK
+                bok_2_serializer = BOK_2_Serializer(data=line)
+                if bok_2_serializer.is_valid():
+                    bok_2_serializer.save()
+                else:
+                    message = f"Serialiser Error - {bok_2_serializer.errors}"
+                    logger.info(f"@8135 {LOG_ID} {message}")
+                    raise Exception(message)
+                bok_2s.append({"booking_line": line})
+
+            for palletized_item in palletized:  # Palletized
+                pallet = pallets[palletized_item["pallet_index"]]
+
+                total_weight = 0
+                for _iter in palletized_item["lines"]:
+                    line_in_pallet = _iter["line_obj"]
+                    total_weight += (
+                        line_in_pallet.l_009_weight_per_each
+                        * _iter["quantity"]
+                        / palletized_item["quantity"]
+                    )
+
+                new_line = {}
+                new_line["fk_header_id"] = bok_1["pk_header_id"]
+                new_line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+                new_line["pk_booking_lines_id"] = str(uuid.uuid1())
+                new_line["success"] = bok_1["success"]
+                new_line["l_001_type_of_packaging"] = "PAL"
+                new_line["l_002_qty"] = palletized_item["quantity"]
+                new_line["l_003_item"] = "Auto repacked item"
+                new_line["l_004_dim_UOM"] = "mm"
+                new_line["l_005_dim_length"] = pallet.length
+                new_line["l_006_dim_width"] = pallet.width
+                new_line["l_007_dim_height"] = palletized_item["packed_height"] * 1000
+                new_line["l_009_weight_per_each"] = round(total_weight, 2)
+                new_line["l_008_weight_UOM"] = "KG"
+                new_line["is_deleted"] = False
+                new_line["b_093_packed_status"] = BOK_2_lines.AUTO_PACK
+
+                bok_2_serializer = BOK_2_Serializer(data=new_line)
+                if bok_2_serializer.is_valid():
+                    # Create Bok_3s
+                    for _iter in palletized_item["lines"]:
+                        line = _iter["line_obj"]  # line_in_pallet
+                        bok_3 = {}
+                        bok_3["fk_header_id"] = bok_1["pk_header_id"]
+                        bok_3["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
+                        bok_3["fk_booking_lines_id"] = new_line["pk_booking_lines_id"]
+                        bok_3["success"] = line.success
+                        bok_3[
+                            "ld_005_item_serial_number"
+                        ] = line.zbl_131_decimal_1  # Sequence
+                        bok_3["ld_001_qty"] = line.l_002_qty
+                        bok_3["ld_003_item_description"] = line.l_003_item
+                        bok_3["ld_002_model_number"] = line.e_item_type
+                        bok_3["zbld_121_integer_1"] = line.zbl_131_decimal_1  # Sequence
+                        bok_3["zbld_122_integer_2"] = _iter["quantity"]
+                        bok_3["zbld_131_decimal_1"] = line.l_005_dim_length
+                        bok_3["zbld_132_decimal_2"] = line.l_006_dim_width
+                        bok_3["zbld_133_decimal_3"] = line.l_007_dim_height
+                        bok_3["zbld_134_decimal_4"] = round(
+                            line.l_009_weight_per_each, 2
+                        )
+                        bok_3["zbld_101_text_1"] = line.l_004_dim_UOM
+                        bok_3["zbld_102_text_2"] = line.l_008_weight_UOM
+                        bok_3["zbld_103_text_3"] = line.e_item_type
+                        bok_3["zbld_104_text_4"] = line.l_001_type_of_packaging
+                        bok_3["zbld_105_text_5"] = line.l_003_item
+
+                        bok_3_serializer = BOK_3_Serializer(data=bok_3)
+                        if bok_3_serializer.is_valid():
+                            bok_3_serializer.save()
+                        else:
+                            message = f"Serialiser Error - {bok_3_serializer.errors}"
+                            logger.info(f"@8134 {LOG_ID} {message}")
+                            raise Exception(message)
+
+                    bok_2_serializer.save()
+                    bok_2s.append({"booking_line": new_line})
+                else:
+                    message = f"Serialiser Error - {bok_2_serializer.errors}"
+                    logger.info(f"@8135 {LOG_ID} {message}")
+                    raise Exception(message)
+
+            # Set `auto_repack` flag
+            bok_1_obj.b_081_b_pu_auto_pack = True
+            bok_1_obj.save()
+
+        # Get Pricings
+        booking = {
+            "pk_booking_id": bok_1["pk_header_id"],
+            "puPickUpAvailFrom_Date": next_biz_day,
+            "b_clientReference_RA_Numbers": "",
+            "puCompany": bok_1["b_028_b_pu_company"],
+            "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
+            "pu_Email": bok_1["b_037_b_pu_email"],
+            "pu_Phone_Main": bok_1["b_038_b_pu_phone_main"],
+            "pu_Address_Street_1": bok_1["b_029_b_pu_address_street_1"],
+            "pu_Address_street_2": bok_1["b_030_b_pu_address_street_2"],
+            "pu_Address_Country": bok_1["b_034_b_pu_address_country"],
+            "pu_Address_PostalCode": bok_1["b_033_b_pu_address_postalcode"],
+            "pu_Address_State": bok_1["b_031_b_pu_address_state"],
+            "pu_Address_Suburb": bok_1["b_032_b_pu_address_suburb"],
+            "pu_Address_Type": bok_1["b_027_b_pu_address_type"],
+            "deToCompanyName": bok_1["b_054_b_del_company"],
+            "de_to_Contact_F_LName": bok_1["b_061_b_del_contact_full_name"],
+            "de_Email": bok_1["b_063_b_del_email"],
+            "de_to_Phone_Main": bok_1["b_064_b_del_phone_main"],
+            "de_To_Address_Street_1": bok_1["b_055_b_del_address_street_1"],
+            "de_To_Address_Street_2": bok_1["b_056_b_del_address_street_2"],
+            "de_To_Address_Country": bok_1["b_060_b_del_address_country"],
+            "de_To_Address_PostalCode": bok_1["b_059_b_del_address_postalcode"],
+            "de_To_Address_State": bok_1["b_057_b_del_address_state"],
+            "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
+            "de_To_AddressType": bok_1["b_053_b_del_address_type"],
+            "b_booking_tail_lift_pickup": bok_1["b_019_b_pu_tail_lift"],
+            "b_booking_tail_lift_deliver": bok_1["b_041_b_del_tail_lift"],
+            "client_warehouse_code": bok_1["b_client_warehouse_code"],
+            "kf_client_id": bok_1["fk_client_id"],
+            "b_client_name": client.company_name,
+            "pu_no_of_assists": bok_1.get("b_072_b_pu_no_of_assists") or 0,
+            "de_no_of_assists": bok_1.get("b_073_b_del_no_of_assists") or 0,
+            "b_booking_project": None,
+        }
+
+        booking_lines = []
+        for bok_2 in bok_2s:
+            _bok_2 = bok_2["booking_line"]
+            bok_2_line = {
+                "fk_booking_id": _bok_2["fk_header_id"],
+                "pk_lines_id": _bok_2["fk_header_id"],
+                "e_type_of_packaging": _bok_2["l_001_type_of_packaging"],
+                "e_qty": _bok_2["l_002_qty"],
+                "e_item": _bok_2["l_003_item"],
+                "e_dimUOM": _bok_2["l_004_dim_UOM"],
+                "e_dimLength": _bok_2["l_005_dim_length"],
+                "e_dimWidth": _bok_2["l_006_dim_width"],
+                "e_dimHeight": _bok_2["l_007_dim_height"],
+                "e_weightUOM": _bok_2["l_008_weight_UOM"],
+                "e_weightPerEach": _bok_2["l_009_weight_per_each"],
+                "packed_status": _bok_2["b_093_packed_status"],
+            }
+            booking_lines.append(bok_2_line)
+
+        fc_log, _ = FC_Log.objects.get_or_create(
+            client_booking_id=bok_1["client_booking_id"],
+            old_quote__isnull=True,
+            new_quote__isnull=True,
         )
+        # fc_log.old_quote = old_quote
+        body = {"booking": booking, "booking_lines": booking_lines}
+        quote_set = None
 
-        # Create one PAL bok_2
-        for item in non_palletized:  # Non Palletized
-            line_obj = item["line_obj"]
-            line = {}
-            line["fk_header_id"] = line_obj.pk
-            line["v_client_pk_consigment_num"] = line_obj.v_client_pk_consigment_num
-            line["pk_booking_lines_id"] = line_obj.pk_booking_lines_id
-            line["success"] = line_obj.success
-            line["l_001_type_of_packaging"] = "PAL"
-            line["l_002_qty"] = item["quantity"]
-            line["l_003_item"] = line_obj.l_003_item
-            line["l_004_dim_UOM"] = line_obj.l_004_dim_UOM
-            line["l_005_dim_length"] = line_obj.l_005_dim_length
-            line["l_006_dim_width"] = line_obj.l_006_dim_width
-            line["l_007_dim_height"] = line_obj.l_007_dim_height
-            line["l_009_weight_per_each"] = line_obj.l_009_weight_per_each
-            line["l_008_weight_UOM"] = line_obj.l_008_weight_UOM
-            line["is_deleted"] = line_obj.is_deleted
-            line["b_093_packed_status"] = BOK_2_lines.AUTO_PACK
-            bok_2s.append({"booking_line": line})
+        if booking_lines:
+            _, success, message, quote_set = pricing_oper(
+                body=body,
+                booking_id=None,
+                is_pricing_only=True,
+                packed_statuses=[Booking_lines.ORIGINAL, Booking_lines.AUTO_PACK],
+            )
+            logger.info(
+                f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
+            )
 
-        for palletized_item in palletized:  # Palletized
-            pallet = pallets[palletized_item["pallet_index"]]
+            if selected_quote:
+                if selected_quote.freight_provider == "Deliver-ME":
+                    quote_set = quote_set.filter(
+                        freight_provider=selected_quote.freight_provider,
+                        packed_status=Booking_lines.ORIGINAL,
+                    )
+                else:
+                    quote_set = quote_set.filter(
+                        freight_provider=selected_quote.freight_provider,
+                        service_name=selected_quote.service_name,
+                    )
 
-            total_weight = 0
-            for _iter in palletized_item["lines"]:
-                line_in_pallet = _iter["line_obj"]
-                total_weight += (
-                    line_in_pallet.l_009_weight_per_each
-                    * _iter["quantity"]
-                    / palletized_item["quantity"]
+        # Select best quotes(fastest, lowest)
+        if quote_set and quote_set.exists() and quote_set.count() > 0:
+            auto_select_pricing_4_bok(
+                bok_1=bok_1_obj,
+                pricings=quote_set,
+                is_from_script=False,
+                auto_select_type=1,
+                client=client,
+            )
+
+            if quote_set.count() > 1:
+                best_quotes = select_best_options(pricings=quote_set, client=client)
+            else:
+                best_quotes = quote_set
+
+            logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
+
+            if len(best_quotes) > 0:
+                context = {"client_customer_mark_up": client.client_customer_mark_up}
+                json_results = Simple4ProntoQuoteSerializer(
+                    best_quotes, many=True, context=context
+                ).data
+                json_results = dme_time_lib.beautify_eta(
+                    json_results, best_quotes, client
                 )
 
-            new_line = {}
-            new_line["fk_header_id"] = bok_1["pk_header_id"]
-            new_line["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
-            new_line["pk_booking_lines_id"] = str(uuid.uuid1())
-            new_line["success"] = bok_1["success"]
-            new_line["l_001_type_of_packaging"] = "PAL"
-            new_line["l_002_qty"] = palletized_item["quantity"]
-            new_line["l_003_item"] = "Auto repacked item"
-            new_line["l_004_dim_UOM"] = "mm"
-            new_line["l_005_dim_length"] = pallet.length
-            new_line["l_006_dim_width"] = pallet.width
-            new_line["l_007_dim_height"] = palletized_item["packed_height"] * 1000
-            new_line["l_009_weight_per_each"] = round(total_weight, 2)
-            new_line["l_008_weight_UOM"] = "KG"
-            new_line["is_deleted"] = False
-            new_line["b_093_packed_status"] = BOK_2_lines.AUTO_PACK
+                # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
+                best_quote = best_quotes[0]
+                bok_1_obj.b_003_b_service_name = best_quote.service_name
+                bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+                bok_1_obj.b_002_b_vehicle_type = (
+                    best_quote.vehicle.description if best_quote.vehicle else None
+                )
+                bok_1_obj.save()
+                fc_log.new_quote = best_quotes[0]
+                fc_log.save()
 
-            bok_2_serializer = BOK_2_Serializer(data=new_line)
-            if bok_2_serializer.is_valid():
-                # Create Bok_3s
-                for _iter in palletized_item["lines"]:
-                    line = _iter["line_obj"]  # line_in_pallet
-                    bok_3 = {}
-                    bok_3["fk_header_id"] = bok_1["pk_header_id"]
-                    bok_3["v_client_pk_consigment_num"] = bok_1["pk_header_id"]
-                    bok_3["fk_booking_lines_id"] = new_line["pk_booking_lines_id"]
-                    bok_3["success"] = line.success
-                    bok_3[
-                        "ld_005_item_serial_number"
-                    ] = line.zbl_131_decimal_1  # Sequence
-                    bok_3["ld_001_qty"] = line.l_002_qty
-                    bok_3["ld_003_item_description"] = line.l_003_item
-                    bok_3["ld_002_model_number"] = line.e_item_type
-                    bok_3["zbld_121_integer_1"] = line.zbl_131_decimal_1  # Sequence
-                    bok_3["zbld_122_integer_2"] = _iter["quantity"]
-                    bok_3["zbl_131_decimal_1"] = line.l_005_dim_length
-                    bok_3["zbld_132_decimal_2"] = line.l_006_dim_width
-                    bok_3["zbld_133_decimal_3"] = line.l_007_dim_height
-                    bok_3["zbld_134_decimal_4"] = round(line.l_009_weight_per_each, 2)
-                    bok_3["zbld_101_text_1"] = line.l_004_dim_UOM
-                    bok_3["zbld_102_text_2"] = line.l_008_weight_UOM
-                    bok_3["zbld_103_text_3"] = line.e_item_type
-                    bok_3["zbld_104_text_4"] = line.l_001_type_of_packaging
-                    bok_3["zbld_105_text_5"] = line.l_003_item
-
-                    bok_3_serializer = BOK_3_Serializer(data=bok_3)
-                    if bok_3_serializer.is_valid():
-                        bok_3_serializer.save()
-                    else:
-                        message = f"Serialiser Error - {bok_3_serializer.errors}"
-                        logger.info(f"@8134 {LOG_ID} {message}")
-                        raise Exception(message)
-
-                bok_2_serializer.save()
-                bok_2s.append({"booking_line": new_line})
-            else:
-                message = f"Serialiser Error - {bok_2_serializer.errors}"
-                logger.info(f"@8135 {LOG_ID} {message}")
-                raise Exception(message)
-
-        # Set `auto_repack` flag
-        bok_1_obj.b_081_b_pu_auto_pack = True
-        bok_1_obj.save()
-
-    # Get Pricings
-    booking = {
-        "pk_booking_id": bok_1["pk_header_id"],
-        "puPickUpAvailFrom_Date": next_biz_day,
-        "b_clientReference_RA_Numbers": "",
-        "puCompany": bok_1["b_028_b_pu_company"],
-        "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
-        "pu_Email": bok_1["b_037_b_pu_email"],
-        "pu_Phone_Main": bok_1["b_038_b_pu_phone_main"],
-        "pu_Address_Street_1": bok_1["b_029_b_pu_address_street_1"],
-        "pu_Address_street_2": bok_1["b_030_b_pu_address_street_2"],
-        "pu_Address_Country": bok_1["b_034_b_pu_address_country"],
-        "pu_Address_PostalCode": bok_1["b_033_b_pu_address_postalcode"],
-        "pu_Address_State": bok_1["b_031_b_pu_address_state"],
-        "pu_Address_Suburb": bok_1["b_032_b_pu_address_suburb"],
-        "pu_Address_Type": bok_1["b_027_b_pu_address_type"],
-        "deToCompanyName": bok_1["b_054_b_del_company"],
-        "de_to_Contact_F_LName": bok_1["b_061_b_del_contact_full_name"],
-        "de_Email": bok_1["b_063_b_del_email"],
-        "de_to_Phone_Main": bok_1["b_064_b_del_phone_main"],
-        "de_To_Address_Street_1": bok_1["b_055_b_del_address_street_1"],
-        "de_To_Address_Street_2": bok_1["b_056_b_del_address_street_2"],
-        "de_To_Address_Country": bok_1["b_060_b_del_address_country"],
-        "de_To_Address_PostalCode": bok_1["b_059_b_del_address_postalcode"],
-        "de_To_Address_State": bok_1["b_057_b_del_address_state"],
-        "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
-        "de_To_AddressType": bok_1["b_053_b_del_address_type"],
-        "b_booking_tail_lift_pickup": bok_1["b_019_b_pu_tail_lift"],
-        "b_booking_tail_lift_deliver": bok_1["b_041_b_del_tail_lift"],
-        "client_warehouse_code": bok_1["b_client_warehouse_code"],
-        "kf_client_id": bok_1["fk_client_id"],
-        "b_client_name": client.company_name,
-        "pu_no_of_assists": bok_1.get("b_072_b_pu_no_of_assists") or 0,
-        "de_no_of_assists": bok_1.get("b_073_b_del_no_of_assists") or 0,
-        "b_booking_project": None,
-    }
-
-    booking_lines = []
-    for bok_2 in bok_2s:
-        _bok_2 = bok_2["booking_line"]
-        bok_2_line = {
-            "fk_booking_id": _bok_2["fk_header_id"],
-            "pk_lines_id": _bok_2["fk_header_id"],
-            "e_type_of_packaging": _bok_2["l_001_type_of_packaging"],
-            "e_qty": _bok_2["l_002_qty"],
-            "e_item": _bok_2["l_003_item"],
-            "e_dimUOM": _bok_2["l_004_dim_UOM"],
-            "e_dimLength": _bok_2["l_005_dim_length"],
-            "e_dimWidth": _bok_2["l_006_dim_width"],
-            "e_dimHeight": _bok_2["l_007_dim_height"],
-            "e_weightUOM": _bok_2["l_008_weight_UOM"],
-            "e_weightPerEach": _bok_2["l_009_weight_per_each"],
-            "packed_status": _bok_2["b_093_packed_status"],
-        }
-        booking_lines.append(bok_2_line)
-
-    fc_log, _ = FC_Log.objects.get_or_create(
-        client_booking_id=bok_1["client_booking_id"],
-        old_quote__isnull=True,
-        new_quote__isnull=True,
-    )
-    # fc_log.old_quote = old_quote
-    body = {"booking": booking, "booking_lines": booking_lines}
-    quote_set = None
-
-    if booking_lines:
-        _, success, message, quote_set = pricing_oper(
-            body=body,
-            booking_id=None,
-            is_pricing_only=True,
-            packed_statuses=[Booking_lines.ORIGINAL, Booking_lines.AUTO_PACK],
-        )
-        logger.info(
-            f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
-        )
-
-        if (
-            selected_quote
-            and bok_1.get("shipping_type") == "DMEM"
-            and selected_quote.freight_provider == "Deliver-ME"
-        ):
-            quote_set = quote_set.filter(
-                freight_provider=selected_quote.freight_provider,
-                packed_status=Booking_lines.ORIGINAL,
-            )
-        elif bok_1.get("shipping_type") == "DMEM" and selected_quote:
-            quote_set = quote_set.filter(
-                freight_provider=selected_quote.freight_provider,
-                service_name=selected_quote.service_name,
-            )
-
-    # Select best quotes(fastest, lowest)
-    if quote_set and quote_set.exists() and quote_set.count() > 0:
-        auto_select_pricing_4_bok(
-            bok_1=bok_1_obj,
-            pricings=quote_set,
-            is_from_script=False,
-            auto_select_type=1,
-            client=client,
-        )
-
-        if quote_set.count() > 1:
-            best_quotes = select_best_options(pricings=quote_set, client=client)
-        else:
-            best_quotes = quote_set
-
-        logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
-
-        if len(best_quotes) > 0:
-            context = {"client_customer_mark_up": client.client_customer_mark_up}
-            json_results = Simple4ProntoQuoteSerializer(
-                best_quotes, many=True, context=context
-            ).data
-            json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
-
-            # if bok_1["success"] == dme_constants.BOK_SUCCESS_4:
-            best_quote = best_quotes[0]
-            bok_1_obj.b_003_b_service_name = best_quote.service_name
-            bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
-            bok_1_obj.b_002_b_vehicle_type = (
-                best_quote.vehicle.description if best_quote.vehicle else None
-            )
-            bok_1_obj.save()
-            fc_log.new_quote = best_quotes[0]
-            fc_log.save()
-
-    # Set Express or Standard
-    if len(json_results) == 1:
-        json_results[0]["service_name"] = "Standard"
-    elif len(json_results) > 1:
-        if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
-            json_results[0]["service_name"] = "Express"
-            json_results[1]["service_name"] = "Standard"
-
-            if json_results[0]["eta"] == json_results[1]["eta"]:
-                eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
-                json_results[1]["eta"] = eta
-
-            json_results = [json_results[1], json_results[0]]
-        else:
-            json_results[1]["service_name"] = "Express"
+        # Set Express or Standard
+        if len(json_results) == 1:
             json_results[0]["service_name"] = "Standard"
+        elif len(json_results) > 1:
+            if float(json_results[0]["cost"]) > float(json_results[1]["cost"]):
+                json_results[0]["service_name"] = "Express"
+                json_results[1]["service_name"] = "Standard"
 
-            if json_results[0]["eta"] == json_results[1]["eta"]:
-                eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
-                json_results[0]["eta"] = eta
+                if json_results[0]["eta"] == json_results[1]["eta"]:
+                    eta = f"{int(json_results[1]['eta'].split(' ')[0]) + 1} days"
+                    json_results[1]["eta"] = eta
+
+                json_results = [json_results[1], json_results[0]]
+            else:
+                json_results[1]["service_name"] = "Express"
+                json_results[0]["service_name"] = "Standard"
+
+                if json_results[0]["eta"] == json_results[1]["eta"]:
+                    eta = f"{int(json_results[0]['eta'].split(' ')[0]) + 1} days"
+                    json_results[0]["eta"] = eta
 
     # Response
-    if json_results:
-        push_to_warehouse(bok_1_obj)
+    if json_results or not bok_1["shipping_type"]:
+        # push_to_warehouse(bok_1_obj)
         logger.info(f"@8838 {LOG_ID} success: True, 201_created")
         result = {"success": True, "results": json_results}
         url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
@@ -600,11 +610,9 @@ def push_boks(payload, client, username, method):
         send_email_to_admins("No FC result", message)
 
         message = (
-            "Pricing cannot be returned due to incorrect address/lines information."
+            f"Pricing cannot be returned due to incorrect address/lines information."
         )
         logger.info(f"@8839 {LOG_ID} {message}")
-
-        # Show price page either DMEA and DMEM
         url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
 
         result = {"success": True, "results": json_results}
