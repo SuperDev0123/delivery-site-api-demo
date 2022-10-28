@@ -326,7 +326,7 @@ def push_boks(payload, client, username, method):
         bok_1["pk_header_id"], "Imported / Integrated", username
     )
 
-    if bok_1["b_092_booking_type"]:
+    if not bok_1["b_092_booking_type"]:
         # `auto_repack` logic
         carton_cnt = 0
         for bok_2_obj in bok_2_objs:
@@ -596,7 +596,7 @@ def push_boks(payload, client, username, method):
                     json_results[0]["eta"] = eta
 
     # Response
-    if json_results or not bok_1["shipping_type"]:
+    if json_results:
         # push_to_warehouse(bok_1_obj)
         logger.info(f"@8838 {LOG_ID} success: True, 201_created")
         result = {"success": True, "results": json_results}
