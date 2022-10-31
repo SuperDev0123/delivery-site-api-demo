@@ -3985,7 +3985,8 @@ class FPStoreBookingLog(viewsets.ViewSet):
 class ApiBookingQuotesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_pricings(self, request):
-        dme_employee = DME_employees.objects.filter(fk_id_user=request.user.id)
+        
+        dme_employee = DME_employees.objects.filter(fk_id_user=request.user.id).first()
 
         if dme_employee:
             user_type = "DME"
@@ -4014,14 +4015,14 @@ class ApiBookingQuotesViewSet(viewsets.ViewSet):
         }
 
         serializer = ApiBookingQuotesSerializer(
-            queryset,
-            many=True,
+            queryset.first(),
+            many=False,
             fields_to_exclude=fields_to_exclude,
             context=context,
         )
 
         # When DmeInvoice and Quote $* is set
-        res = list(serializer.data)
+        res = [serializer.data]
         if (
             res
             and booking.inv_dme_invoice_no
