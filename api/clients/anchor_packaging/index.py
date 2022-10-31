@@ -37,6 +37,11 @@ from api.fp_apis.utils import (
     auto_select_pricing_4_bok,
     gen_consignment_num,
 )
+from api.clients.operations.index import (
+    get_suburb_state,
+    get_similar_suburb,
+    is_postalcode_in_state,
+)
 
 # from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
@@ -50,6 +55,116 @@ from api.warehouses.index import push as push_to_warehouse
 
 
 logger = logging.getLogger(__name__)
+
+
+def collect_errors(bok_1):
+    errors = []
+
+    # Entity name
+    if not bok_1.get("b_028_b_pu_company"):
+        errors.append("Stop Error: Pickup entity missing")
+    if not bok_1.get("b_054_b_del_company"):
+        errors.append("Stop Error: Delivery entity missing")
+
+    # Street
+    if not (
+        bok_1.get("b_029_b_pu_address_street_1")
+        or bok_1.get("b_030_b_pu_address_street_2")
+    ):
+        errors.append("Stop Error: Pickup street missing")
+    if not (
+        bok_1.get("b_055_b_del_address_street_1")
+        or bok_1.get("b_056_b_del_address_street_2")
+    ):
+        errors.append("Stop Error: Delivery street missing")
+
+    # State
+    if not bok_1.get("b_031_b_pu_address_state"):
+        errors.append("Stop Error: Pickup state missing or misspelled")
+    if not bok_1.get("b_057_b_del_address_state"):
+        errors.append("Stop Error: Delivery state missing or misspelled")
+
+    # Postal Code
+    if not bok_1.get("b_033_b_pu_address_postalcode"):
+        errors.append("Stop Error: Pickup postal code missing or misspelled")
+    if not bok_1.get("b_059_b_del_address_postalcode"):
+        errors.append("Stop Error: Delivery postal code missing or misspelled")
+
+    # Suburb
+    if not bok_1.get("b_032_b_pu_address_suburb"):
+        errors.append("Stop Error: Pickup suburb missing or misspelled")
+    if not bok_1.get("b_058_b_del_address_suburb"):
+        errors.append("Stop Error: Delivery suburb missing or misspelled")
+
+    # Postal Code & State
+    if address["state"] and address["postal_code"]:
+        if not is_postalcode_in_state(address["state"], address["postal_code"]):
+            errors.append(
+                "Stop Error: Delivery state and postal code mismatch (Hint perform a Google search for the correct match)"
+            )
+
+    if address["state"] and not address["suburb"]:
+        errors.append(
+            "Stop Error: Delivery state and suburb mistmatch (Hint perform a Google search for the correct match)"
+        )
+
+    if not address["suburb"] and address["postal_code"]:
+        suburb = get_similar_suburb(clue_DA or clue_CUS or clue_DI)
+
+        if suburb:
+            address["suburb"] = suburb
+            errors.append("Stop Error: Delivery suburb misspelled")
+        else:
+            errors.append("Stop Error: Delivery suburb missing")
+
+    if not address["phone"]:
+        errors.append(
+            "Warning: Missing phone number, if SMS status is desired please submit mobile number"
+        )
+    else:
+        _phone = address["phone"]
+        _phone = _phone.replace(" ", "")
+        _phone = _phone.replace("+61", "")
+        _phone = _phone.replace("+", "")
+
+        if not re.match("\d{6,10}", _phone):
+            errors.append("Warning: Wrong phone number")
+        elif "+61" in address["phone"] and len(_phone) != 9:
+            errors.append("Warning: Wrong phone number")
+        elif "+61" in address["phone"] and len(_phone) == 9 and _phone[0] != "4":
+            errors.append(
+                "Warning: Missing mobile number for delivery address, used to text booking status"
+            )
+        elif not "+61" in address["phone"] and len(_phone) not in [6, 10]:
+            errors.append("Warning: Wrong phone number")
+        elif (
+            not "+61" in address["phone"]
+            and len(_phone) == 10
+            and (_phone[0] != "0" or _phone[1] != "4")
+        ):
+            errors.append(
+                "Warning: Missing mobile number for delivery address, used to text booking status"
+            )
+        elif not "+61" in address["phone"] and len(_phone) == 6:
+            errors.append(
+                "Warning: Missing mobile number for delivery address, used to text booking status"
+            )
+
+    # Email
+    if not address["email"]:
+        if clue_DA or clue_CUS or clue_DI:
+            for clue in clue_DA or clue_CUS or clue_DI:
+                if "@" in clue:
+                    address["email"] = clue.strip()
+                    errors.append("Warning: Email is formatted incorrectly")
+                    break
+
+        if not address["email"]:
+            errors.append(
+                "Warning: Missing email for delivery address, used to advise booking status"
+            )
+
+    return "***".join(errors)
 
 
 def push_boks(payload, client, username, method):
@@ -277,6 +392,8 @@ def push_boks(payload, client, username, method):
 
     bok_1["b_500_b_client_cust_job_code"] = bok_1.get("b_500_b_client_cust_job_code")
 
+    bok_1["zb_105_text_5"] = collect_errors(bok_1)
+
     bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
     if not bok_1_serializer.is_valid():
@@ -326,7 +443,7 @@ def push_boks(payload, client, username, method):
         bok_1["pk_header_id"], "Imported / Integrated", username
     )
 
-    if bok_1["b_092_booking_type"]:
+    if True or bok_1["b_092_booking_type"]:
         # `auto_repack` logic
         carton_cnt = 0
         for bok_2_obj in bok_2_objs:

@@ -41,7 +41,11 @@ from django.urls import reverse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets, views, status, authentication, permissions
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import (
+    IsAuthenticated,
+    AllowAny,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from rest_framework.decorators import (
     api_view,
@@ -5692,3 +5696,9 @@ class DMEBookingCSNoteViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.info(f"Delete Fp Status Error: {str(e)}")
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET"])
+@permission_classes((IsAuthenticatedOrReadOnly,))
+def getStatus(request):
+    return Response(status=status.HTTP_200_OK)

@@ -126,6 +126,26 @@ def get_percentage(vehicle_name):
         return 0.417169832
     if vehicle_name == "DD000135_220921_SYD-BRIS":
         return 0.249566363
+    if vehicle_name == "DD000150_221020_SYD-MEL":
+        return 0.560731145
+    if vehicle_name == "DD000149_221019_SYD-BRIS":
+        return 0.51831156
+    if vehicle_name == "DD000148_221018_SYD-MEL":
+        return 0.607706664
+    if vehicle_name == "DD000146_221013_SYD-MEL_Semi":
+        return 0.935031288
+    if vehicle_name == "DD000147_221013_SYD-MEL_12_Tonne":
+        return 0.536260841
+    if vehicle_name == "DD000145_221012_SYD-BRIS":
+        return 0.351026457
+    if vehicle_name == "DD000144_221011_SYD-MEL":
+        return 0.94280382
+    if vehicle_name == "DD000143_221006_SYD-MEL":
+        return 0.458656274
+    if vehicle_name == "DD000142_221005_SYD-BRIS":
+        return 0.353452629
+    if vehicle_name == "DD000141_221004_SYD-MEL":
+        return 0.44821605
     else:
         return 1
 
