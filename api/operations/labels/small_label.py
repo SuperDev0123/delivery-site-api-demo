@@ -233,7 +233,26 @@ def build_label(
         for j_index in range(booking_line.e_qty):
             if one_page_label and j_index > 0:
                 continue
-
+            booking.puCompany = "This is test label to check long label"
+            booking.pu_Contact_F_L_Name = "This is test label to check long label"
+            booking.pu_Address_Street_1 = "This is test label to check long label"
+            booking.pu_Address_street_2 = "This is test label to check long label"
+            booking.pu_Address_Suburb = "check long label"
+            booking.pu_Address_State = "check long label"
+            booking.pu_Address_Country = "This is test label to check long label"
+            booking_line.sscc = "This is test label to check long label"
+            booking.b_client_order_num = "This is test label to check long label"
+            booking.vx_serviceName = "This is test label to check long label"
+            booking.deToCompanyName = "This is test label to check long label"
+            booking.de_to_Contact_F_LName = "This is test label to check long label"
+            booking.de_To_Address_Street_1 = "This is test label to check long label"
+            booking.de_To_Address_Street_2 = "This is test label to check long label"
+            booking.de_To_Address_State = "check long label"
+            booking.de_To_Address_Suburb = "check long label"
+            booking.de_to_PickUp_Instructions_Address = "This is test label to check long label"
+            booking.de_to_Pick_Up_Instructions_Contact= "This is test label to check long label"
+            booking.vx_account_code = "This is test label to check long label"
+            booking_line.e_item = "This is test label to check long label"
             logger.info(f"#114 [TNT LABEL] Adding: {booking_line}")
             tbl_data1 = [
                 [
@@ -355,7 +374,7 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             16 if len(booking.vx_serviceName or "") < 12 else 9,
-                            (booking.vx_serviceName or ""),
+                            (booking.vx_serviceName or "")[:30],
                         ),
                         style_left,
                     ),
@@ -552,7 +571,7 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             font_size,
-                            booking.de_to_Contact_F_LName or "",
+                            (booking.de_to_Contact_F_LName or "")[:30],
                         ),
                         style_uppercase_big,
                     )
@@ -568,7 +587,7 @@ def build_label(
                             "<font size=%s><b>%s</b></font>"
                             % (
                                 font_size,
-                                booking.deToCompanyName or "",
+                                (booking.deToCompanyName or "")[:30],
                             ),
                             style_uppercase_big,
                         )
@@ -581,7 +600,7 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             font_size,
-                            booking.de_To_Address_Street_1 or "",
+                            (booking.de_To_Address_Street_1 or "")[:30],
                         ),
                         style_uppercase_big,
                     )
@@ -593,21 +612,25 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             font_size,
-                            booking.de_To_Address_Street_2 or "",
+                            (booking.de_To_Address_Street_2 or "")[:30],
                         ),
                         style_uppercase_big,
                     )
                 ]
             )
+            
+            deToAddressInfo = "%s %s %s" % (
+                booking.de_To_Address_Suburb or "",
+                booking.de_To_Address_PostalCode or "",
+                booking.de_To_Address_State or "",
+            )
             tbl_data2.append(
                 [
                     Paragraph(
-                        "<font size=%s><b>%s %s %s</b></font> "
+                        "<font size=%s><b>%s</b></font> "
                         % (
                             font_size,
-                            booking.de_To_Address_Suburb or "",
-                            booking.de_To_Address_PostalCode or "",
-                            booking.de_To_Address_State or "",
+                            deToAddressInfo[:30]
                         ),
                         style_uppercase_big,
                     ),
@@ -669,52 +692,47 @@ def build_label(
             )
 
             if booking.pu_Address_street_2:
-                tbl_data2 = [
-                    [
-                        Paragraph(
-                            "<font size=%s>%s%s, %s, %s, %s, %s, %s</font>"
-                            % (
-                                8,
-                                (
-                                    (booking.puCompany + ", ")
-                                    if (booking.puCompany or "").lower()
-                                    != (booking.pu_Contact_F_L_Name or "").lower()
-                                    else ""
-                                ),
-                                booking.pu_Contact_F_L_Name or "",
-                                booking.pu_Address_Street_1 or "",
-                                booking.pu_Address_street_2 or "",
-                                booking.pu_Address_Suburb or "",
-                                booking.pu_Address_PostalCode or "",
-                                booking.pu_Address_State or "",
-                            ),
-                            style_uppercase,
-                        )
-                    ],
-                ]
+                puAddressInfo = "%s%s, %s, %s, %s, %s, %s" % (
+                    (
+                        (booking.puCompany + ", ")
+                        if (booking.puCompany or "").lower()
+                        != (booking.pu_Contact_F_L_Name or "").lower()
+                        else ""
+                    ),
+                    booking.pu_Contact_F_L_Name or "",
+                    booking.pu_Address_Street_1 or "",
+                    booking.pu_Address_street_2 or "",
+                    booking.pu_Address_Suburb or "",
+                    booking.pu_Address_PostalCode or "",
+                    booking.pu_Address_State or "",
+                )                
             else:
-                tbl_data2 = [
-                    [
-                        Paragraph(
-                            "<font size=%s>%s%s, %s, %s, %s, %s</font>"
-                            % (
-                                8,
-                                (
-                                    (booking.puCompany + ", ")
-                                    if (booking.puCompany or "").lower()
-                                    != (booking.pu_Contact_F_L_Name or "").lower()
-                                    else ""
-                                ),
-                                booking.pu_Contact_F_L_Name or "",
-                                booking.pu_Address_Street_1 or "",
-                                booking.pu_Address_Suburb or "",
-                                booking.pu_Address_PostalCode or "",
-                                booking.pu_Address_State or "",
-                            ),
-                            style_uppercase,
-                        )
-                    ],
-                ]
+                puAddressInfo = "%s%s, %s, %s, %s, %s" % (
+                    (
+                        (booking.puCompany + ", ")
+                        if (booking.puCompany or "").lower()
+                        != (booking.pu_Contact_F_L_Name or "").lower()
+                        else ""
+                    ),
+                    booking.pu_Contact_F_L_Name or "",
+                    booking.pu_Address_Street_1 or "",
+                    booking.pu_Address_Suburb or "",
+                    booking.pu_Address_PostalCode or "",
+                    booking.pu_Address_State or "",
+                )      
+
+            tbl_data2 = [
+                [
+                    Paragraph(
+                        "<font size=%s>%s</font>"
+                        % (
+                            8,
+                            puAddressInfo[:85],
+                        ),
+                        style_uppercase,
+                    )
+                ],
+            ]
 
             t2 = Table(
                 tbl_data2,
@@ -825,6 +843,12 @@ def build_label(
             Story.append(shell_table)
             Story.append(Spacer(1, 5))
 
+            deToAddressInfo = "%s %s %s" % (
+                booking.de_To_Address_Suburb or "",
+                booking.de_To_Address_PostalCode or "",
+                booking.de_To_Address_State or "",
+            )
+
             tbl_data1 = [
                 [
                     Paragraph(
@@ -865,7 +889,7 @@ def build_label(
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.deToCompanyName or "",
+                            (booking.deToCompanyName or "")[:25],
                         ),
                         style_uppercase,
                     )
@@ -885,19 +909,17 @@ def build_label(
                         "<font size=%s>%s</font> "
                         % (
                             label_settings["font_size_normal"],
-                            booking.de_To_Address_Street_2 or "",
+                            (booking.de_To_Address_Street_2 or "")[:25],
                         ),
                         style_uppercase,
                     ),
-                ],
+                ],                
                 [
                     Paragraph(
-                        "<font size=%s>%s %s %s</font> "
+                        "<font size=%s>%s</font> "
                         % (
                             label_settings["font_size_normal"],
-                            booking.de_To_Address_Suburb or "",
-                            booking.de_To_Address_PostalCode or "",
-                            booking.de_To_Address_State or "",
+                            deToAddressInfo[:25]
                         ),
                         style_uppercase,
                     ),
@@ -917,6 +939,12 @@ def build_label(
                     ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ],
             )
+            
+            puAddressInfo = "%s %s %s" % (
+                booking.pu_Address_Suburb or "",
+                booking.pu_Address_PostalCode or "",
+                booking.pu_Address_State or "",
+            )
 
             tbl_data2 = [
                 [
@@ -924,7 +952,7 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.vx_serviceName or "",
+                            (booking.vx_serviceName or "")[:30],
                         ),
                         style_left,
                     )
@@ -953,7 +981,7 @@ def build_label(
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.puCompany or "",
+                            (booking.puCompany or "")[:25],
                         ),
                         style_uppercase,
                     )
@@ -963,7 +991,7 @@ def build_label(
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.pu_Address_Street_1 or "",
+                            (booking.pu_Address_Street_1 or "")[:25],
                         ),
                         style_uppercase,
                     ),
@@ -973,19 +1001,17 @@ def build_label(
                         "<font size=%s>%s</font> "
                         % (
                             label_settings["font_size_normal"],
-                            booking.pu_Address_street_2 or "",
+                            (booking.pu_Address_street_2 or "")[:25],
                         ),
                         style_uppercase,
                     ),
                 ],
                 [
                     Paragraph(
-                        "<font size=%s>%s %s %s</font> "
+                        "<font size=%s>%s</font> "
                         % (
                             label_settings["font_size_normal"],
-                            booking.pu_Address_Suburb or "",
-                            booking.pu_Address_PostalCode or "",
-                            booking.pu_Address_State or "",
+                            puAddressInfo[:25]
                         ),
                         style_uppercase,
                     ),

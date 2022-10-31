@@ -207,7 +207,7 @@ def number_format(num):
 
 
 def gen_ArticleBarcode(booking, v_FPBookingNumber, item_no=0):
-    service_name = str(booking.vx_serviceName)
+    service_name = get_serviceName(booking.vx_serviceName)
     item_index = str(item_no).zfill(5)
 
     label_code = f"{v_FPBookingNumber}{service_name}{item_index}"
@@ -216,7 +216,7 @@ def gen_ArticleBarcode(booking, v_FPBookingNumber, item_no=0):
 
 
 def get_serviceName(temp):
-    return "PRM" if temp == "FPP" else temp
+    return "PRM" if temp == "FPP" else temp[:3]
 
 
 def get_ATL_number(booking):

@@ -486,7 +486,7 @@ def build_label(
                         "<font size=%s>Order Ref: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_client_order_num or "",
+                            (booking.b_client_order_num or "")[:18],
                         ),
                         style_left,
                     ),

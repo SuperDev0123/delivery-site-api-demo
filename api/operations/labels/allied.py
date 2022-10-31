@@ -250,7 +250,7 @@ def build_label(
         for k in range(booking_line.e_qty):
             if one_page_label and k > 0:
                 continue
-
+            
             data = [
                 [
                     dme_img,
@@ -440,7 +440,7 @@ def build_label(
                         "<font size=%s>Order Ref: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.b_client_order_num or "",
+                            (booking.b_client_order_num or "")[:18],
                         ),
                         style_left,
                     ),
@@ -762,7 +762,7 @@ def build_label(
                         "<font size=%s>Account: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            booking.vx_account_code or "",
+                            (booking.vx_account_code or "")[:18],
                         ),
                         style_left,
                     ),

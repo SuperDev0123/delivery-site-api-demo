@@ -427,7 +427,7 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             16 if len(booking.vx_serviceName) < 12 else 9,
-                            booking.vx_serviceName,
+                            booking.vx_serviceName[:30],
                         ),
                         style_left,
                     ),
@@ -623,7 +623,7 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             font_size,
-                            booking.de_to_Contact_F_LName or "",
+                            (booking.de_to_Contact_F_LName or "")[:30],
                         ),
                         style_uppercase_lg,
                     )
@@ -639,7 +639,7 @@ def build_label(
                             "<font size=%s><b>%s</b></font>"
                             % (
                                 font_size,
-                                booking.deToCompanyName or "",
+                                (booking.deToCompanyName or "")[:30],
                             ),
                             style_uppercase_lg,
                         )
@@ -652,7 +652,7 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             font_size,
-                            booking.de_To_Address_Street_1 or "",
+                            (booking.de_To_Address_Street_1 or "")[:30],
                         ),
                         style_uppercase_lg,
                     )
@@ -664,21 +664,24 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             font_size,
-                            booking.de_To_Address_Street_2 or "",
+                            (booking.de_To_Address_Street_2 or "")[:30],
                         ),
                         style_uppercase_lg,
                     )
                 ]
             )
+            deToAddressInfo = "%s %s %s" % (
+                booking.de_To_Address_Suburb or "",
+                booking.de_To_Address_PostalCode or "",
+                booking.de_To_Address_State or "",
+            )
             tbl_data2.append(
                 [
                     Paragraph(
-                        "<font size=%s><b>%s %s %s</b></font> "
+                        "<font size=%s><b>%s</b></font> "
                         % (
                             font_size,
-                            booking.de_To_Address_Suburb or "",
-                            booking.de_To_Address_PostalCode or "",
-                            booking.de_To_Address_State or "",
+                            deToAddressInfo[:30]
                         ),
                         style_uppercase_lg,
                     ),
@@ -740,41 +743,34 @@ def build_label(
             )
 
             if booking.pu_Address_street_2:
-                tbl_data2 = [
-                    [
-                        Paragraph(
-                            "<font size=%s>%s, %s, %s, %s, %s, %s</font>"
-                            % (
-                                8,
-                                booking.puCompany or "",
-                                booking.pu_Address_Street_1 or "",
-                                booking.pu_Address_street_2 or "",
-                                booking.pu_Address_Suburb or "",
-                                booking.pu_Address_PostalCode or "",
-                                booking.pu_Address_State or "",
-                            ),
-                            style_uppercase,
-                        )
-                    ],
-                ]
+                puAddressInfo = "%s, %s, %s, %s, %s, %s" % (
+                    booking.puCompany or "",
+                    booking.pu_Address_Street_1 or "",
+                    booking.pu_Address_street_2 or "",
+                    booking.pu_Address_Suburb or "",
+                    booking.pu_Address_PostalCode or "",
+                    booking.pu_Address_State or "",
+                )                
             else:
-                tbl_data2 = [
-                    [
-                        Paragraph(
-                            "<font size=%s>%s, %s, %s, %s, %s</font>"
-                            % (
-                                8,
-                                booking.puCompany or "",
-                                booking.pu_Address_Street_1 or "",
-                                booking.pu_Address_Suburb or "",
-                                booking.pu_Address_PostalCode or "",
-                                booking.pu_Address_State or "",
-                            ),
-                            style_uppercase,
-                        )
-                    ],
-                ]
-
+                puAddressInfo = "%s, %s, %s, %s, %s" % (
+                    booking.puCompany or "",
+                    booking.pu_Address_Street_1 or "",
+                    booking.pu_Address_Suburb or "",
+                    booking.pu_Address_PostalCode or "",
+                    booking.pu_Address_State or "",
+                )       
+            tbl_data2 = [
+                [
+                    Paragraph(
+                        "<font size=%s>%s</font>"
+                        % (
+                            8,
+                            puAddressInfo[:85]
+                        ),
+                        style_uppercase,
+                    )
+                ],
+            ]
             t2 = Table(
                 tbl_data2,
                 colWidths=(float(label_settings["label_image_size_length"]) * mm - 30),
@@ -926,7 +922,7 @@ def build_label(
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.deToCompanyName or "",
+                            (booking.deToCompanyName or "")[:25],
                         ),
                         style_uppercase,
                     )
@@ -936,7 +932,7 @@ def build_label(
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.de_To_Address_Street_1 or "",
+                            (booking.de_To_Address_Street_1 or "")[:25],
                         ),
                         style_uppercase,
                     ),
@@ -946,7 +942,7 @@ def build_label(
                         "<font size=%s>%s</font> "
                         % (
                             label_settings["font_size_normal"],
-                            booking.de_To_Address_Street_2 or "",
+                            (booking.de_To_Address_Street_2 or "")[:25],
                         ),
                         style_uppercase,
                     ),
@@ -956,7 +952,7 @@ def build_label(
                         "<font size=%s>%s</font> "
                         % (
                             label_settings["font_size_normal"],
-                            booking.de_To_Address_Suburb or "",
+                            (booking.de_To_Address_Suburb or "")[:25],
                         ),
                         style_uppercase,
                     ),
@@ -967,7 +963,7 @@ def build_label(
                         % (
                             label_settings["font_size_normal"],
                             booking.de_To_Address_PostalCode or "",
-                            booking.de_To_Address_State or "",
+                            (booking.de_To_Address_State or "")[:20],
                         ),
                         style_uppercase,
                     ),
@@ -994,7 +990,7 @@ def build_label(
                         "<font size=%s><b>%s</b></font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.vx_serviceName or "",
+                            (booking.vx_serviceName or "")[:30],
                         ),
                         style_left,
                     )
@@ -1022,7 +1018,7 @@ def build_label(
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.puCompany or "",
+                            (booking.puCompany or "")[:25],
                         ),
                         style_uppercase,
                     )
@@ -1032,7 +1028,7 @@ def build_label(
                         "<font size=%s>%s</font>"
                         % (
                             label_settings["font_size_normal"],
-                            booking.pu_Address_Street_1 or "",
+                            (booking.pu_Address_Street_1 or "")[:25],
                         ),
                         style_uppercase,
                     ),
@@ -1042,7 +1038,7 @@ def build_label(
                         "<font size=%s>%s</font> "
                         % (
                             label_settings["font_size_normal"],
-                            booking.pu_Address_street_2 or "",
+                            (booking.pu_Address_street_2 or "")[:25],
                         ),
                         style_uppercase,
                     ),
@@ -1052,7 +1048,7 @@ def build_label(
                         "<font size=%s>%s</font> "
                         % (
                             label_settings["font_size_normal"],
-                            booking.pu_Address_Suburb or "",
+                            (booking.pu_Address_Suburb or "")[:25],
                         ),
                         style_uppercase,
                     ),
@@ -1063,7 +1059,7 @@ def build_label(
                         % (
                             label_settings["font_size_normal"],
                             booking.pu_Address_PostalCode or "",
-                            booking.pu_Address_State or "",
+                            (booking.pu_Address_State or "")[:20],
                         ),
                         style_uppercase,
                     ),
