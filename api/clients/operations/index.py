@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, date
+from re import sub
 
 from api.models import (
     Client_employees,
@@ -135,6 +136,18 @@ def is_postalcode_in_state(state, postal_code):
     logger.info(f"{LOG_ID} state: {state}, postal_code: {postal_code}")
 
     addresses = Utl_suburbs.objects.filter(state=state, postal_code=postal_code)
+
+    return addresses.exists()
+
+
+def is_suburb_in_postalcode(suburb, postal_code):
+    """
+    check if postal_code is in suburb
+    """
+    LOG_ID = "[CHECK SUBURB HAS POSTAL]"
+    logger.info(f"{LOG_ID} suburb: {suburb}, postal_code: {postal_code}")
+
+    addresses = Utl_suburbs.objects.filter(suburb=suburb, postal_code=postal_code)
 
     return addresses.exists()
 
