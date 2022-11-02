@@ -42,6 +42,7 @@ from api.clients.operations.index import (
     get_suburb_state,
     get_similar_suburb,
     is_postalcode_in_state,
+    is_suburb_in_postalcode,
 )
 
 # from api.fp_apis.operations.book import book as book_oper
@@ -120,14 +121,16 @@ def collect_errors(bok_1):
             )
 
     # Postal Code & Suburb
-    if pu_state and not pu_suburb:
-        errors.append(
-            "Stop Error: Pickup state and suburb mistmatch (Hint perform a Google search for the correct match)"
-        )
-    if de_state and not de_suburb:
-        errors.append(
-            "Stop Error: Delivery state and suburb mistmatch (Hint perform a Google search for the correct match)"
-        )
+    if pu_postal and pu_suburb:
+        if not is_suburb_in_postalcode(pu_postal, pu_suburb):
+            errors.append(
+                "Stop Error: Pickup postal code and suburb mismatch (Hint perform a Google search for the correct match)"
+            )
+    if de_postal and de_suburb:
+        if not is_suburb_in_postalcode(de_postal, de_suburb):
+            errors.append(
+                "Stop Error: Delivery postal code and suburb mismatch (Hint perform a Google search for the correct match)"
+            )
 
     # Phone
     if not pu_phone:

@@ -139,6 +139,18 @@ def is_postalcode_in_state(state, postal_code):
     return addresses.exists()
 
 
+def is_suburb_in_postalcode(postal_code, suburb):
+    """
+    check if suburb is in postal_code
+    """
+    LOG_ID = "[CHECK POSTAL HAS SUBURB]"
+    logger.info(f"{LOG_ID} postal_code: {postal_code}, suburb: {suburb}")
+
+    addresses = Utl_suburbs.objects.filter(postal_code=postal_code, suburb=suburb)
+
+    return addresses.exists()
+
+
 def bok_quote(bok_1, packed_status):
     from api.fp_apis.operations.pricing import pricing as pricing_oper
     from api.clients.jason_l.operations import get_total_sales
