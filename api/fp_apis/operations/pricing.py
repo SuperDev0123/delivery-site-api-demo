@@ -658,7 +658,10 @@ def _api_pricing_worker_builder(
                 #     del parse_result["surcharges"]
 
                 parse_result["packed_status"] = packed_status
-                serializer = ApiBookingQuotesSerializer(data=parse_result)
+                context = {"booking": booking}
+                serializer = ApiBookingQuotesSerializer(
+                    data=parse_result, context=context
+                )
                 if serializer.is_valid():
                     quote = serializer.save()
 
@@ -699,7 +702,8 @@ def _built_in_pricing_worker_builder(
     for parse_result in parse_results:
         if parse_results and not "error" in parse_results:
             parse_result["packed_status"] = packed_status
-            serializer = ApiBookingQuotesSerializer(data=parse_result)
+            context = {"booking": booking}
+            serializer = ApiBookingQuotesSerializer(data=parse_result, context=context)
 
             if serializer.is_valid():
                 serializer.save()
