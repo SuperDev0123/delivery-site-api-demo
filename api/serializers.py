@@ -616,7 +616,7 @@ class ApiBookingQuotesSerializer(serializers.ModelSerializer):
         elif obj.service_name and "(Into Premises)" in obj.service_name:
             return obj.service_name
 
-        booking = Bookings.objects.get(pk_booking_id=obj.fk_booking_id)
+        booking = self.context.get("booking")
         if (booking.deToCompanyName.lower() in ["jl fitouts"]) or (
             obj.freight_provider
             in [
