@@ -275,6 +275,24 @@ def get_item_type(i):
     else:
         return "ERROR"
 
+def run_raw_sql(sql):
+    try:
+        mysqlcon = pymysql.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            user=DB_USER,
+            password=DB_PASS,
+            db=DB_NAME,
+            charset="utf8mb4",
+            cursorclass=pymysql.cursors.DictCursor,
+        )
+    except:
+        exit(1)
+    mycursor = mysqlcon.cursor()
+    mycursor.execute(sql)
+    result = mycursor.fetchall()
+    return result
+    
 
 def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     try:
