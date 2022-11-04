@@ -805,10 +805,8 @@ def send_email_missing_dims(client_name, order_num, lines_missing_dims):
     """
     subject = f"JasonL | {order_num}"
     message = f"Hi Regina, Order({order_num}) has lines with missing dims: {lines_missing_dims}"
-    to_emails = ["rejina@jasonl.com.au", "michelle@jasonl.com.au"]
-    cc_emails = [
-        "dev.deliverme@gmail.com",
-    ]
+    to_emails = ["dims@jasonl.com.au"]
+    cc_emails = ["dev.deliverme@gmail.com"]
     send_email(to_emails, cc_emails, [], subject, message)
 
 
