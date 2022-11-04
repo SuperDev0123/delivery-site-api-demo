@@ -1,3 +1,5 @@
+from __future__ import annotations
+from asyncio.windows_events import NULL
 import re
 import os
 import io
@@ -24,7 +26,7 @@ from django_rest_passwordreset.signals import (
     post_password_reset,
     pre_password_reset,
 )
-
+from django.db.models.functions import Cast, Substr
 from django.shortcuts import render
 from django.core import serializers, files
 from django.http import HttpResponse, JsonResponse, QueryDict
@@ -66,7 +68,6 @@ from api.utils import (
     make_3digit,
     get_sydney_now_time,
     calc_collect_after_status_change,
-    run_raw_sql,
     tables_in_query,
     get_clientname_with_request,
 )
@@ -5714,11 +5715,11 @@ def getStatus(request):
 
 @api_view(["GET"])
 @permission_classes((AllowAny,))
-def moveSuccess2ToBookings(request):
+def mapBokToBooking(request):
     option_value = DME_Options.objects.get(option_name='MoveSuccess2ToBookings')
     run_time = (datetime.now().replace(tzinfo=None) - option_value.start_time.replace(tzinfo=None)).seconds
     message = ''
-    if not option_value.is_running or run_time > 300:
+    if not option_value.is_running or run_time > 0:
         option_value.is_running = 1
         option_value.start_time = datetime.now()
         option_value.save()
@@ -5844,23 +5845,15 @@ def moveSuccess2ToBookings(request):
                 )
             message += f"Rows moved to dme_bookings = {headers_count}"
         
-        get_error_booking_sql = f"""select max(id) as id, kf_client_id, b_client_sales_inv_num, Group_Concat(b_bookingID_Visual SEPARATOR ', ') as b_bookingID_Visual_List
-            from (
-            select id, kf_client_id, b_client_sales_inv_num, b_bookingID_Visual
-            from dme_bookings where b_bookingID_Visual < {start_id}
-            and b_status not in ('Cancelled', 'Closed') 
-            and kf_client_id is not null and b_client_sales_inv_num is not null and length(b_client_sales_inv_num) > 0
-            and (kf_client_id, b_client_sales_inv_num) in (select kf_client_id, b_client_sales_inv_num from dme_bookings
-                                                            where b_bookingID_Visual between {start_id} and {end_id}
-                                                            )
-            union
-            select id, kf_client_id, b_client_sales_inv_num, b_bookingID_Visual from dme_bookings
-            where b_bookingID_Visual between {start_id} and {end_id}
-            and kf_client_id is not null and b_client_sales_inv_num is not null and length(b_client_sales_inv_num) > 0
-            ) t
-            group by kf_client_id, b_client_sales_inv_num
-            having count(*) > 1;"""
-        error_bookings = run_raw_sql(get_error_booking_sql)
+        pre_data = list(Bookings.objects.filter(b_bookingID_Visual__gte=start_id, b_bookingID_Visual__lte=end_id).values_list('kf_client_id', 'b_client_sales_inv_num'))
+        kf_client_id_list = []
+        b_client_sales_inv_num_list = []
+        for data in pre_data:
+            kf_client_id_list.append(data[0])
+            b_client_sales_inv_num_list.append(data[1])
+        error_bookings_1 = Bookings.objects.filter(b_bookingID_Visual__gt=start_id, kf_client_id__isnull=False, b_client_sales_inv_num__isnull=False, b_client_sales_inv_num__regex = r'.{0}.*', kf_client_id__in=kf_client_id_list, b_client_sales_inv_num__in=b_client_sales_inv_num_list).exclude(b_status__in=['Cancelled', 'Closed']).values('kf_client_id', 'b_client_sales_inv_num').annotate(id=Max('id'), b_bookingID_Visual_List=GroupConcat('b_bookingID_Visual', separator=', '))
+        error_bookings_2 = Bookings.objects.filter(b_bookingID_Visual__gte=start_id, b_bookingID_Visual__lte=end_id, kf_client_id__isnull=False, b_client_sales_inv_num__isnull=False, b_client_sales_inv_num__regex = r'.{0}.*').values('kf_client_id', 'b_client_sales_inv_num').annotate(id=Max('id'), ctn=Count('*'), b_bookingID_Visual_List=GroupConcat('b_bookingID_Visual', separator=', ')).filter(ctn__gt=1)
+        error_bookings = list(error_bookings_1) + list(error_bookings_2)
         for booking in error_bookings:
             Bookings.objects.filter(id=booking["id"]).update(b_error_Capture=('SINV is duplicated in bookingID = ' + booking['b_bookingID_Visual_List']), b_status='On Hold')
         
@@ -5936,32 +5929,54 @@ def moveSuccess2ToBookings(request):
         
         bookingID_Visual = start_id
         while bookingID_Visual <= end_id:
-            created_email = run_raw_sql(f"""SELECT 
-            SUBSTRING_INDEX(SUBSTRING_INDEX(dme_bookings.booking_Created_For, ' ', 1), ' ', -1),
-            TRIM(SUBSTR(dme_bookings.booking_Created_For, LOCATE(' ', dme_bookings.booking_Created_For))),
-            dme_bookings.api_booking_quote_id, dme_clients.pk_id_dme_client
-            INTO first_name, last_name, api_booking_quote_id, pk_id_dme_client
-            FROM dme_bookings 
-            INNER JOIN dme_clients 
-            ON dme_bookings.b_client_name=dme_clients.company_name AND dme_bookings.kf_client_id=dme_clients.dme_account_num
-            WHERE dme_bookings.b_bookingID_Visual = {bookingID_Visual};""")[0]
-            if created_email['first_name'] == 'Bathroom':
-                Bookings.objects.filter(b_bookingID_Visual=bookingID_Visual).update(booking_Created_For_Email = "info@bathroomsalesdirect.com.au")
-            else:
-                booking_created_for_email = ''
-                if created_email['last_name'] == '':
-                    booking_created_for_email = Client_employees.objects.filter(name_first=created_email['first_name'], name_last__isnull=True, fk_id_dme_client_id=created_email['pk_id_dme_client'])
+            booking = Bookings.objects.filter(b_bookingID_Visual=bookingID_Visual)
+            
+            if(len(booking) > 0):
+                booking = booking[0]
+                dme_client = DME_clients.objects.filter(company_name=booking.b_client_name, dme_account_num=booking.kf_client_id).first()
+                booking_Created_For = booking.booking_Created_For
+                booking_Created_For = booking_Created_For if booking_Created_For else '' 
+                first_name = booking_Created_For.split(" ")[0]
+                last_name = booking_Created_For.replace(first_name, '').strip()
+                api_booking_quote_id = booking.api_booking_quote_id
+                pk_id_dme_client = dme_client.pk_id_dme_client if dme_client else None
+                if first_name == 'Bathroom':
+                    booking.booking_Created_For_Email = "info@bathroomsalesdirect.com.au"
+                    booking.save()
                 else:
-                    booking_created_for_email = Client_employees.objects.filter(name_first=created_email['last_name'], name_last=created_email['first_name'], fk_id_dme_client_id=created_email['pk_id_dme_client'])                    
-                Bookings.objects.filter(b_bookingID_Visual=bookingID_Visual).update(booking_Created_For_Email = booking_created_for_email)
-            if created_email['api_booking_quote_id']:
-                run_raw_sql(f"""UPDATE dme_bookings booking
-                INNER JOIN api_booking_quotes quote ON booking.api_booking_quote_id = quote.id
-                SET booking.inv_sell_quoted = quote.client_mu_1_minimum_values, booking.inv_cost_quoted = quote.fee * (1 + quote.mu_percentage_fuel_levy)
-                WHERE booking.b_bookingID_Visual = {bookingID_Visual};""")
+                    booking_created_for_email = ''
+                    if last_name == '':
+                        booking_created_for_email = Client_employees.objects.filter(name_first=first_name, name_last__isnull=True, fk_id_dme_client_id=pk_id_dme_client).values_list("email")
+                    else:
+                        booking_created_for_email = Client_employees.objects.filter(name_first=last_name, name_last=first_name, fk_id_dme_client_id=pk_id_dme_client).values_list("email")
+                    booking.booking_Created_For_Email = booking_created_for_email[0].email if len(booking_created_for_email) > 0 else ''
+                    booking.save()                    
+                if api_booking_quote_id:
+                    print("--------ok")
+                    booking_quote = API_booking_quotes.objects.filter(id=booking.api_booking_quote_id).first()
+                    booking.inv_sell_quoted = booking_quote.client_mu_1_minimum_values
+                    booking.inv_cost_quoted = booking_quote.fee * (1 + booking_quote.mu_percentage_fuel_levy)
+                    booking.save()
             bookingID_Visual += 1
-        DME_Options.objects.filter(option_name = 'MoveSuccess2ToBookings').update(is_running=0,end_time=datetime.now())
+        option_value.is_running = 0
+        option_value.end_time = datetime.now()
+        option_value.save()
     else:
         message += 'Procedure MoveSuccess2ToBookings is already running.'
     return Response(message, status=status.HTTP_200_OK)
         
+from django.db.models import Aggregate, CharField
+
+class GroupConcat(Aggregate):
+    function = 'GROUP_CONCAT'
+    template = '%(function)s(%(distinct)s%(expressions)s%(ordering)s%(separator)s)'
+
+    def __init__(self, expression, distinct=False, ordering=None, separator=',', **extra):
+        super(GroupConcat, self).__init__(
+            expression,
+            distinct='DISTINCT ' if distinct else '',
+            ordering=' ORDER BY %s' % ordering if ordering is not None else '',
+            separator=' SEPARATOR "%s"' % separator,
+            output_field=CharField(),
+            **extra
+        )

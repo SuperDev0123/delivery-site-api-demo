@@ -67,7 +67,7 @@ urlpatterns = router.urls
 urlpatterns += [
     # Auth
     url(r"^status/", getStatus),
-    url(r"^move-success-to-bookings/", moveSuccess2ToBookings),
+    url(r"^map-bok-to-booking/", mapBokToBooking),
     url(r"^api-token-auth/", obtain_jwt_token),
     url(r"^api-token-verify/", verify_jwt_token),
     url(r"^warehouses/", WarehouseViewSet.as_view({"get": "list"})),
