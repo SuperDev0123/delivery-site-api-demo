@@ -6,6 +6,7 @@ from .views import *
 from .views_status import *
 from .views_client import *
 from .views_zoho import *
+from .views_cron import *
 from .views_external_apis import *
 from .views_spojit import *
 from .fp_apis import apis as fp_apis
