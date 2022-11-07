@@ -25,7 +25,6 @@ from django_rest_passwordreset.signals import (
     pre_password_reset,
 )
 
-from django.db.models.functions import Cast, Substr
 from django.shortcuts import render
 from django.core import serializers, files
 from django.http import HttpResponse, JsonResponse, QueryDict
