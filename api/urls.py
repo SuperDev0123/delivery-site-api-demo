@@ -6,6 +6,7 @@ from .views import *
 from .views_status import *
 from .views_client import *
 from .views_zoho import *
+from .views_cron import *
 from .views_external_apis import *
 from .views_spojit import *
 from .fp_apis import apis as fp_apis
@@ -67,6 +68,7 @@ urlpatterns = router.urls
 urlpatterns += [
     # Auth
     url(r"^status/", getStatus),
+    url(r"^map-bok-to-booking/", mapBokToBooking),
     url(r"^api-token-auth/", obtain_jwt_token),
     url(r"^api-token-verify/", verify_jwt_token),
     url(r"^warehouses/", WarehouseViewSet.as_view({"get": "list"})),
