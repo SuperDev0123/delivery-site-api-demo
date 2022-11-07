@@ -66,18 +66,20 @@ router.register(r"cs_notes", DMEBookingCSNoteViewSet, basename="cs_notes")
 urlpatterns = router.urls
 
 urlpatterns += [
-    # Auth
+    # Status
     url(r"^status/", getStatus),
-    url(r"^map-bok-to-booking/", mapBokToBooking),
+    # Auth
     url(r"^api-token-auth/", obtain_jwt_token),
     url(r"^api-token-verify/", verify_jwt_token),
-    url(r"^warehouses/", WarehouseViewSet.as_view({"get": "list"})),
-    url(r"^attachments/", getAttachmentsHistory),
     url(
         r"^password_reset/",
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
+    # Mapping
+    url(r"^map-bok-to-booking/", mapBokToBooking),
+    url(r"^warehouses/", WarehouseViewSet.as_view({"get": "list"})),
     # File Uploads
+    url(r"^attachments/", getAttachmentsHistory),
     url(r"^upload/", FileUploadView.as_view()),
     url(r"^upload/status/", get_upload_status),
     # File Downloads

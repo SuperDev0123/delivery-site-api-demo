@@ -30,8 +30,8 @@ def auto_repack(booking, repack_status, need_soft_delete=False):
     auto_repacked_lines = []
 
     # Select suitable pallet and get required pallets count
-    if booking.b_client_name == 'Bathroom Sales Direct':
-        pallets = Pallet.objects.filter(pk=7) # 1.2 x 1.2
+    if booking.b_client_name == "Bathroom Sales Direct":
+        pallets = Pallet.objects.filter(pk=7)  # 1.2 x 1.2
     else:
         pallets = Pallet.objects.all()
     palletized, non_palletized = get_palletized_by_ai(lines, pallets)
@@ -297,6 +297,7 @@ def scanned_repack(booking):
             for line_data in line_datas:
                 line_data.pk = None
                 line_data.fk_booking_lines_id = line.pk_booking_lines_id
+                line_data.packed_status = Booking_lines.SCANNED_PACK
                 line_data.save()
 
         # Duplicate Quotes
