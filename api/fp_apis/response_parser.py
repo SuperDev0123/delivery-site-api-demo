@@ -72,6 +72,10 @@ def _api(booking, fp_name, dme_client, json_data, account_code):
             results.append(result)
     elif fp_name == "tnt" and "price" in json_data:  # TNT
         for price in json_data["price"]:
+            # Exclude `Technology Express - Sensitive Express` service
+            if price["rateCode"] == "717B":
+                continue
+
             result = {}
             result["account_code"] = account_code
             result["api_results_id"] = json_data["requestId"]
