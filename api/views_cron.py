@@ -6,7 +6,7 @@ from django.db.models import Count, Aggregate, CharField
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import (    
-    AllowAny,
+    IsAuthenticated,
 )
 from rest_framework.decorators import (
     api_view,
@@ -33,9 +33,11 @@ class GroupConcat(Aggregate):
             **extra
         )
 
-@api_view(["GET"])
-@permission_classes((AllowAny,))
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
 def mapBokToBooking(request):
+    LOG_ID = "[MAPPING]"
+    
     try:
         option_value = DME_Options.objects.get(option_name='MoveSuccess2ToBookings')
         run_time = (datetime.now().replace(tzinfo=None) - option_value.start_time.replace(tzinfo=None)).seconds
@@ -44,8 +46,8 @@ def mapBokToBooking(request):
             option_value.is_running = 1
             option_value.start_time = datetime.now()
             option_value.save()
-            max_id = Bookings.objects.order_by('-b_bookingID_Visual').first()
-            max_id = max_id.b_bookingID_Visual if max_id else 89600
+            max_id = Bookings.objects.filter().aggregate(max_id=Max('id')).get('max_id')
+            max_id = max_id if max_id else 89600
             start_id = max_id + 1
             bok_headers = BOK_1_headers.objects.filter(success__in=[2,4,5])        
             headers_count = len(bok_headers)
@@ -283,8 +285,8 @@ def mapBokToBooking(request):
             option_value.save()
         else:
             message += 'Procedure MoveSuccess2ToBookings is already running.'
-        logger.info(f"map_bok_to_booking Result: {message}")
+        logger.info(f"{LOG_ID} Result: {str(e)}")
         return Response(message, status=status.HTTP_200_OK)        
     except Exception as e:
-            logger.info(f"map_bok_to_booking Error: {str(e)}")
+            logger.info(f"{LOG_ID} Error: {str(e)}")
             return Response(e.message, status=status.HTTP_400_BAD_REQUEST)
