@@ -275,6 +275,7 @@ def get_item_type(i):
     else:
         return "ERROR"
 
+
 def build_xml(booking_ids, vx_freight_provider, one_manifest_file):
     try:
         mysqlcon = pymysql.connect(
