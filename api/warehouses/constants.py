@@ -22,7 +22,7 @@ CARRIER_MAPPING = {
     "symons clark": "SYMONSCL",
     "state transport": "STATETRN",
     "deliver-me": "DME-DIRECT",
-    "dxt transport": "DXTTRANS",
+    "dxt": "DME-DXT",
     "cochranes": "COCHRANE",
     "hunter": "HUNTER",
     "pickup": "DME-PICKUP",
