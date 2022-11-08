@@ -5699,6 +5699,6 @@ class DMEBookingCSNoteViewSet(viewsets.ModelViewSet):
 
 
 @api_view(["GET"])
-@permission_classes((IsAuthenticatedOrReadOnly,))
+@permission_classes((AllowAny,))
 def getStatus(request):
     return Response(status=status.HTTP_200_OK)

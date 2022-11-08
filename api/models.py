@@ -2522,6 +2522,17 @@ def post_delete_booking_line(sender, instance, **kwargs):
 
 
 class Booking_lines_data(models.Model):
+    ORIGINAL = "original"
+    AUTO_PACK = "auto"
+    MANUAL_PACK = "manual"
+    SCANNED_PACK = "scanned"
+    PACKED_STATUS_CHOICES = (
+        (ORIGINAL, "original"),
+        (AUTO_PACK, "auto"),
+        (MANUAL_PACK, "manual"),
+        (SCANNED_PACK, "scanned"),
+    )
+
     pk_id_lines_data = models.AutoField(primary_key=True)
     fk_booking_lines_id = models.CharField(
         verbose_name=_("FK Booking Lines Id"),
@@ -2556,6 +2567,9 @@ class Booking_lines_data(models.Model):
         verbose_name=_("Item Serial Numbers"), max_length=100, blank=True, null=True
     )
     z_pushed_to_fm = models.BooleanField(default=False, blank=True, null=True)
+    packed_status = models.CharField(
+        max_length=16, default=None, null=True, choices=PACKED_STATUS_CHOICES
+    )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )

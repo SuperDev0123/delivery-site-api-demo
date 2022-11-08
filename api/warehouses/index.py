@@ -112,15 +112,15 @@ def push_webhook(data):
             bok_1 = BOK_1_headers.objects.get(pk=bok_1_pk, b_client_order_num=order_num)
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
 
-            for bok_2 in bok_2s:
-                bok_2.success = dme_constants.BOK_SUCCESS_4
-                bok_2.save()
+            # for bok_2 in bok_2s:
+            #     bok_2.success = dme_constants.BOK_SUCCESS_4
+            #     bok_2.save()
 
-            bok_1.success = dme_constants.BOK_SUCCESS_4
-            bok_1.save()
-            logger.info(
-                f"{LOG_ID} Bok_1 will be mapped. Detail: {bok_1_pk}(pk_auto_id), {order_num}(order number)"
-            )
+            # bok_1.success = dme_constants.BOK_SUCCESS_4
+            # bok_1.save()
+            # logger.info(
+            #     f"{LOG_ID} Bok_1 will be mapped. Detail: {bok_1_pk}(pk_auto_id), {order_num}(order number)"
+            # )
         except:
             message = f"{LOG_ID} BOK_1 does not exist. Data: {data}"
             logger.error(message)
