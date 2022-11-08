@@ -66,7 +66,7 @@ def push(bok_1):
             payload = build_push_payload(bok_1, bok_2s)
             logger.info(f"@9000 {LOG_ID} payload - {payload}")
         except Exception as e:
-            error = f"@901 {LOG_ID} error on payload builder.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\nOrder Number: {bok_1.b_client_order_num}"
+            error = f"@901 {LOG_ID} error on payload builder.\n\nError: {str(e)}\nBok_1: {str(bok_1.pk)}\nOrder Number: {bok_1.b_client_sales_inv_num}"
             logger.error(error)
             raise Exception(error)
 
@@ -76,7 +76,7 @@ def push(bok_1):
         s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         logger.info(f"### Response: {s0}")
     except Exception as e:
-        if bok_1.b_client_order_num:
+        if bok_1.b_client_sales_inv_num:
             to_emails = [settings.ADMIN_EMAIL_02]
             subject = "Error on Whse workflow"
 
@@ -109,7 +109,9 @@ def push_webhook(data):
             send_email_to_admins("Invalid webhook data", message)
 
         try:
-            bok_1 = BOK_1_headers.objects.get(pk=bok_1_pk, b_client_order_num=order_num)
+            bok_1 = BOK_1_headers.objects.get(
+                pk=bok_1_pk, b_client_sales_inv_num=order_num
+            )
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
 
             # for bok_2 in bok_2s:
@@ -170,10 +172,10 @@ def quoting_in_bg(booking):
         else:
             set_booking_quote(booking, None)
     else:
-        message = f"#521 {LOG_ID} SCAN with No Pricing! Order Number: {booking.b_client_order_num}"
+        message = f"#521 {LOG_ID} SCAN with No Pricing! Order Number: {booking.b_client_sales_inv_num}"
         logger.error(message)
 
-        if booking.b_client_order_num:
+        if booking.b_client_sales_inv_num:
             send_email_to_admins("No FC result", message)
 
     # Build label with Line
@@ -197,7 +199,7 @@ def scanned(payload):
 
     LOG_ID = "[SCANNED at WHSE]"
     client_name = payload.get("clientName")
-    b_client_order_num = payload.get("orderNumber")
+    b_client_sales_inv_num = payload.get("orderNumber")
     picked_items = payload.get("items")
     time1 = t.time()
 
@@ -206,7 +208,7 @@ def scanned(payload):
         message = "'clientName' is required."
         raise ValidationError(message)
 
-    if not b_client_order_num:
+    if not b_client_sales_inv_num:
         message = "'orderNumber' is required."
         raise ValidationError(message)
 
@@ -216,7 +218,7 @@ def scanned(payload):
 
     # Check if Order exists on Bookings table
     bookings = Bookings.objects.select_related("api_booking_quote").filter(
-        b_client_name=client_name, b_client_order_num=b_client_order_num
+        b_client_name=client_name, b_client_sales_inv_num=b_client_sales_inv_num
     )
 
     if bookings.count() == 0:
@@ -362,16 +364,18 @@ def reprint_label(params):
     """
     LOG_ID = "[REPRINT from WHSE]"
     client_name = params.get("clientName")
-    b_client_order_num = params.get("orderNumber")
+    b_client_sales_inv_num = params.get("orderNumber")
     sscc = params.get("sscc")
 
-    if not b_client_order_num:
+    if not b_client_sales_inv_num:
         message = "'orderNumber' is required."
         raise ValidationError(message)
 
     booking = (
         Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_order_num=b_client_order_num, b_client_name=client_name)
+        .filter(
+            b_client_sales_inv_num=b_client_sales_inv_num, b_client_name=client_name
+        )
         .first()
     )
 
@@ -436,21 +440,23 @@ def ready(payload):
     """
     LOG_ID = "[READY at WHSE]"
     client_name = payload.get("clientName")
-    b_client_order_num = payload.get("orderNumber")
+    b_client_sales_inv_num = payload.get("orderNumber")
 
     # Check required params are included
     if not client_name:
         message = "'clientName' is required."
         raise ValidationError(message)
 
-    if not b_client_order_num:
+    if not b_client_sales_inv_num:
         message = "'orderNumber' is required."
         raise ValidationError(message)
 
     # Check if Order exists
     booking = (
         Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_name=client_name, b_client_order_num=b_client_order_num)
+        .filter(
+            b_client_name=client_name, b_client_sales_inv_num=b_client_sales_inv_num
+        )
         .first()
     )
 
@@ -490,14 +496,14 @@ def manifest(payload):
         raise ValidationError(message)
 
     bookings = Bookings.objects.filter(
-        b_client_name=client_name, b_client_order_num__in=order_nums
-    ).only("id", "b_client_order_num")
+        b_client_name=client_name, b_client_sales_inv_num__in=order_nums
+    ).only("id", "b_client_sales_inv_num")
 
     booking_ids = []
     filtered_order_nums = []
     for booking in bookings:
         booking_ids.append(booking.id)
-        filtered_order_nums.append(booking.b_client_order_num)
+        filtered_order_nums.append(booking.b_client_sales_inv_num)
 
     missing_order_nums = list(set(order_nums) - set(filtered_order_nums))
 
@@ -512,7 +518,7 @@ def manifest(payload):
         manifest_data = str(b64encode(manifest.read()))
 
     Bookings.objects.filter(
-        b_client_name=client_name, b_client_order_num__in=order_nums
+        b_client_name=client_name, b_client_sales_inv_num__in=order_nums
     ).update(z_manifest_url=manifest_url)
 
     return {
