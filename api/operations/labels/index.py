@@ -20,6 +20,7 @@ from api.operations.labels import (
     tnt,
     allied,
     startrack,
+    dxt,
     default,
     small_label,
 )
@@ -217,6 +218,17 @@ def _build_sscc_label(
             )
         elif pre_data["fp_name"] == "startrack":
             file_path, file_name = startrack.build_label(
+                booking,
+                file_path,
+                pre_data,
+                lines,
+                label_index,
+                sscc,
+                sscc_cnt,
+                one_page_label,
+            )
+        elif pre_data["fp_name"] == "dxt":
+            file_path, file_name = dxt.build_label(
                 booking,
                 file_path,
                 pre_data,
