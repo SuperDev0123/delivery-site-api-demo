@@ -36,7 +36,7 @@ from api.common.booking_quote import set_booking_quote
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
-from api.operations.labels.index import build_label, get_barcode
+from api.operations.labels.index import build_label as build_label_oper, get_barcode
 from api.operations.manifests.index import build_manifest
 from api.operations.email_senders import send_email_to_admins
 from api.operations import product_operations as product_oper
