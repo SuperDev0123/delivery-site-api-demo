@@ -218,7 +218,7 @@ def scanned(payload):
 
     # Check if Order exists on Bookings table
     bookings = Bookings.objects.select_related("api_booking_quote").filter(
-        b_client_name=client_name, b_client_sales_inv_num=b_client_sales_inv_num
+        b_client_name__iexact=client_name, b_client_sales_inv_num=b_client_sales_inv_num
     )
 
     if bookings.count() == 0:
@@ -374,7 +374,8 @@ def reprint_label(params):
     booking = (
         Bookings.objects.select_related("api_booking_quote")
         .filter(
-            b_client_sales_inv_num=b_client_sales_inv_num, b_client_name=client_name
+            b_client_sales_inv_num=b_client_sales_inv_num,
+            b_client_name__iexact=client_name,
         )
         .first()
     )
@@ -455,7 +456,8 @@ def ready(payload):
     booking = (
         Bookings.objects.select_related("api_booking_quote")
         .filter(
-            b_client_name=client_name, b_client_sales_inv_num=b_client_sales_inv_num
+            b_client_name__iexact=client_name,
+            b_client_sales_inv_num=b_client_sales_inv_num,
         )
         .first()
     )
@@ -496,7 +498,7 @@ def manifest(payload):
         raise ValidationError(message)
 
     bookings = Bookings.objects.filter(
-        b_client_name=client_name, b_client_sales_inv_num__in=order_nums
+        b_client_name__iexact=client_name, b_client_sales_inv_num__in=order_nums
     ).only("id", "b_client_sales_inv_num")
 
     booking_ids = []
@@ -518,7 +520,7 @@ def manifest(payload):
         manifest_data = str(b64encode(manifest.read()))
 
     Bookings.objects.filter(
-        b_client_name=client_name, b_client_sales_inv_num__in=order_nums
+        b_client_name__iexact=client_name, b_client_sales_inv_num__in=order_nums
     ).update(z_manifest_url=manifest_url)
 
     return {
