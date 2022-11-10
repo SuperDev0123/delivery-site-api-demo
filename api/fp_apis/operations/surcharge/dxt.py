@@ -25,7 +25,7 @@ def dg(param):
         return {
             "name": "Dangerous Goods",
             "description": "",
-            "value": 15,
+            "value": param["quote_obj"].fee * 0.3,
         }
     else:
         return None
@@ -110,23 +110,41 @@ def hd(param):
 
 
 def ol(param):
-    if param["max_dimension"] > 3 and param["max_dimension"] <= 6:
+    if param["max_dimension"] > 1.2 and param["max_dimension"] <= 2:
         return {
-            "name": "Over-length Goods",
+            "name": "Over Length Surcharge 1.2-1.99m",
             "description": "Where the length of the consignment matches the following dimensions.",
-            "value": 105,
+            "value": 10,
         }
-    elif param["max_dimension"] > 6 and param["max_dimension"] <= 9:
+    elif param["max_dimension"] > 2 and param["max_dimension"] <= 3:
         return {
-            "name": "Over-length Goods",
+            "name": "Over Length Surcharge 2-2.99m",
             "description": "Where the length of the consignment matches the following dimensions.",
-            "value": 315,
+            "value": 20,
         }
-    elif param["max_dimension"] > 9:
+    elif param["max_dimension"] > 3 and param["max_dimension"] <= 4:
         return {
-            "name": "Over-length Goods",
+            "name": "Over Length Surcharge 3-3.99m",
             "description": "Where the length of the consignment matches the following dimensions.",
-            "value": 1000,
+            "value": 30,
+        }
+    elif param["max_dimension"] > 4 and param["max_dimension"] <= 5:
+        return {
+            "name": "Over Length Surcharge 4-4.99m",
+            "description": "Where the length of the consignment matches the following dimensions.",
+            "value": 80,
+        }
+    elif param["max_dimension"] > 5 and param["max_dimension"] <= 6:
+        return {
+            "name": "Over Length Surcharge 5-5.99m",
+            "description": "Where the length of the consignment matches the following dimensions.",
+            "value": 150,
+        }
+    elif param["max_dimension"] > 6:
+        return {
+            "name": "Over Length Surcharge 6m+",
+            "description": "Where the length of the consignment matches the following dimensions.",
+            "value": 250,
         }
     else:
         return None
@@ -284,7 +302,7 @@ def dxt():
         "order": [
             # asf,
             # al,
-            # dg,
+            dg,
             # et,
             # fup_fud,
             # ha,
@@ -304,7 +322,7 @@ def dxt():
             # wht
         ],
         "line": [
-            # ol,
+            ol,
             # op
         ],
     }
