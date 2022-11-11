@@ -166,6 +166,13 @@ def make_table(bookings, start, end):
     t2_h = float(label_settings["label_image_size_height"]) * (1 / 30) * mm
     _rowHeights = []
     for index in range(start, end):
+        booking = bookings[index]
+        customer_reference = booking.b_client_sales_inv_num
+
+        # Anchor Packaging Pty Ltd
+        if booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953":
+            customer_reference = booking.b_client_order_num
+
         _rowHeights.append(t2_h)
         data.append(
             [
@@ -186,9 +193,7 @@ def make_table(bookings, start, end):
                     "<font size=%s>%s</font>"
                     % (
                         label_settings["font_size_extra_small"],
-                        bookings[index].b_client_sales_inv_num
-                        if bookings[index].b_client_sales_inv_num
-                        else "",
+                        customer_reference or "",
                     ),
                     style_center,
                 ),
@@ -289,6 +294,7 @@ def make_pagenumber(number, page_number):
 def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
     fp_name = bookings[0].vx_freight_provider
     fp_info = Fp_freight_providers.objects.get(fp_company_name=fp_name)
+
     if fp_info and fp_info.hex_color_code:
         fp_bg_color = fp_info.hex_color_code
     else:
@@ -304,7 +310,11 @@ def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
             item for item in booking_lines if item.fk_booking_id == order.pk_booking_id
         ]
         kg, cubic, pallets, packages = 0, 0, 0, 0
+
         for line in lines:
+            if line.packed_status != booking.api_booking_quote.packed_status:
+                continue
+
             total_qty += line.e_qty
             kg += (
                 line.e_weightPerEach * _get_weight_amount(line.e_weightUOM) * line.e_qty
@@ -323,12 +333,14 @@ def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
                 pallets += line.e_qty
             else:
                 packages += line.e_qty
+
         pallets_per_order.append(pallets)
         packages_per_order.append(packages)
         kg_per_booking.append(round(kg, 3))
         cubic_per_booking.append(round(cubic, 3))
         total_dead_weight += kg
         total_cubic += cubic
+
     total_cubic_weight = total_cubic * m3_to_kg_factor
     number_of_consignments = len(bookings)
 
