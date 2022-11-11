@@ -312,7 +312,10 @@ def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
         kg, cubic, pallets, packages = 0, 0, 0, 0
 
         for line in lines:
-            if line.packed_status != booking.api_booking_quote.packed_status:
+            if (
+                booking.api_booking_quote
+                and line.packed_status != booking.api_booking_quote.packed_status
+            ):
                 continue
 
             total_qty += line.e_qty
