@@ -305,9 +305,11 @@ def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
 
     m3_to_kg_factor = 250
     total_dead_weight, total_cubic, total_qty = 0, 0, 0
-    for order in bookings:
+    for booking in bookings:
         lines = [
-            item for item in booking_lines if item.fk_booking_id == order.pk_booking_id
+            item
+            for item in booking_lines
+            if item.fk_booking_id == booking.pk_booking_id
         ]
         kg, cubic, pallets, packages = 0, 0, 0, 0
 
