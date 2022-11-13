@@ -1098,7 +1098,6 @@ def scanned(payload, client):
                     _booking = set_booking_quote(booking, booking.api_booking_quote)
 
         # Build built-in label with SSCC - one sscc should have one page label
-        label_urls = []
         total_qty = 0
         for item in original_items:
             total_qty += item.e_qty
@@ -1123,7 +1122,7 @@ def scanned(payload, client):
 
         if label_data["urls"]:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
-            pdf.pdf_merge(label_urls, entire_label_url)
+            pdf.pdf_merge(label_data["urls"], entire_label_url)
             booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
             booking.v_FPBookingNumber = gen_consignment_num(
                 booking.vx_freight_provider,
