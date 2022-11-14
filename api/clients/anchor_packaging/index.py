@@ -1,3 +1,4 @@
+import re
 import os
 import json
 import uuid
@@ -37,6 +38,12 @@ from api.fp_apis.utils import (
     auto_select_pricing_4_bok,
     gen_consignment_num,
 )
+from api.clients.operations.index import (
+    get_suburb_state,
+    get_similar_suburb,
+    is_postalcode_in_state,
+    is_suburb_in_postalcode,
+)
 
 # from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
@@ -52,6 +59,163 @@ from api.warehouses.index import push as push_to_warehouse
 logger = logging.getLogger(__name__)
 
 
+def collect_errors(bok_1):
+    errors = []
+
+    pu_street1 = bok_1.get("b_029_b_pu_address_street_1")
+    pu_street2 = bok_1.get("b_030_b_pu_address_street_2")
+    pu_state = bok_1.get("b_031_b_pu_address_state")
+    pu_postal = bok_1.get("b_033_b_pu_address_postalcode")
+    pu_suburb = bok_1.get("b_032_b_pu_address_suburb")
+    pu_phone = bok_1.get("b_038_b_pu_phone_main")
+    pu_email = bok_1.get("b_037_b_pu_email")
+
+    de_street1 = bok_1.get("b_055_b_del_address_street_1")
+    de_street2 = bok_1.get("b_056_b_del_address_street_2")
+    de_state = bok_1.get("b_057_b_del_address_state")
+    de_postal = bok_1.get("b_059_b_del_address_postalcode")
+    de_suburb = bok_1.get("b_058_b_del_address_suburb")
+    de_phone = bok_1.get("b_064_b_del_phone_main")
+    de_email = bok_1.get("b_063_b_del_email")
+
+    # Entity name
+    if not bok_1.get("b_028_b_pu_company"):
+        errors.append("Stop Error: Pickup entity missing")
+    if not bok_1.get("b_054_b_del_company"):
+        errors.append("Stop Error: Delivery entity missing")
+
+    # Street
+    if not (pu_street1 or pu_street2):
+        errors.append("Stop Error: Pickup street missing")
+    if not (de_street1 or de_street2):
+        errors.append("Stop Error: Delivery street missing")
+
+    # State
+    if not pu_state:
+        errors.append("Stop Error: Pickup state missing or misspelled")
+    if not de_state:
+        errors.append("Stop Error: Delivery state missing or misspelled")
+
+    # Postal Code
+    if not pu_postal:
+        errors.append("Stop Error: Pickup postal code missing or misspelled")
+    if not de_postal:
+        errors.append("Stop Error: Delivery postal code missing or misspelled")
+
+    # Suburb
+    if not pu_suburb:
+        errors.append("Stop Error: Pickup suburb missing or misspelled")
+    if not de_suburb:
+        errors.append("Stop Error: Delivery suburb missing or misspelled")
+
+    # State & Postal Code
+    if pu_state and pu_postal:
+        if not is_postalcode_in_state(pu_state, pu_postal):
+            errors.append(
+                "Stop Error: Pickup state and postal code mismatch (Hint perform a Google search for the correct match)"
+            )
+    if de_state and de_postal:
+        if not is_postalcode_in_state(de_state, de_postal):
+            errors.append(
+                "Stop Error: Delivery state and postal code mismatch (Hint perform a Google search for the correct match)"
+            )
+
+    # Postal Code & Suburb
+    if pu_postal and pu_suburb:
+        if not is_suburb_in_postalcode(pu_postal, pu_suburb):
+            errors.append(
+                "Stop Error: Pickup postal code and suburb mismatch (Hint perform a Google search for the correct match)"
+            )
+    if de_postal and de_suburb:
+        if not is_suburb_in_postalcode(de_postal, de_suburb):
+            errors.append(
+                "Stop Error: Delivery postal code and suburb mismatch (Hint perform a Google search for the correct match)"
+            )
+
+    # Phone
+    if not pu_phone:
+        errors.append(
+            "Warning: Missing Pickup phone number, if SMS status is desired please submit mobile number"
+        )
+    else:
+        _phone = pu_phone
+        _phone = _phone.replace(" ", "")
+        _phone = _phone.replace("+61", "")
+        _phone = _phone.replace("+", "")
+
+        if not re.match("\d{6,10}", _phone):
+            errors.append("Warning: Wrong phone number")
+        elif "+61" in pu_phone and len(_phone) != 9:
+            errors.append("Warning: Wrong phone number")
+        elif "+61" in pu_phone and len(_phone) == 9 and _phone[0] != "4":
+            errors.append(
+                "Warning: Missing mobile number for pickup address, used to text booking status"
+            )
+        elif not "+61" in pu_phone and len(_phone) not in [6, 10]:
+            errors.append("Warning: Wrong phone number")
+        elif (
+            not "+61" in pu_phone
+            and len(_phone) == 10
+            and (_phone[0] != "0" or _phone[1] != "4")
+        ):
+            errors.append(
+                "Warning: Missing mobile number for pickup address, used to text booking status"
+            )
+        elif not "+61" in pu_phone and len(_phone) == 6:
+            errors.append(
+                "Warning: Missing mobile number for pickup address, used to text booking status"
+            )
+    if not de_phone:
+        errors.append(
+            "Warning: Missing Delivery phone number, if SMS status is desired please submit mobile number"
+        )
+    else:
+        _phone = de_phone
+        _phone = _phone.replace(" ", "")
+        _phone = _phone.replace("+61", "")
+        _phone = _phone.replace("+", "")
+
+        if not re.match("\d{6,10}", _phone):
+            errors.append("Warning: Wrong phone number")
+        elif "+61" in de_phone and len(_phone) != 9:
+            errors.append("Warning: Wrong phone number")
+        elif "+61" in de_phone and len(_phone) == 9 and _phone[0] != "4":
+            errors.append(
+                "Warning: Missing mobile number for delivery address, used to text booking status"
+            )
+        elif not "+61" in de_phone and len(_phone) not in [6, 10]:
+            errors.append("Warning: Wrong phone number")
+        elif (
+            not "+61" in de_phone
+            and len(_phone) == 10
+            and (_phone[0] != "0" or _phone[1] != "4")
+        ):
+            errors.append(
+                "Warning: Missing mobile number for delivery address, used to text booking status"
+            )
+        elif not "+61" in address["phone"] and len(_phone) == 6:
+            errors.append(
+                "Warning: Missing mobile number for delivery address, used to text booking status"
+            )
+
+    # Email
+    if not pu_email:
+        errors.append(
+            "Warning: Missing email for pickup address, used to advise booking status"
+        )
+    if not de_email:
+        errors.append(
+            "Warning: Missing email for delivery address, used to advise booking status"
+        )
+
+    has_error = False
+    for error in errors:
+        if "Stop Error" in error:
+            has_error = True
+
+    return has_error, "***".join(errors)
+
+
 def push_boks(payload, client, username, method):
     """
     PUSH api (bok_1, bok_2, bok_3)
@@ -65,8 +229,8 @@ def push_boks(payload, client, username, method):
     json_results = []
 
     # Strip data
-    bok_1["b_client_order_num"] = bok_1["b_client_order_num"].strip()
-    bok_1["b_client_sales_inv_num"] = bok_1["b_client_sales_inv_num"].strip()
+    bok_1["b_client_order_num"] = bok_1["b_client_sales_inv_num"].strip()
+    bok_1["b_client_sales_inv_num"] = bok_1["b_client_order_num"].strip()
     bok_1["shipping_type"] = bok_1.get("shipping_type", "DMEM").strip()
     bok_1["b_053_b_del_address_type"] = (
         bok_1.get("b_053_b_del_delivery_type", "").strip().lower()
@@ -77,41 +241,6 @@ def push_boks(payload, client, username, method):
 
     if not "DME" in bok_1["shipping_type"]:
         bok_1["shipping_type"] = None
-
-    # Validate
-    error_msg = None
-    de_company = bok_1.get("b_054_b_del_company")
-    de_street_1 = bok_1.get("b_055_b_del_address_street_1")
-    de_street_2 = bok_1.get("b_056_b_del_address_street_2")
-    de_state = bok_1.get("b_057_b_del_address_state")
-    de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
-    de_suburb = bok_1.get("b_058_b_del_address_suburb")
-    de_contact = bok_1.get("b_061_b_del_contact_full_name")
-    b_client_order_num = bok_1.get("b_client_order_num")
-
-    if not b_client_order_num:
-        error_msg = "b_client_order_num is required"
-    if not de_company:
-        error_msg = "b_054_b_del_company is required"
-    if de_company and not de_contact:
-        bok_1["b_061_b_del_contact_full_name"] = de_company
-    if not de_street_1 and not de_street_2:
-        error_msg = "Delivery street info is required"
-    if de_street_2 and not de_street_1:
-        bok_1["b_055_b_del_address_street_1"] = de_street_2
-        bok_1["b_056_b_del_address_street_2"] = ""
-    if not de_state:
-        error_msg = "b_057_b_del_address_state is required"
-    if not de_postal_code:
-        error_msg = "b_059_b_del_address_postalcode is required"
-    if not de_suburb:
-        error_msg = "b_058_b_del_address_suburb is required"
-
-    if error_msg:
-        raise Exception(error_msg)
-
-    # Postal Code check
-    check_port_code(de_suburb, de_postal_code, de_state)
 
     # Warehouse
     warehouse_code = bok_1.get("b_client_warehouse_code")
@@ -137,12 +266,19 @@ def push_boks(payload, client, username, method):
     # Check duplicated push with `b_client_order_num`
     selected_quote = None
     if method == "POST":
+        order_num = bok_1.get("b_client_order_num")
+        inv_num = bok_1.get("b_client_sales_inv_num")
+
         bok_1_objs = BOK_1_headers.objects.filter(
             fk_client_id=client.dme_account_num,
-            b_client_order_num=bok_1["b_client_order_num"],
+            b_client_order_num=order_num,
+            b_client_sales_inv_num=inv_num,
         )
 
-        if bok_1_objs.exists():
+        if inv_num:
+            bok_1_objs = bok_1_objs.filter(b_client_sales_inv_num=inv_num)
+
+        if inv_num and bok_1_objs.exists():
             message = f"Order(b_client_order_num={bok_1['b_client_order_num']}) does already exist."
             logger.info(f"@884 {LOG_ID} {message}")
 
@@ -277,6 +413,8 @@ def push_boks(payload, client, username, method):
 
     bok_1["b_500_b_client_cust_job_code"] = bok_1.get("b_500_b_client_cust_job_code")
 
+    has_error, bok_1["zb_105_text_5"] = collect_errors(bok_1)
+
     bok_1_serializer = BOK_1_Serializer(data=bok_1)
 
     if not bok_1_serializer.is_valid():
@@ -326,7 +464,7 @@ def push_boks(payload, client, username, method):
         bok_1["pk_header_id"], "Imported / Integrated", username
     )
 
-    if not bok_1["b_092_booking_type"]:
+    if not has_error and (True or bok_1["b_092_booking_type"]):
         # `auto_repack` logic
         carton_cnt = 0
         for bok_2_obj in bok_2_objs:
@@ -338,6 +476,11 @@ def push_boks(payload, client, username, method):
 
             # Select suitable pallet and get required pallets count
             pallets = Pallet.objects.all()
+
+            # Anchor Packaging special
+            if bok_1_obj.fk_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953":
+                pallets = pallets.filter(pk=10)
+
             palletized, non_palletized = get_palletized_by_ai(bok_2_objs, pallets)
             logger.info(
                 f"@8831 {LOG_ID} Palletized: {palletized}\nNon-Palletized: {non_palletized}"
@@ -596,7 +739,7 @@ def push_boks(payload, client, username, method):
                     json_results[0]["eta"] = eta
 
     # Response
-    if json_results:
+    if json_results or not bok_1["shipping_type"]:
         # push_to_warehouse(bok_1_obj)
         logger.info(f"@8838 {LOG_ID} success: True, 201_created")
         result = {"success": True, "results": json_results}
@@ -607,10 +750,10 @@ def push_boks(payload, client, username, method):
         # Inform to admins
         message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
         logger.error(message)
-        send_email_to_admins("No FC result", message)
+        # send_email_to_admins("No FC result", message)
 
         message = (
-            f"Pricing cannot be returned due to incorrect address/lines information."
+            "Pricing cannot be returned due to incorrect address/lines information."
         )
         logger.info(f"@8839 {LOG_ID} {message}")
         url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"

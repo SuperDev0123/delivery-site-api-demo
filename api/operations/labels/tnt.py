@@ -23,9 +23,8 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
-from api.models import Booking_lines, FPRouting, Fp_freight_providers
+from api.models import Booking_lines, FPRouting
 from api.helpers.cubic import get_cubic_meter
-from api.fp_apis.utils import gen_consignment_num
 from api.operations.api_booking_confirmation_lines import index as api_bcl
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 
@@ -98,20 +97,25 @@ def gen_itm(booking, booking_lines, line_index, sscc_cnt):
     CCCCCC = "132214"  # DME
     item_index = str(line_index).zfill(3)
     label_code = f"{TT}{CCCCCC}{str(booking.b_bookingID_Visual).zfill(9)}{item_index}"
-    api_bcl.create(booking, [{"label_code": label_code}])
+    # api_bcl.create(booking, [{"label_code": label_code}])
 
     return label_code
 
 
 def build_label(
-    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+    booking,
+    filepath,
+    pre_data,
+    lines,
+    label_index,
+    sscc,
+    sscc_cnt=1,
+    one_page_label=True,
 ):
     logger.info(
         f"#110 [TNT LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
-    v_FPBookingNumber = gen_consignment_num(
-        booking.vx_freight_provider, booking.b_bookingID_Visual
-    )
+    v_FPBookingNumber = pre_data["v_FPBookingNumber"]
 
     # start check if pdfs folder exists
     if not os.path.exists(filepath):
@@ -312,7 +316,11 @@ def build_label(
                     ),
                     Paragraph(
                         "<font size=%s><b>via %s  to  %s</b></font>"
-                        % (16, routing.gateway, routing.onfwd),
+                        % (
+                            16,
+                            pre_data["routing"].gateway,
+                            pre_data["routing"].onfwd,
+                        ),
                         style_right,
                     ),
                 ],
@@ -433,7 +441,7 @@ def build_label(
                     ),
                     Paragraph(
                         "<font size=%s><b>%s</b></font><font size=%s><b>%s</b></font>"
-                        % (8, "Sort bin:", 16, routing.sort_bin),
+                        % (8, "Sort bin:", 16, pre_data["routing"].sort_bin),
                         style_right,
                     ),
                 ],
@@ -499,7 +507,8 @@ def build_label(
                         style_left,
                     ),
                     Paragraph(
-                        "<font size=%s><b>%s</b></font>" % (9, "Ex " + orig_depot),
+                        "<font size=%s><b>%s</b></font>"
+                        % (9, "Ex " + pre_data["orig_depot"]),
                         style_right,
                     ),
                 ],
@@ -805,14 +814,24 @@ def build_label(
             )
             Story.append(shell_table)
 
+            # Gap/RA
+            gap_ras = []
+            if pre_data["lines_data_cnt"] > 0:
+                for line_data in pre_data["lines_data"]:
+                    if (
+                        line_data.fk_booking_lines_id
+                        == booking_line.pk_booking_lines_id
+                    ):
+                        gap_ras.append(line_data.gap_ra)
+
             tbl_data1 = [
                 [
                     Paragraph(
                         "<font size=%s><b>Senders Ref:</b> %s</font>"
                         % (
                             8,
-                            booking_line.gap_ras
-                            if booking_line.gap_ras
+                            ",".join(gap_ras)
+                            if gap_ras
                             else booking.b_client_order_num,
                         ),
                         style_left,
@@ -1126,10 +1145,7 @@ def build_label(
             Story.append(t1)
             Story.append(Spacer(1, 5))
 
-            fp_color_code = (
-                Fp_freight_providers.objects.get(fp_company_name="TNT").hex_color_code
-                or "808080"
-            )
+            fp_color_code = pre_data["color_code"] or "808080"
 
             tbl_data1 = [[tnt_img], [""]]
 

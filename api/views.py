@@ -4353,21 +4353,22 @@ def get_csv(request):
                 status_history.create(booking, "Booked", request.user.username)
                 booking.save()
 
-                if vx_freight_provider == "state transport":
-                    file_path = f"{S3_URL}/pdfs/{vx_freight_provider}_au/"
-                    file_path, file_name = build_label_oper(booking, file_path)
-                    booking.z_label_url = f"{vx_freight_provider}_au/{file_name}"
-                    booking.save()
+                # Deactivated on 2022-09-22
+                # if vx_freight_provider == "state transport":
+                #     file_path = f"{S3_URL}/pdfs/{vx_freight_provider}_au/"
+                #     file_path, file_name = build_label_oper(booking, file_path)
+                #     booking.z_label_url = f"{vx_freight_provider}_au/{file_name}"
+                #     booking.save()
 
-                    # Send email when GET_LABEL
-                    email_template_name = "General Booking"
+                #     # Send email when GET_LABEL
+                #     email_template_name = "General Booking"
 
-                    # if booking.b_booking_Category == "Salvage Expense":
-                    #     email_template_name = "Return Booking"
+                #     # if booking.b_booking_Category == "Salvage Expense":
+                #     #     email_template_name = "Return Booking"
 
-                    send_booking_status_email(
-                        booking.pk, email_template_name, request.user.username
-                    )
+                #     send_booking_status_email(
+                #         booking.pk, email_template_name, request.user.username
+                #     )
 
         return JsonResponse(
             {"success": True, "message": "Created CSV successfully"}, status=200
@@ -4596,27 +4597,18 @@ def build_label(request):
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
+        label_data = build_label_oper(
+            booking=booking,
+            file_path=file_path,
+            total_qty=total_qty,
+            sscc_list=sscc_list,
+            sscc_lines=sscc_lines,
+            need_zpl=True,
+        )
 
-        label_index = 0
-        for sscc in sscc_list:
-            logger.info(f"@368 - building label with SSCC...")
-            file_path, file_name = build_label_oper(
-                booking=booking,
-                file_path=file_path,
-                lines=sscc_lines[sscc],
-                label_index=label_index,
-                sscc=sscc,
-                sscc_cnt=total_qty,
-                one_page_label=False,
-            )
-            label_urls.append(f"{file_path}/{file_name}")
-
-            for _line in sscc_lines[sscc]:
-                label_index += _line.e_qty
-
-        if label_urls:
+        if label_data["urls"]:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
-            pdf_merge(label_urls, entire_label_url)
+            pdf_merge(label_data["urls"], entire_label_url)
 
         message = f"#379 {LOG_ID} - Successfully build label. Booking Id: {booking.b_bookingID_Visual}"
         logger.info(message)

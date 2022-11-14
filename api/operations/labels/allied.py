@@ -23,9 +23,8 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
 from reportlab.graphics.barcode import createBarcodeDrawing
 
-from api.models import Booking_lines, FPRouting, FP_zones, Fp_freight_providers
+from api.models import Booking_lines
 from api.helpers.cubic import get_cubic_meter
-from api.fp_apis.utils import gen_consignment_num
 from api.operations.api_booking_confirmation_lines import index as api_bcl
 from api.clients.operations.index import extract_product_code
 from api.common.ratio import _get_dim_amount, _get_weight_amount
@@ -97,37 +96,29 @@ def gen_barcode(booking, item_no=0):
     item_index = str(item_no).zfill(3)
     visual_id = str(booking.b_bookingID_Visual)
     label_code = f"DME{visual_id}{item_index}"
-    api_bcl.create(booking, [{"label_code": label_code}])
+    # api_bcl.create(booking, [{"label_code": label_code}])
     return label_code
 
 
 def build_label(
-    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+    booking,
+    filepath,
+    pre_data,
+    lines,
+    label_index,
+    sscc,
+    sscc_cnt=1,
+    one_page_label=True,
 ):
     logger.info(
         f"#110 [ALLIED LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
-    v_FPBookingNumber = gen_consignment_num(
-        booking.vx_freight_provider, booking.b_bookingID_Visual
-    )
+    v_FPBookingNumber = pre_data["v_FPBookingNumber"]
 
     # start check if pdfs folder exists
     if not os.path.exists(filepath):
         os.makedirs(filepath)
     # end check if pdfs folder exists
-
-    fp_id = Fp_freight_providers.objects.get(fp_company_name="Allied").id
-    try:
-        carrier = FP_zones.objects.get(
-            state=booking.de_To_Address_State,
-            suburb=booking.de_To_Address_Suburb,
-            postal_code=booking.de_To_Address_PostalCode,
-            fk_fp=fp_id,
-        ).carrier
-    except FP_zones.DoesNotExist:
-        carrier = ""
-    except Exception as e:
-        logger.info(f"#110 [ALLIED LABEL] Error: {str(e)}")
 
     # start pdf file name using naming convention
     if lines:
@@ -207,10 +198,7 @@ def build_label(
     allied_logo = "./static/assets/logos/allied.png"
     allied_img = Image(allied_logo, 30 * mm, 7.7 * mm)
 
-    fp_color_code = (
-        Fp_freight_providers.objects.get(fp_company_name="Allied").hex_color_code
-        or "808080"
-    )
+    fp_color_code = pre_data["color_code"] or "808080"
 
     style_center_bg = ParagraphStyle(
         name="right",
@@ -503,7 +491,9 @@ def build_label(
                     Paragraph(
                         '<font size=%s color="white"><b>%s</b> </font>'
                         % (
-                            label_settings["font_size_large"] if len(vx_serviceName) < 23 else label_settings["font_size_medium"],
+                            label_settings["font_size_large"]
+                            if len(vx_serviceName) < 23
+                            else label_settings["font_size_medium"],
                             vx_serviceName or "",
                         ),
                         style_back_black,
@@ -553,9 +543,9 @@ def build_label(
             if booking_line.e_dimUOM:
                 _dim_amount = _get_dim_amount(booking_line.e_dimUOM)
 
-            _length = _dim_amount * (booking_line.e_dimLength or 0)
-            _width = _dim_amount * (booking_line.e_dimWidth or 0)
-            _height = _dim_amount * (booking_line.e_dimHeight or 0)
+            _length = round(_dim_amount * (booking_line.e_dimLength or 0), 3)
+            _width = round(_dim_amount * (booking_line.e_dimWidth or 0), 3)
+            _height = round(_dim_amount * (booking_line.e_dimHeight or 0), 3)
 
             tbl_package = [
                 [
@@ -623,7 +613,7 @@ def build_label(
             to_del_data = []
 
             codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            d = Drawing(15, 15, transform=[1,0,0,1,0,-35])
+            d = Drawing(15, 15, transform=[1, 0, 0, 1, 0, -35])
             d.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
             d.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
 
@@ -635,18 +625,22 @@ def build_label(
                 [
                     Paragraph(
                         "<font size=%s>To:</font>"
-                        % (
-                            label_settings['font_size_large'],
-                        ),
+                        % (label_settings["font_size_large"],),
                         style_left_bg,
                     ),
                     Paragraph(
                         "<font size=%s><b>%s %s</b> <br/> <b>%s</b> <br/> </font>"
                         % (
-                            label_settings['font_size_large'],
+                            label_settings["font_size_large"],
                             booking.deToCompanyName or "",
-                            "" if booking.deToCompanyName == booking.de_to_Contact_F_LName else (booking.de_to_Contact_F_LName or ""),
-                            ((booking.de_To_Address_Street_1 or "") + " " + (booking.de_To_Address_Street_2 or ""))[:30],
+                            ""
+                            if booking.deToCompanyName == booking.de_to_Contact_F_LName
+                            else (booking.de_to_Contact_F_LName or ""),
+                            (
+                                (booking.de_To_Address_Street_1 or "")
+                                + " "
+                                + (booking.de_To_Address_Street_2 or "")
+                            )[:30],
                         ),
                         style_left_bg,
                     ),
@@ -660,9 +654,9 @@ def build_label(
                     Paragraph(
                         "<font size=%s><b>%s&nbsp;%s&nbsp;%s&nbsp;%s</b></font>"
                         % (
-                            label_settings['font_size_large'],
+                            label_settings["font_size_large"],
                             booking.de_To_Address_State or "",
-                            (carrier or "")[:20],
+                            (pre_data["carrier"] or "")[:20],
                             booking.de_To_Address_PostalCode or "",
                             booking.de_To_Address_Suburb or "",
                         ),
@@ -677,8 +671,11 @@ def build_label(
                     "",
                     Paragraph(
                         "<font size=%s><b>%s</b></font>"
-                        % (label_settings['font_size_large'], booking.de_to_Phone_Main[:30]),
-                        style_left_bg,
+                        % (
+                            label_settings["font_size_large"],
+                            booking.de_to_Phone_Main[:30],
+                        ),
+                        style_left,
                     ),
                     "",
                 ]
@@ -735,7 +732,11 @@ def build_label(
                         "<font size=%s>Instruction: %s</font>"
                         % (
                             label_settings["font_size_medium"],
-                            ((booking.de_to_PickUp_Instructions_Address or "") + " " + (booking.de_to_Pick_Up_Instructions_Contact or ""))[:70],
+                            (
+                                (booking.de_to_PickUp_Instructions_Address or "")
+                                + " "
+                                + (booking.de_to_Pick_Up_Instructions_Contact or "")
+                            )[:70],
                         ),
                         style_left,
                     )

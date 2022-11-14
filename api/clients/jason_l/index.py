@@ -43,7 +43,7 @@ from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations import product_operations as product_oper
 from api.operations.email_senders import send_email_to_admins, send_email_missing_dims
-from api.operations.labels.index import build_label
+from api.operations.labels.index import build_label as build_label_oper
 from api.operations.booking_line import index as line_oper
 
 # from api.operations.pronto_xi.index import populate_bok as get_bok_from_pronto_xi
@@ -1238,41 +1238,21 @@ def scanned(payload, client):
     ).delete()
 
     # Build built-in label with SSCC - one sscc should have one page label
-    label_urls = []
-    for index, sscc in enumerate(sscc_list):
-        file_path = (
-            f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
-        )
+    file_path = (
+        f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+    )
+    label_data = build_label_oper(
+        booking=booking,
+        file_path=file_path,
+        total_qty=len(sscc_list),
+        sscc_list=sscc_list,
+        sscc_lines=sscc_lines,
+        need_zpl=True,
+    )
 
-        logger.info(f"@368 - building label with SSCC...\n sscc_lines: {sscc_lines}")
-        file_path, file_name = build_label(
-            booking=booking,
-            file_path=file_path,
-            lines=sscc_lines[sscc],
-            label_index=index,
-            sscc=sscc,
-            sscc_cnt=len(sscc_list),
-            one_page_label=False,
-        )
-
-        # Convert label into ZPL format
-        logger.info(
-            f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
-        )
-        label_url = f"{file_path}/{file_name}"
-        label_urls.append(label_url)
-        result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-        if not result:
-            message = "Please contact DME support center. <bookings@deliver-me.com.au>"
-            raise Exception(message)
-
-        with open(label_url[:-4] + ".zpl", "rb") as zpl:
-            zpl_data = str(b64encode(zpl.read()))[2:-1]
-
-    if label_urls:
+    if label_data["urls"]:
         entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
-        pdf_merge(label_urls, entire_label_url)
+        pdf_merge(label_data["urls"], entire_label_url)
 
     message = f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
     logger.info(message)

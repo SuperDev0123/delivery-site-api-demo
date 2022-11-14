@@ -2,6 +2,7 @@ import json
 import uuid
 import logging
 import requests
+import time as t
 from datetime import datetime, date
 from base64 import b64encode
 
@@ -28,7 +29,6 @@ from api.fp_apis.operations.pricing import pricing as pricing_oper
 from api.operations.email_senders import send_email_to_admins
 from api.operations.labels.index import build_label as build_label_oper
 from api.operations.manifests.index import build_manifest as build_manifest_oper
-from api.operations.labels.index import get_barcode
 from api.common.booking_quote import set_booking_quote
 from api.common.thread import background
 from api.common import (
@@ -112,15 +112,15 @@ def push_webhook(data):
             bok_1 = BOK_1_headers.objects.get(pk=bok_1_pk, b_client_order_num=order_num)
             bok_2s = BOK_2_lines.objects.filter(fk_header_id=bok_1.pk_header_id)
 
-            for bok_2 in bok_2s:
-                bok_2.success = dme_constants.BOK_SUCCESS_4
-                bok_2.save()
+            # for bok_2 in bok_2s:
+            #     bok_2.success = dme_constants.BOK_SUCCESS_4
+            #     bok_2.save()
 
-            bok_1.success = dme_constants.BOK_SUCCESS_4
-            bok_1.save()
-            logger.info(
-                f"{LOG_ID} Bok_1 will be mapped. Detail: {bok_1_pk}(pk_auto_id), {order_num}(order number)"
-            )
+            # bok_1.success = dme_constants.BOK_SUCCESS_4
+            # bok_1.save()
+            # logger.info(
+            #     f"{LOG_ID} Bok_1 will be mapped. Detail: {bok_1_pk}(pk_auto_id), {order_num}(order number)"
+            # )
         except:
             message = f"{LOG_ID} BOK_1 does not exist. Data: {data}"
             logger.error(message)
@@ -194,10 +194,12 @@ def scanned(payload):
     request when item(s) is picked(scanned) at warehouse
     should response LABEL if payload is correct
     """
+
     LOG_ID = "[SCANNED at WHSE]"
     client_name = payload.get("clientName")
     b_client_order_num = payload.get("orderNumber")
     picked_items = payload.get("items")
+    time1 = t.time()
 
     # Check required params are included
     if not client_name:
@@ -214,7 +216,7 @@ def scanned(payload):
 
     # Check if Order exists on Bookings table
     bookings = Bookings.objects.select_related("api_booking_quote").filter(
-        b_client_name=client_name, b_client_order_num=b_client_order_num
+        b_client_name__iexact=client_name, b_client_order_num=b_client_order_num
     )
 
     if bookings.count() == 0:
@@ -239,11 +241,7 @@ def scanned(payload):
     logger.info(f"@365 {LOG_ID} sscc(s): {sscc_list}")
 
     # Delete existing ssccs(for scanned ones)
-    picked_ssccs = []
-    for picked_item in picked_items:
-        picked_ssccs.append(picked_item["sscc"])
-    if picked_ssccs:
-        Booking_lines.objects.filter(sscc__in=picked_ssccs).delete()
+    scanned_items.delete()
 
     # Save
     try:
@@ -293,68 +291,24 @@ def scanned(payload):
 
         next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
         booking.puPickUpAvailFrom_Date = next_biz_day
-        booking.save()
 
-        # Build built-in label with SSCC - one sscc should have one page label
-        label_urls = []
+        # Build label with SSCC - one sscc should have one page label
+        file_path = (
+            f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+        )
+        label_data = build_label_oper(
+            booking=booking,
+            file_path=file_path,
+            total_qty=len(sscc_list),
+            sscc_list=sscc_list,
+            sscc_lines=sscc_lines,
+            need_base64=True,
+            need_zpl=False,
+        )
 
-        from django.conf import settings
-
-        settings.DEBUG = True
-        from django.db import connection
-
-        logger.info(f"@368 - building label with SSCC...\n sscc_lines: {sscc_lines}")
-        for index, sscc in enumerate(sscc_list):
-            logger.info(
-                f"@368 - building label with SSCC... SSCC: {sscc} --- {len(connection.queries)}"
-            )
-            file_path = f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
-
-            file_path, file_name = build_label_oper(
-                booking=booking,
-                file_path=file_path,
-                lines=sscc_lines[sscc],
-                label_index=index,
-                sscc=sscc,
-                sscc_cnt=len(sscc_list),
-                one_page_label=False,
-            )
-
-            # Convert label into ZPL format
-            logger.info(
-                f"@369 {LOG_ID} converting LABEL({file_path}/{file_name}) into ZPL format..."
-            )
-            label_url = f"{file_path}/{file_name}"
-            label_urls.append(label_url)
-
-            # # Plum ZPL printer requries portrait label
-            # if booking.vx_freight_provider.lower() in ["hunter", "tnt"]:
-            #     label_url = pdf.rotate_pdf(label_url)
-
-            # result = pdf.pdf_to_zpl(label_url, label_url[:-4] + ".zpl")
-
-            # if not result:
-            #     message = (
-            #         "Please contact DME support center. <bookings@deliver-me.com.au>"
-            #     )
-            #     raise Exception(message)
-
-            # with open(label_url[:-4] + ".zpl", "rb") as zpl:
-            #     zpl_data = str(b64encode(zpl.read()))[2:-1]
-
-            labels.append(
-                {
-                    "sscc": sscc,
-                    "label": str(pdf.pdf_to_base64(label_url))[2:-1],
-                    "barcode": get_barcode(
-                        booking, [new_line], index + 1, len(sscc_list)
-                    ),
-                }
-            )
-
-        if label_urls:
+        if label_data["urls"]:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
-            pdf.pdf_merge(label_urls, entire_label_url)
+            pdf.pdf_merge(label_data["urls"], entire_label_url)
             booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
             # Set consignment number
             booking.v_FPBookingNumber = gen_consignment_num(
@@ -363,9 +317,12 @@ def scanned(payload):
                 booking.kf_client_id,
                 booking,
             )
-            booking.save()
             entire_label_b64 = str(pdf.pdf_to_base64(entire_label_url))[2:-1]
 
+        booking.save()
+
+        time2 = t.time()
+        logger.info(f"{LOG_ID} Spent time: {str(int(round(time2 - time1)))}s\n")
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
         )
@@ -385,9 +342,9 @@ def scanned(payload):
                 booking.b_bookingID_Visual,
                 booking.kf_client_id,
             ),
-            "labels": labels,
+            "labels": label_data["labels"],
             "label": entire_label_b64,
-            "freightProvider": CARRIER_MAPPING[booking.vx_freight_provider],
+            "freightProvider": CARRIER_MAPPING[booking.vx_freight_provider.lower()],
         }
     except Exception as e:
         trace_error.print()
@@ -414,7 +371,10 @@ def reprint_label(params):
 
     booking = (
         Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_order_num=b_client_order_num, b_client_name=client_name)
+        .filter(
+            b_client_order_num=b_client_order_num,
+            b_client_name__iexact=client_name,
+        )
         .first()
     )
 
@@ -493,7 +453,10 @@ def ready(payload):
     # Check if Order exists
     booking = (
         Bookings.objects.select_related("api_booking_quote")
-        .filter(b_client_name=client_name, b_client_order_num=b_client_order_num)
+        .filter(
+            b_client_name__iexact=client_name,
+            b_client_order_num=b_client_order_num,
+        )
         .first()
     )
 
@@ -533,7 +496,7 @@ def manifest(payload):
         raise ValidationError(message)
 
     bookings = Bookings.objects.filter(
-        b_client_name=client_name, b_client_order_num__in=order_nums
+        b_client_name__iexact=client_name, b_client_order_num__in=order_nums
     ).only("id", "b_client_order_num")
 
     booking_ids = []
@@ -555,7 +518,7 @@ def manifest(payload):
         manifest_data = str(b64encode(manifest.read()))
 
     Bookings.objects.filter(
-        b_client_name=client_name, b_client_order_num__in=order_nums
+        b_client_name__iexact=client_name, b_client_order_num__in=order_nums
     ).update(z_manifest_url=manifest_url)
 
     return {

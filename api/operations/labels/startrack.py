@@ -11,29 +11,21 @@ from reportlab.platypus import (
     Image,
     PageBreak,
     Table,
-    NextPageTemplate,
-    Frame,
-    PageTemplate,
-    TableStyle,
 )
-from reportlab.platypus.flowables import Image, Spacer, HRFlowable, PageBreak, Flowable
+from reportlab.platypus.flowables import Image, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
-from reportlab.graphics.barcode import code39, code128, code93, qrencoder
+from reportlab.graphics.barcode import code128
 from reportlab.graphics.barcode.qr import QrCodeWidget
 from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.lib import colors
-from reportlab.graphics.barcode import createBarcodeDrawing
 
 from api.models import (
     Booking_lines,
-    FPRouting,
-    FP_zones,
     Fp_freight_providers,
     Bookings,
 )
 from api.helpers.cubic import get_cubic_meter
-from api.fp_apis.utils import gen_consignment_num
 from api.fp_apis.constants import FP_CREDENTIALS
 from api.operations.api_booking_confirmation_lines import index as api_bcl
 
@@ -142,7 +134,7 @@ def gen_ReceiverBarcode(booking, location_info):
     depote_code = str(location_info["R1"] or "")
 
     label_code = f"{service_name}{postal_code}{depote_code}"
-    api_bcl.create(booking, [{"item_id": label_code}])
+    # api_bcl.create(booking, [{"item_id": label_code}])
 
     return label_code
 
@@ -206,7 +198,7 @@ def number_format(num):
     return str(round(num * 1000))
 
 
-def gen_ArticleBarcode(booking, v_FPBookingNumber, item_no=0):
+def gen_barcode(booking, v_FPBookingNumber, item_no=0):
     service_name = str(booking.vx_serviceName)
     item_index = str(item_no).zfill(5)
 
@@ -229,12 +221,12 @@ def get_ATL_number(booking):
 
 
 def build_label(
-    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+    booking, filepath, pre_data, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
 ):
     logger.info(
         f"#110 [{booking.vx_freight_provider} LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
     )
-    v_FPBookingNumber = booking.v_FPBookingNumber
+    v_FPBookingNumber = pre_data["v_FPBookingNumber"]
     # if booking.v_FPBookingNumber else gen_consignment_num(
     #     booking.vx_freight_provider, booking.b_bookingID_Visual
     # )
@@ -243,21 +235,6 @@ def build_label(
     if not os.path.exists(filepath):
         os.makedirs(filepath)
     # end check if pdfs folder exists
-
-    fp_id = Fp_freight_providers.objects.get(
-        fp_company_name=booking.vx_freight_provider
-    ).id
-    try:
-        carrier = FP_zones.objects.get(
-            state=booking.de_To_Address_State,
-            suburb=booking.de_To_Address_Suburb,
-            postal_code=booking.de_To_Address_PostalCode,
-            fk_fp=fp_id,
-        ).carrier
-    except FP_zones.DoesNotExist:
-        carrier = ""
-    except Exception as e:
-        logger.info(f"#110 [{booking.vx_freight_provider} LABEL] Error: {str(e)}")
 
     # start pdf file name using naming convention
     if lines:
@@ -344,21 +321,6 @@ def build_label(
         fp_logo,
         float(label_settings["label_image_size_width"]) * (2.5 / 10) * mm,
         6 * mm,
-    )
-
-    fp_color_code = (
-        Fp_freight_providers.objects.get(
-            fp_company_name=booking.vx_freight_provider
-        ).hex_color_code
-        or "808080"
-    )
-
-    style_center_bg = ParagraphStyle(
-        name="right",
-        parent=styles["Normal"],
-        alignment=TA_CENTER,
-        leading=16,
-        backColor=f"#{fp_color_code}",
     )
 
     Story = []
@@ -613,6 +575,7 @@ def build_label(
                     t1_w * 2,
                     t1_w * 3,
                 ),
+                rowHeights=(18),
                 style=tableStyle,
             )
 
@@ -825,7 +788,7 @@ def build_label(
             Story.append(from_table)
             Story.append(Spacer(1, 3))
 
-            barcode = gen_ArticleBarcode(booking, v_FPBookingNumber, j)
+            barcode = gen_barcode(booking, v_FPBookingNumber, j)
 
             tbl_data = [
                 [

@@ -127,7 +127,14 @@ class RotatedImage(Image):
 
 
 def build_label(
-    booking, filepath, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+    booking,
+    filepath,
+    pre_data,
+    lines,
+    label_index,
+    sscc,
+    sscc_cnt=1,
+    one_page_label=True,
 ):
     logger.info(
         f"#110 [HUNTER NORMAL LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
@@ -277,22 +284,17 @@ def build_label(
                 continue
 
             codeString = f"DME{booking.b_bookingID_Visual}{str(j).zfill(3)}, {booking.b_bookingID_Visual}, {booking.b_client_name}, {booking.b_client_sales_inv_num}, {booking.de_To_Address_PostalCode}"
-            
+
             d1 = Drawing(100, 40)
             d1.add(Rect(0, 0, 0, 0, strokeWidth=1, fillColor=None))
             d1.add(QrCodeWidget(value=codeString, barWidth=20 * mm, barHeight=20 * mm))
 
             t2 = [
-                [
-                    d1
-                ],
+                [d1],
                 [
                     Paragraph(
                         "<font size=%s>%s&nbsp;&nbsp;&nbsp;</font>"
-                        % (
-                            label_settings["font_size_small"],
-                            "DME QR Code"
-                        ),
+                        % (label_settings["font_size_small"], "DME QR Code"),
                         style_center,
                     )
                 ],
@@ -581,9 +583,6 @@ def build_label(
                 ],
             )
 
-            
-            
-
             d2 = Drawing(100, 100)
             barcode = gen_barcode(booking, lines, j, sscc_cnt)
             codeString = barcode
@@ -592,21 +591,16 @@ def build_label(
             d2.add(QrCodeWidget(value=codeString))
 
             t3 = [
-                [
-                    d2
-                ],
+                [d2],
                 [
                     Paragraph(
                         "<font size=%s>%s&nbsp;&nbsp;&nbsp;</font>"
-                        % (
-                            label_settings["font_size_small"],
-                            "Hunter QR Code"
-                        ),
+                        % (label_settings["font_size_small"], "Hunter QR Code"),
                         style_center,
                     )
                 ],
             ]
-           
+
             data = [[t1, t3]]
 
             t1_w = float(label_settings["label_image_size_length"]) * (3 / 4) * mm

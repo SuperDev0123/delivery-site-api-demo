@@ -139,6 +139,18 @@ def is_postalcode_in_state(state, postal_code):
     return addresses.exists()
 
 
+def is_suburb_in_postalcode(postal_code, suburb):
+    """
+    check if suburb is in postal_code
+    """
+    LOG_ID = "[CHECK POSTAL HAS SUBURB]"
+    logger.info(f"{LOG_ID} postal_code: {postal_code}, suburb: {suburb}")
+
+    addresses = Utl_suburbs.objects.filter(postal_code=postal_code, suburb=suburb)
+
+    return addresses.exists()
+
+
 def bok_quote(bok_1, packed_status):
     from api.fp_apis.operations.pricing import pricing as pricing_oper
     from api.clients.jason_l.operations import get_total_sales
@@ -147,7 +159,7 @@ def bok_quote(bok_1, packed_status):
 
     # Get Boks
     bok_2s = bok_1.bok_2s().filter(is_deleted=False, b_093_packed_status=packed_status)
-    client = DME_clients.objects.get(pk=21)
+    client = DME_clients.objects.get(dme_account_num=bok_1.fk_client_id)
 
     # Get next business day
     next_biz_day = dme_time_lib.next_business_day(date.today(), 1)

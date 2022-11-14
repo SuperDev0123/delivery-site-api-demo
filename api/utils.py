@@ -2970,6 +2970,9 @@ def get_eta_de_by(booking, quote):
             else:
                 etd_de_by = eta_pu_by + timedelta(hours=4 * 24)
 
+        if booking.b_client_name == "Plum Products Australia Ltd":
+            etd_de_by = eta_pu_by + timedelta(hours=3 * 24)
+
         # Workdays
         weekno = etd_de_by.weekday()
         if weekno > 4:
