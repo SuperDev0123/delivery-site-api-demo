@@ -147,19 +147,21 @@ def mapBok(id, header):
         with transaction.atomic():
             bookingStatus = ""
             bookingStatusCategory = ""
-            if header.success == 2:
-                if header.b_000_3_consignment_number:
-                    bookingStatus = "Booked"
-                    bookingStatusCategory = "Booked"
-                else:
-                    bookingStatus = "Ready for booking"
+            if header.success:
+                success = int(header.success)
+                if success == 2:
+                    if header.b_000_3_consignment_number:
+                        bookingStatus = "Booked"
+                        bookingStatusCategory = "Booked"
+                    else:
+                        bookingStatus = "Ready for booking"
+                        bookingStatusCategory = "Pre Booking"
+                elif success == 4:
+                    bookingStatus = "Picking"
                     bookingStatusCategory = "Pre Booking"
-            elif header.success == 4:
-                bookingStatus = "Picking"
-                bookingStatusCategory = "Pre Booking"
-            elif header.success == 5:
-                bookingStatus = "Imported / Integrated"
-                bookingStatusCategory = "Pre Booking"
+                elif success == 5:
+                    bookingStatus = "Imported / Integrated"
+                    bookingStatusCategory = "Pre Booking"
 
             dme_client = DME_clients.objects.filter(
                 dme_account_num=header.fk_client_id
@@ -302,6 +304,8 @@ def mapBok(id, header):
                 is_quote_locked=header.b_092_is_quote_locked,
             )
             booking.save()
+            header.success = 1
+            header.save()
 
             bok_lines = BOK_2_lines.objects.filter(
                 success__in=[2, 4, 5], v_client_pk_consigment_num=header.pk_header_id
@@ -403,6 +407,7 @@ def mapBok(id, header):
             last_name = booking_Created_For.replace(first_name, "").strip()
             api_booking_quote_id = booking.api_booking_quote_id
             pk_id_dme_client = dme_client.pk_id_dme_client if dme_client else None
+
             if first_name == "Bathroom":
                 booking.booking_Created_For_Email = "info@bathroomsalesdirect.com.au"
                 booking.save()
@@ -426,6 +431,7 @@ def mapBok(id, header):
                     else ""
                 )
                 booking.save()
+
             if api_booking_quote_id:
                 booking_quote = API_booking_quotes.objects.filter(
                     id=booking.api_booking_quote_id
