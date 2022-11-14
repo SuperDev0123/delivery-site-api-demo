@@ -60,8 +60,9 @@ def mapBokToBooking(request):
             )
             max_id = max_id if max_id else 89600
             start_id = max_id + 1
-            bok_headers = BOK_1_headers.objects.filter(success__in=[2, 4, 5])
+            bok_headers = BOK_1_headers.objects.filter(success__in=[2, 4, 5])[:10]
             headers_count = len(bok_headers)
+            logger.info(f"{LOG_ID} {headers_count} can be mapped.")
             end_id = start_id + headers_count - 1
 
             if headers_count > 0:
@@ -143,6 +144,7 @@ def mapBokToBooking(request):
 def mapBok(id, header):
     LOG_ID = "[MAPPING]"
     sid = transaction.savepoint()
+
     try:
         with transaction.atomic():
             bookingStatus = ""
@@ -302,6 +304,9 @@ def mapBok(id, header):
                 b_promo_code=sliceString(header.b_093_b_promo_code, 30),
                 client_sales_total=header.b_094_client_sales_total,
                 is_quote_locked=header.b_092_is_quote_locked,
+            )
+            logger.info(
+                f"{LOG_ID} {booking.b_bookingID_Visual} is mapped! --- {booking.pk_booking_id}"
             )
             booking.save()
             header.success = 1
