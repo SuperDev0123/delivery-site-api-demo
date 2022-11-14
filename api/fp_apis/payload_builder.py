@@ -460,6 +460,8 @@ def get_book_payload(booking, fp_name):
 
         if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":  # Jason L
             payload["customerReference"] = booking.b_client_sales_inv_num or ""
+        elif booking.kf_client_id == "49294ca3-2adb-4a6e-9c55-9b56c0361953":  # AP
+            payload["customerReference"] = booking.b_client_sales_inv_num or ""
         else:
             payload["customerReference"] = booking.clientRefNumbers
 
