@@ -174,7 +174,7 @@ def mapBok(id, header):
             booking = Bookings.objects.create(
                 pk_booking_id=header.pk_header_id,
                 b_clientReference_RA_Numbers=sliceString(
-                    header.b_000_1_b_clientReference_RA_Numbers, 1000
+                    header.b_000_1_b_clientReference_RA_Numbers, 100
                 ),
                 total_lines_qty_override=header.b_000_b_total_lines,
                 vx_freight_provider=sliceString(header.b_001_b_freight_provider, 100),
@@ -205,8 +205,8 @@ def mapBok(id, header):
                 pu_PickUp_By_Time_Hours=header.b_025_b_pu_by_time_hour,
                 pu_PickUp_By_Time_Minutes=header.b_026_b_pu_by_time_minute,
                 pu_Address_Type=sliceString(header.b_027_b_pu_address_type, 25),
-                pu_Address_Street_1=sliceString(header.b_029_b_pu_address_street_1, 80),
-                pu_Address_street_2=sliceString(header.b_030_b_pu_address_street_2, 40),
+                pu_Address_Street_1=sliceString(header.b_029_b_pu_address_street_1, 30),
+                pu_Address_street_2=sliceString(header.b_030_b_pu_address_street_2, 30),
                 pu_Address_State=sliceString(header.b_031_b_pu_address_state, 25),
                 pu_Address_Suburb=sliceString(header.b_032_b_pu_address_suburb, 50),
                 pu_Address_PostalCode=sliceString(
@@ -214,7 +214,7 @@ def mapBok(id, header):
                 ),
                 pu_Address_Country=sliceString(header.b_034_b_pu_address_country, 50),
                 pu_Contact_F_L_Name=sliceString(
-                    header.b_035_b_pu_contact_full_name, 25
+                    header.b_035_b_pu_contact_full_name, 20
                 ),
                 pu_email_Group=sliceString(header.b_036_b_pu_email_group, 512),
                 pu_Phone_Main=sliceString(header.b_038_b_pu_phone_main, 25),
@@ -238,7 +238,7 @@ def mapBok(id, header):
                 de_Deliver_From_Hours=header.b_048_b_del_avail_from_time_hour,
                 de_Deliver_By_Minutes=header.b_049_b_del_avail_from_time_minute,
                 de_To_AddressType=sliceString(header.b_053_b_del_address_type, 20),
-                deToCompanyName=sliceString(header.b_054_b_del_company, 128),
+                deToCompanyName=sliceString(header.b_054_b_del_company, 40),
                 de_To_Address_Street_1=sliceString(
                     header.b_055_b_del_address_street_1, 40
                 ),
@@ -254,7 +254,7 @@ def mapBok(id, header):
                     header.b_060_b_del_address_country, 12
                 ),
                 de_to_Contact_F_LName=sliceString(
-                    header.b_061_b_del_contact_full_name, 50
+                    header.b_061_b_del_contact_full_name, 20
                 ),
                 de_Email_Group_Emails=sliceString(header.b_062_b_del_email_group, 512),
                 de_to_Phone_Main=sliceString(header.b_064_b_del_phone_main, 30),
@@ -273,7 +273,7 @@ def mapBok(id, header):
                 vx_serviceName=sliceString(header.b_003_b_service_name, 50),
                 b_booking_Category=sliceString(header.b_008_b_category, 64),
                 b_booking_Notes=sliceString(header.b_010_b_notes, 400),
-                puCompany=sliceString(header.b_028_b_pu_company, 128),
+                puCompany=sliceString(header.b_028_b_pu_company, 40),
                 pu_Email=sliceString(header.b_037_b_pu_email, 64),
                 pu_Phone_Mobile=sliceString(header.b_039_b_pu_phone_mobile, 25),
                 de_Email=sliceString(header.b_063_b_del_email, 64),
