@@ -132,7 +132,7 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
                 ).first()
 
             logger.info(
-                f"{LOG_ID} avail_pu_zones: {avail_pu_zone}, avail_de_zones: {avail_de_zone}"
+                f"{LOG_ID} {fp.fp_company_name} avail_pu_zones: {avail_pu_zone}, avail_de_zones: {avail_de_zone}"
             )
 
             if not avail_pu_zone or not avail_de_zone:
@@ -154,7 +154,7 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
                 avail_de_zones = avail_de_zones.filter(suburb__iexact=de_suburb)
 
             logger.info(
-                f"{LOG_ID} avail_pu_zones: {avail_pu_zones}, avail_de_zones: {avail_de_zones}"
+                f"{LOG_ID} {fp.fp_company_name} avail_pu_zones: {avail_pu_zones}, avail_de_zones: {avail_de_zones}"
             )
 
     if fp.fp_company_name in ["Northline", "Camerons"] and (
