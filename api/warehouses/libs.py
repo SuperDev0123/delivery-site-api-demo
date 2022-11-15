@@ -77,7 +77,7 @@ def build_push_payload(bok_1, bok_2s):
 
     return {
         "bookingID": bok_1.pk,
-        "orderNumber": bok_1.b_client_sales_inv_num,
+        "orderNumber": bok_1.b_client_order_num,
         "warehouseName": bok_1.b_028_b_pu_company,
         "warehouseCode": bok_1.b_client_warehouse_code,
         "freightProvider": CARRIER_MAPPING[bok_1.quote.freight_provider.lower()],
