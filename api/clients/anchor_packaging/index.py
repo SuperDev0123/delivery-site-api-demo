@@ -266,8 +266,8 @@ def push_boks(payload, client, username, method):
     # Check duplicated push with `b_client_order_num`
     selected_quote = None
     if method == "POST":
-        order_num = bok_1.get("b_client_order_num")
-        inv_num = bok_1.get("b_client_sales_inv_num")
+        order_num = bok_1.get("b_client_sales_inv_num")
+        inv_num = bok_1.get("b_client_order_num")
 
         bok_1_objs = BOK_1_headers.objects.filter(
             fk_client_id=client.dme_account_num,
