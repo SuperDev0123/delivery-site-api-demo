@@ -333,7 +333,7 @@ def build_label(
 
             with open(label_url[:-4] + ".zpl", "rb") as zpl:
                 label["zpl"] = str(b64encode(zpl.read()))[2:-1]
-                label["label"] = str(b64encode(zpl.read()))[2:-1]
+                label["label"] = label["zpl"]
 
         label_data["labels"].append(label)
 
