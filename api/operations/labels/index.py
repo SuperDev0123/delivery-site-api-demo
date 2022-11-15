@@ -38,7 +38,9 @@ def get_barcode(booking, booking_lines, pre_data, line_index=1, sscc_cnt=1):
     elif pre_data["fp_name"] == "tnt":
         result = tnt.gen_barcode(booking, booking_lines, line_index, sscc_cnt)
     elif pre_data["fp_name"] == "startrack":
-        result = startrack.gen_barcode(booking, pre_data['v_FPBookingNumber'], line_index)
+        result = startrack.gen_barcode(
+            booking, pre_data["v_FPBookingNumber"], line_index
+        )
     else:  # "auspost", "startrack", "TNT", "State Transport"
         result = ship_it.gen_barcode(booking, booking_lines, line_index, sscc_cnt)
 
@@ -53,7 +55,10 @@ def _get_pre_data(booking):
     _pre_data["fp_id"] = fp.pk
     _pre_data["color_code"] = fp.hex_color_code
     v_FPBookingNumber = gen_consignment_num(
-        booking.vx_freight_provider, booking.b_bookingID_Visual, booking.kf_client_id, booking
+        booking.vx_freight_provider,
+        booking.b_bookingID_Visual,
+        booking.kf_client_id,
+        booking,
     )
     _pre_data["v_FPBookingNumber"] = v_FPBookingNumber
 
@@ -328,6 +333,7 @@ def build_label(
 
             with open(label_url[:-4] + ".zpl", "rb") as zpl:
                 label["zpl"] = str(b64encode(zpl.read()))[2:-1]
+                label["label"] = str(b64encode(zpl.read()))[2:-1]
 
         label_data["labels"].append(label)
 
