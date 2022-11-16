@@ -2935,10 +2935,18 @@ class BookingLinesViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def get_booking_lines(self, request, format=None):
         pk_booking_id = request.GET["pk_booking_id"]
+        onlyScanned = request.GET.get('onlyScanned', '')
         booking_lines = Booking_lines.objects.filter(is_deleted=False)
 
         if pk_booking_id != "undefined":
             booking_lines = booking_lines.filter(fk_booking_id=pk_booking_id)
+            
+        if onlyScanned:
+            temp = booking_lines.filter(packed_status=Booking_lines.SCANNED_PACK)
+            if len(temp) == 0:
+                booking_lines = booking_lines.filter(packed_status=Booking_lines.ORIGINAL)
+            else :
+                booking_lines = temp
 
         return JsonResponse(
             {"booking_lines": BookingLineSerializer(booking_lines, many=True).data}
