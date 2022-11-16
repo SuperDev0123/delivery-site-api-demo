@@ -121,7 +121,7 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
         avail_de_zones = FP_zones.objects.filter(fk_fp=fp.id)
 
         # Blacks, Blenner, BlueStar, Startrack, Hi-Trans, VFS: postal_code filter only
-        if fp.id in [3, 83, 84, 85, 86, 87, 101, 105]:
+        if fp.id in [3, 5, 83, 84, 85, 86, 87, 101, 105]:
             if pu_postal_code:
                 avail_pu_zone = avail_pu_zones.filter(
                     postal_code=pu_postal_code
