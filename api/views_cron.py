@@ -175,6 +175,31 @@ def mapBok(id, header):
                 postal_code_to__gte=header.b_059_b_del_address_postalcode,
             )
 
+            # *** EDI solutions start ***#
+            de_company = header.b_054_b_del_company
+            de_street_1 = header.b_055_b_del_address_street_1
+            de_street_2 = header.b_056_b_del_address_street_2
+            de_phone_main = header.b_064_b_del_phone_main
+            de_contact = header.b_061_b_del_contact_full_name
+
+            if not de_street_1 and de_street_2:
+                de_street_1 = de_street_2
+                de_street_2 = ""
+
+            if not de_phone_main:
+                de_phone_main = "0267651109"
+            else:
+                de_phone_main = de_phone_main.replace(" ", "")
+                de_phone_main = de_phone_main.replace("+", "")
+
+            if not de_company and de_contact:
+                de_company = de_contact
+
+            if not de_contact and de_company:
+                de_contact = de_company
+
+            # *** EDI solutions end ***#
+
             booking = Bookings.objects.create(
                 pk_booking_id=header.pk_header_id,
                 b_clientReference_RA_Numbers=sliceString(
@@ -242,13 +267,9 @@ def mapBok(id, header):
                 de_Deliver_From_Hours=header.b_048_b_del_avail_from_time_hour,
                 de_Deliver_By_Minutes=header.b_049_b_del_avail_from_time_minute,
                 de_To_AddressType=sliceString(header.b_053_b_del_address_type, 20),
-                deToCompanyName=sliceString(header.b_054_b_del_company, 40),
-                de_To_Address_Street_1=sliceString(
-                    header.b_055_b_del_address_street_1, 40
-                ),
-                de_To_Address_Street_2=sliceString(
-                    header.b_056_b_del_address_street_2, 40
-                ),
+                deToCompanyName=sliceString(de_company, 40),
+                de_To_Address_Street_1=sliceString(de_street_1, 40),
+                de_To_Address_Street_2=sliceString(de_street_2, 40),
                 de_To_Address_State=sliceString(header.b_057_b_del_address_state, 20),
                 de_To_Address_Suburb=sliceString(header.b_058_b_del_address_suburb, 50),
                 de_To_Address_PostalCode=sliceString(
@@ -257,12 +278,10 @@ def mapBok(id, header):
                 de_To_Address_Country=sliceString(
                     header.b_060_b_del_address_country, 12
                 ),
-                de_to_Contact_F_LName=sliceString(
-                    header.b_061_b_del_contact_full_name, 20
-                ),
+                de_to_Contact_F_LName=sliceString(de_contact, 29),
                 de_Email_Group_Emails=sliceString(header.b_062_b_del_email_group, 512),
-                de_to_Phone_Main=sliceString(header.b_064_b_del_phone_main, 30),
-                de_to_Phone_Mobile=sliceString(header.b_065_b_del_phone_mobile, 25),
+                de_to_Phone_Main=sliceString(de_phone_main, 13),
+                de_to_Phone_Mobile=sliceString(header.b_065_b_del_phone_mobile, 13),
                 de_To_Comm_Delivery_Communicate_Via=sliceString(
                     header.b_066_b_del_communicate_via, 40
                 ),
