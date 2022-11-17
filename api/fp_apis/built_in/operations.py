@@ -124,11 +124,11 @@ def address_filter(booking, booking_lines, rules, fp, pu_zones, de_zones):
         if fp.id in [3, 5, 83, 84, 85, 86, 87, 101, 105]:
             if pu_postal_code:
                 avail_pu_zone = avail_pu_zones.filter(
-                    postal_code=pu_postal_code
+                    postal_code=pu_postal_code, suburb=pu_suburb
                 ).first()
             if de_postal_code:
                 avail_de_zone = avail_de_zones.filter(
-                    postal_code=de_postal_code
+                    postal_code=de_postal_code, suburb=de_suburb
                 ).first()
 
             logger.info(
