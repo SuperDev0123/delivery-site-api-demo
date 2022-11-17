@@ -1130,6 +1130,8 @@ def scanned(payload, client):
 
         if label_data["urls"]:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
+            if booking.z_label_url:
+                label_data["urls"].insert(0, booking.z_label_url)
             pdf.pdf_merge(label_data["urls"], entire_label_url)
             booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
             booking.v_FPBookingNumber = gen_consignment_num(
