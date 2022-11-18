@@ -1,4 +1,5 @@
 import logging
+
 from datetime import datetime
 from pydash import _
 from django.db.models import Count, Aggregate, CharField
@@ -13,6 +14,7 @@ from rest_framework.decorators import (
     permission_classes,
 )
 
+from api.common import trace_error
 from api.serializers import *
 from api.models import *
 from api.base.viewsets import *
@@ -467,6 +469,7 @@ def mapBok(id, header):
                 booking.save()
     except Exception as e:
         logger.info(f"{LOG_ID} Error: {str(e)}\n Header: {header}")
+        trace_error.print()
         transaction.savepoint_rollback(sid)
 
     return True
