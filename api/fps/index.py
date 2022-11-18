@@ -5,7 +5,7 @@ def get_fp_fl(fp, client, state, postal_code, suburb, client_fp=None):
     """
     Plum & Hunter
 
-    Fuel Levy to Western Australia (Zone 22-26): 31%
+    Fuel Levy to Western Australia (Zone 22-26): 45%
     Fuel Levy to Other Regions: 24%
     """
     if (
@@ -13,7 +13,7 @@ def get_fp_fl(fp, client, state, postal_code, suburb, client_fp=None):
         and client.dme_account_num == "461162D2-90C7-BF4E-A905-000000000004"
     ):
         if state.upper() == "WA":
-            return 0.31
+            return 0.45
         else:
             return 0.24
 
