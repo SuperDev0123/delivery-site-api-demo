@@ -466,7 +466,7 @@ def mapBok(id, header):
                 )
                 booking.save()
     except Exception as e:
-        logger.info(f"{LOG_ID} Error: {str(e)}")
+        logger.info(f"{LOG_ID} Error: {str(e)}\n Header: {header}")
         transaction.savepoint_rollback(sid)
 
     return True
