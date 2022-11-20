@@ -72,65 +72,65 @@ def mapBokToBooking(request):
                     mapBok(start_id + idx, header)
                 message += f"Rows moved to dme_bookings = {headers_count}"
 
-            pre_data = list(
-                Bookings.objects.filter(
-                    b_bookingID_Visual__gte=start_id, b_bookingID_Visual__lte=end_id
-                ).values_list("kf_client_id", "b_client_sales_inv_num")
-            )
-            kf_client_id_list = []
-            b_client_sales_inv_num_list = []
-            for data in pre_data:
-                kf_client_id_list.append(data[0])
-                b_client_sales_inv_num_list.append(data[1])
-            error_bookings_1 = (
-                Bookings.objects.filter(
-                    b_bookingID_Visual__gt=start_id,
-                    kf_client_id__isnull=False,
-                    b_client_sales_inv_num__isnull=False,
-                    b_client_sales_inv_num__regex=r".{0}.*",
-                    kf_client_id__in=kf_client_id_list,
-                    b_client_sales_inv_num__in=b_client_sales_inv_num_list,
-                )
-                .exclude(b_status__in=["Cancelled", "Closed"])
-                .values("kf_client_id", "b_client_sales_inv_num")
-                .annotate(
-                    id=Max("id"),
-                    b_bookingID_Visual_List=GroupConcat(
-                        "b_bookingID_Visual", separator=", "
-                    ),
-                )
-            )
-            error_bookings_2 = (
-                Bookings.objects.filter(
-                    b_bookingID_Visual__gte=start_id,
-                    b_bookingID_Visual__lte=end_id,
-                    kf_client_id__isnull=False,
-                    b_client_sales_inv_num__isnull=False,
-                    b_client_sales_inv_num__regex=r".{0}.*",
-                )
-                .values("kf_client_id", "b_client_sales_inv_num")
-                .annotate(
-                    id=Max("id"),
-                    ctn=Count("*"),
-                    b_bookingID_Visual_List=GroupConcat(
-                        "b_bookingID_Visual", separator=", "
-                    ),
-                )
-                .filter(ctn__gt=1)
-            )
-            error_bookings = list(error_bookings_1) + list(error_bookings_2)
+            # pre_data = list(
+            #     Bookings.objects.filter(
+            #         b_bookingID_Visual__gte=start_id, b_bookingID_Visual__lte=end_id
+            #     ).values_list("kf_client_id", "b_client_sales_inv_num")
+            # )
+            # kf_client_id_list = []
+            # b_client_sales_inv_num_list = []
+            # for data in pre_data:
+            #     kf_client_id_list.append(data[0])
+            #     b_client_sales_inv_num_list.append(data[1])
+            # error_bookings_1 = (
+            #     Bookings.objects.filter(
+            #         b_bookingID_Visual__gt=start_id,
+            #         kf_client_id__isnull=False,
+            #         b_client_sales_inv_num__isnull=False,
+            #         b_client_sales_inv_num__regex=r".{0}.*",
+            #         kf_client_id__in=kf_client_id_list,
+            #         b_client_sales_inv_num__in=b_client_sales_inv_num_list,
+            #     )
+            #     .exclude(b_status__in=["Cancelled", "Closed"])
+            #     .values("kf_client_id", "b_client_sales_inv_num")
+            #     .annotate(
+            #         id=Max("id"),
+            #         b_bookingID_Visual_List=GroupConcat(
+            #             "b_bookingID_Visual", separator=", "
+            #         ),
+            #     )
+            # )
+            # error_bookings_2 = (
+            #     Bookings.objects.filter(
+            #         b_bookingID_Visual__gte=start_id,
+            #         b_bookingID_Visual__lte=end_id,
+            #         kf_client_id__isnull=False,
+            #         b_client_sales_inv_num__isnull=False,
+            #         b_client_sales_inv_num__regex=r".{0}.*",
+            #     )
+            #     .values("kf_client_id", "b_client_sales_inv_num")
+            #     .annotate(
+            #         id=Max("id"),
+            #         ctn=Count("*"),
+            #         b_bookingID_Visual_List=GroupConcat(
+            #             "b_bookingID_Visual", separator=", "
+            #         ),
+            #     )
+            #     .filter(ctn__gt=1)
+            # )
+            # error_bookings = list(error_bookings_1) + list(error_bookings_2)
 
-            for booking in error_bookings:
-                Bookings.objects.filter(id=booking["id"]).update(
-                    b_error_Capture=sliceString(
-                        (
-                            "SINV is duplicated in bookingID = "
-                            + booking["b_bookingID_Visual_List"]
-                        ),
-                        1000,
-                    ),
-                    b_status="On Hold",
-                )
+            # for booking in error_bookings:
+            #     Bookings.objects.filter(id=booking["id"]).update(
+            #         b_error_Capture=sliceString(
+            #             (
+            #                 "SINV is duplicated in bookingID = "
+            #                 + booking["b_bookingID_Visual_List"]
+            #             ),
+            #             1000,
+            #         ),
+            #         b_status="On Hold",
+            #     )
 
             option_value.is_running = 0
             option_value.end_time = datetime.now()
