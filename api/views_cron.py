@@ -438,22 +438,25 @@ def mapBok(id, header):
                 booking.booking_Created_For_Email = "info@bathroomsalesdirect.com.au"
                 booking.save()
             else:
-                booking_created_for_email = ""
+                booking_created_for_emails = Client_employees.objects.filter(
+                    fk_id_dme_client_id=pk_id_dme_client
+                )
+
                 if last_name == "":
-                    booking_created_for_email = Client_employees.objects.filter(
+                    booking_created_for_emails = booking_created_for_emails.filter(
                         name_first=first_name,
                         name_last__isnull=True,
-                        fk_id_dme_client_id=pk_id_dme_client,
-                    ).values_list("email")
+                    )
                 else:
-                    booking_created_for_email = Client_employees.objects.filter(
+                    booking_created_for_emails = booking_created_for_emails.filter(
                         name_first=last_name,
                         name_last=first_name,
-                        fk_id_dme_client_id=pk_id_dme_client,
-                    ).values_list("email")
+                    )
+
+                booking_created_for_emails = booking_created_for_emails.values("email")
                 booking.booking_Created_For_Email = (
-                    booking_created_for_email[0].email[:64]
-                    if len(booking_created_for_email) > 0
+                    booking_created_for_emails.first()["email"][:64]
+                    if len(booking_created_for_emails) > 0
                     else ""
                 )
                 booking.save()
