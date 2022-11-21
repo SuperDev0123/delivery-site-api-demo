@@ -5519,6 +5519,7 @@ class DME_Vehicle(models.Model):
     active = models.BooleanField(null=True, default=None)
     paid_for_by = models.CharField(max_length=32, blank=True, null=True, default=None)
     constant_1 = models.BooleanField(null=True, default=None)
+    constant_2 = models.IntegerField(default=2)
     fp_to_view = models.CharField(max_length=64, blank=True, null=True, default=None)
     consignment_to_view = models.CharField(
         max_length=64, blank=True, null=True, default=None
