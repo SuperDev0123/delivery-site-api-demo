@@ -50,7 +50,8 @@ def mapBokToBooking(request):
             datetime.now().replace(tzinfo=None)
             - option_value.end_time.replace(tzinfo=None)
         ).seconds
-        message = ""
+        message = "No booking is mapped!"
+
         if not option_value.is_running or run_time > 30:
             option_value.is_running = 1
             option_value.start_time = datetime.now()
@@ -137,9 +138,11 @@ def mapBokToBooking(request):
             option_value.save()
         else:
             message += "Procedure MoveSuccess2ToBookings is already running."
+
         return Response(message, status=status.HTTP_200_OK)
     except Exception as e:
         logger.info(f"{LOG_ID} Error: {str(e)}")
+        trace_error.print()
         return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -148,60 +151,56 @@ def mapBok(id, header):
     sid = transaction.savepoint()
 
     try:
+        dme_client = DME_clients.objects.get(dme_account_num=header.fk_client_id)
+        delivery_time = Utl_fp_delivery_times.objects.filter(
+            fp_name=header.b_001_b_freight_provider,
+            postal_code_from__lte=header.b_059_b_del_address_postalcode,
+            postal_code_to__gte=header.b_059_b_del_address_postalcode,
+        )
+
+        # *** EDI solutions start ***#
+        de_company = header.b_054_b_del_company
+        de_street_1 = header.b_055_b_del_address_street_1
+        de_street_2 = header.b_056_b_del_address_street_2
+        de_phone_main = header.b_064_b_del_phone_main
+        de_contact = header.b_061_b_del_contact_full_name
+
+        if not de_street_1 and de_street_2:
+            de_street_1 = de_street_2
+            de_street_2 = ""
+
+        if not de_phone_main:
+            de_phone_main = "0267651109"
+        else:
+            de_phone_main = de_phone_main.replace(" ", "")
+            de_phone_main = de_phone_main.replace("+", "")
+
+        if not de_company and de_contact:
+            de_company = de_contact
+
+        if not de_contact and de_company:
+            de_contact = de_company
+        # *** EDI solutions end ***#
+
+        bookingStatus = ""
+        bookingStatusCategory = ""
+        if header.success:
+            success = int(header.success)
+            if success == 2:
+                if header.b_000_3_consignment_number:
+                    bookingStatus = "Booked"
+                    bookingStatusCategory = "Booked"
+                else:
+                    bookingStatus = "Ready for booking"
+                    bookingStatusCategory = "Pre Booking"
+            elif success == 4:
+                bookingStatus = "Picking"
+                bookingStatusCategory = "Pre Booking"
+            elif success == 5:
+                bookingStatus = "Imported / Integrated"
+                bookingStatusCategory = "Pre Booking"
+
         with transaction.atomic():
-            bookingStatus = ""
-            bookingStatusCategory = ""
-            if header.success:
-                success = int(header.success)
-                if success == 2:
-                    if header.b_000_3_consignment_number:
-                        bookingStatus = "Booked"
-                        bookingStatusCategory = "Booked"
-                    else:
-                        bookingStatus = "Ready for booking"
-                        bookingStatusCategory = "Pre Booking"
-                elif success == 4:
-                    bookingStatus = "Picking"
-                    bookingStatusCategory = "Pre Booking"
-                elif success == 5:
-                    bookingStatus = "Imported / Integrated"
-                    bookingStatusCategory = "Pre Booking"
-
-            dme_client = DME_clients.objects.filter(
-                dme_account_num=header.fk_client_id
-            ).first()
-
-            delivery_time = Utl_fp_delivery_times.objects.filter(
-                fp_name=header.b_001_b_freight_provider,
-                postal_code_from__lte=header.b_059_b_del_address_postalcode,
-                postal_code_to__gte=header.b_059_b_del_address_postalcode,
-            )
-
-            # *** EDI solutions start ***#
-            de_company = header.b_054_b_del_company
-            de_street_1 = header.b_055_b_del_address_street_1
-            de_street_2 = header.b_056_b_del_address_street_2
-            de_phone_main = header.b_064_b_del_phone_main
-            de_contact = header.b_061_b_del_contact_full_name
-
-            if not de_street_1 and de_street_2:
-                de_street_1 = de_street_2
-                de_street_2 = ""
-
-            if not de_phone_main:
-                de_phone_main = "0267651109"
-            else:
-                de_phone_main = de_phone_main.replace(" ", "")
-                de_phone_main = de_phone_main.replace("+", "")
-
-            if not de_company and de_contact:
-                de_company = de_contact
-
-            if not de_contact and de_company:
-                de_contact = de_company
-
-            # *** EDI solutions end ***#
-
             booking = Bookings.objects.create(
                 pk_booking_id=header.pk_header_id,
                 b_clientReference_RA_Numbers=sliceString(
@@ -358,19 +357,19 @@ def mapBok(id, header):
                         * line.l_007_dim_height
                         / 1000000000
                     )
+
                 total_cubic_mass = total_cubic_meter * 250
                 total_weight = 0
-                if line.l_008_weight_UOM.lower() in ["g", "gram", "grams"]:
+                grams = ["g", "gram", "grams"]
+                kgs = ["kilogram", "kilograms", "kg", "kgs"]
+                tons = ["t", "ton", "tons"]
+                if line.l_008_weight_UOM.lower() in grams:
                     total_weight = line.l_002_qty * line.l_009_weight_per_each / 1000
-                elif line.l_008_weight_UOM.lower() in [
-                    "kilogram",
-                    "kilograms",
-                    "kg",
-                    "kgs",
-                ]:
+                elif line.l_008_weight_UOM.lower() in kgs:
                     total_weight = line.l_002_qty * line.l_009_weight_per_each
-                elif line.l_008_weight_UOM.lower() in ["t", "ton", "tons"]:
+                elif line.l_008_weight_UOM.lower() in tons:
                     total_weight = line.l_002_qty * line.l_009_weight_per_each * 1000
+
                 Booking_lines.objects.create(
                     e_spec_clientRMA_Number=sliceString(line.client_booking_id, 300),
                     e_weightPerEach=line.l_009_weight_per_each,
@@ -424,9 +423,6 @@ def mapBok(id, header):
                 )
             bok_lines_data.update(success=1)
 
-            dme_client = DME_clients.objects.filter(
-                company_name=booking.b_client_name, dme_account_num=booking.kf_client_id
-            ).first()
             booking_Created_For = booking.booking_Created_For
             booking_Created_For = booking_Created_For if booking_Created_For else ""
             first_name = booking_Created_For.split(" ")[0]
