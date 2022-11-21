@@ -56,7 +56,14 @@ def build_quote_report(kf_client_ids, start_date, end_date):
 
     # Write Header
     fileHandler.write(
-        "BookingID, pk_booking_id, BookedDate, FP, OrderNo, QTY, Weight(Kg), Cubic(M3), Utilized Cubic Meter(M3), Utilized Weight(Kg), Quoted $, Booked $, Pallet Sized Booked $, Vehicle(Project), Manual BOOK?\n"
+        "b_bookingID_Visual, pk_booking_id, b_dateBookedDate, vx_freight_provider, b_client_order_num"
+        + ", qty, total_kg_actual, t_actual_cubic_kg, t_cubic_meter_utilized, t_cubic_kg_utilized"
+        + ", inv_booked_quoted, inv_sell_quoted, pallet_sized_booked, b_booking_project, x_manual_booked_flag\n"
+    )
+    fileHandler.write(
+        "BookingID, pk_booking_id, BookedDate, FP, OrderNo"
+        + ", QTY, Weight in Kg, Cubic in M3, Utilized Cubic Meter in M3, Utilized Weight in Kg"
+        + ", Quoted Dollar, Booked Dollar, Pallet Sized Booked Dollar, Vehicle or Project, Manual BOOK\n"
     )
 
     # Write Each Line
