@@ -1131,7 +1131,7 @@ def scanned(payload, client):
 
         if label_data["urls"]:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
-            label_paths = [label_data["urls"]]
+            label_paths = [label_data["urls"][0]]
             pu_state = booking.pu_Address_State
 
             for sscc in sscc_list:
