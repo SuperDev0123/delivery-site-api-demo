@@ -239,9 +239,7 @@ def mapBok(id, header):
                 pu_Address_street_2=sliceString(header.b_030_b_pu_address_street_2, 30),
                 pu_Address_State=sliceString(header.b_031_b_pu_address_state, 25),
                 pu_Address_Suburb=sliceString(header.b_032_b_pu_address_suburb, 50),
-                pu_Address_PostalCode=sliceString(
-                    header.b_033_b_pu_address_postalcode, 25
-                ),
+                pu_Address_PostalCode=header.b_033_b_pu_address_postalcode or None,
                 pu_Address_Country=sliceString(header.b_034_b_pu_address_country, 50),
                 pu_Contact_F_L_Name=sliceString(
                     header.b_035_b_pu_contact_full_name, 20
@@ -273,9 +271,7 @@ def mapBok(id, header):
                 de_To_Address_Street_2=sliceString(de_street_2, 40),
                 de_To_Address_State=sliceString(header.b_057_b_del_address_state, 20),
                 de_To_Address_Suburb=sliceString(header.b_058_b_del_address_suburb, 50),
-                de_To_Address_PostalCode=sliceString(
-                    header.b_059_b_del_address_postalcode, 30
-                ),
+                de_To_Address_PostalCode=header.b_059_b_del_address_postalcode,
                 de_To_Address_Country=sliceString(
                     header.b_060_b_del_address_country, 12
                 ),
