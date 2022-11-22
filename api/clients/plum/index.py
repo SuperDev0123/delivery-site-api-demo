@@ -244,6 +244,12 @@ def push_boks(payload, client, username, method):
     }
     """
     LOG_ID = "[PUSH FROM PLUM]"  # PB - PUSH BOKS
+
+    if "booking" not in payload:
+        message = f"'booking' is required"
+        logger.info(f"{LOG_ID} {message}")
+        raise Exception(message)
+
     bok_1 = payload["booking"]
     bok_1["pk_header_id"] = str(uuid.uuid4())
     bok_2s = payload["booking_lines"]
@@ -322,8 +328,21 @@ def push_boks(payload, client, username, method):
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
     else:
+        if not bok_1.get("b_057_b_del_address_state"):
+            message = "'State' is required."
+        if not bok_1.get("b_058_b_del_address_suburb"):
+            message = "'Suburb' is required."
+        if not bok_1.get("b_059_b_del_address_postalcode"):
+            message = "'Postal Code' is required."
+        if (
+            bok_1.get("b_059_b_del_address_postalcode")
+            and bok_1.get("b_059_b_del_address_postalcode") == "-"
+        ):
+            message = "'Postal Code' is invalid."
         if not bok_1.get("client_booking_id"):
             message = "'client_booking_id' is required."
+
+        if message:
             logger.info(f"{LOG_ID} {message}")
             raise ValidationError(message)
 
@@ -484,101 +503,101 @@ def push_boks(payload, client, username, method):
         client_booking_id = f"{bok_1['b_client_order_num']}_{bok_1['pk_header_id']}_{datetime.strftime(datetime.utcnow(), '%s')}"
         bok_1["client_booking_id"] = client_booking_id
 
+    # Save bok_1
+    bok_1["fk_client_id"] = client.dme_account_num
+    bok_1["x_booking_Created_With"] = "DME PUSH API"
+    bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
+    bok_1["b_clientPU_Warehouse"] = warehouse.name
+    bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
+    bok_1["success"] = dme_constants.BOK_SUCCESS_3
+
+    if not bok_1.get("b_000_1_b_clientreference_ra_numbers"):
+        bok_1["b_000_1_b_clientreference_ra_numbers"] = ""
+
+    if not bok_1.get("b_028_b_pu_company"):
+        bok_1["b_028_b_pu_company"] = warehouse.name
+
+    if not bok_1.get("b_035_b_pu_contact_full_name"):
+        bok_1["b_035_b_pu_contact_full_name"] = warehouse.contact_name
+
+    if not bok_1.get("b_037_b_pu_email"):
+        bok_1["b_037_b_pu_email"] = warehouse.contact_email
+
+    if not bok_1.get("b_038_b_pu_phone_main"):
+        bok_1["b_038_b_pu_phone_main"] = warehouse.phone_main
+
+    if not bok_1.get("b_029_b_pu_address_street_1"):
+        bok_1["b_029_b_pu_address_street_1"] = warehouse.address1
+
+    if not bok_1.get("b_030_b_pu_address_street_2"):
+        bok_1["b_030_b_pu_address_street_2"] = warehouse.address2
+
+    if not bok_1.get("b_034_b_pu_address_country"):
+        bok_1["b_034_b_pu_address_country"] = "AU"
+
+    if not bok_1.get("b_033_b_pu_address_postalcode"):
+        bok_1["b_033_b_pu_address_postalcode"] = warehouse.postal_code
+
+    if not bok_1.get("b_031_b_pu_address_state"):
+        bok_1["b_031_b_pu_address_state"] = warehouse.state.upper()
+
+    if not bok_1.get("b_032_b_pu_address_suburb"):
+        bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
+
+    if not bok_1.get("b_021_b_pu_avail_from_date"):
+        next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+        bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
+
+    if not bok_1.get("b_064_b_del_phone_main"):
+        bok_1["b_064_b_del_phone_main"] = "0289682200"
+
+    if not bok_1.get("b_063_b_del_email"):
+        bok_1["b_063_b_del_email"] = "aushelpdesk@plumproducts.com"
+
+    if not bok_1.get("b_061_b_del_contact_full_name"):
+        bok_1["b_061_b_del_contact_full_name"] = "Ben Randall"
+
+    if not bok_1.get("b_054_b_del_company"):
+        bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
+
+    # State and Suburb
+    de_state = bok_1.get("b_057_b_del_address_state")
+    de_suburb = bok_1.get("b_058_b_del_address_suburb")
+    de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
+
+    if not de_postal_code:
+        message = f"Delivery postal code is required."
+        logger.info(f"@885 {LOG_ID} {message}")
+        raise Exception(message)
+
+    if not de_state or not de_suburb:
+        de_state, de_suburb = get_suburb_state(de_postal_code)
+        bok_1["b_057_b_del_address_state"] = de_state.upper()
+        bok_1["b_058_b_del_address_suburb"] = de_suburb.upper()
+    else:
+        bok_1["b_057_b_del_address_state"] = de_state.upper()
+        bok_1["b_058_b_del_address_suburb"] = de_suburb.upper()
+
+    # Check prefix of email and phone - 'eml: ', 'tel: '
+    de_email = bok_1["b_063_b_del_email"]
+
+    if ":" in de_email:
+        bok_1["b_063_b_del_email"] = de_email.split(":")[1].strip()
+
+    de_phone = bok_1["b_064_b_del_phone_main"]
+
+    if ":" in de_phone:
+        bok_1["b_064_b_del_phone_main"] = de_phone.split(":")[1].strip()
+
+    bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
+    bok_1_serializer = BOK_1_Serializer(data=bok_1)
+
+    if not bok_1_serializer.is_valid():
+        message = f"Serialiser Error - {bok_1_serializer.errors}"
+        logger.info(f"@8821 {LOG_ID} {message}")
+        raise Exception(message)
+
     with transaction.atomic():
-        # Save bok_1
-        bok_1["fk_client_id"] = client.dme_account_num
-        bok_1["x_booking_Created_With"] = "DME PUSH API"
-        bok_1["fk_client_warehouse"] = warehouse.pk_id_client_warehouses
-        bok_1["b_clientPU_Warehouse"] = warehouse.name
-        bok_1["b_client_warehouse_code"] = warehouse.client_warehouse_code
-        bok_1["success"] = dme_constants.BOK_SUCCESS_3
-
-        if not bok_1.get("b_000_1_b_clientreference_ra_numbers"):
-            bok_1["b_000_1_b_clientreference_ra_numbers"] = ""
-
-        if not bok_1.get("b_028_b_pu_company"):
-            bok_1["b_028_b_pu_company"] = warehouse.name
-
-        if not bok_1.get("b_035_b_pu_contact_full_name"):
-            bok_1["b_035_b_pu_contact_full_name"] = warehouse.contact_name
-
-        if not bok_1.get("b_037_b_pu_email"):
-            bok_1["b_037_b_pu_email"] = warehouse.contact_email
-
-        if not bok_1.get("b_038_b_pu_phone_main"):
-            bok_1["b_038_b_pu_phone_main"] = warehouse.phone_main
-
-        if not bok_1.get("b_029_b_pu_address_street_1"):
-            bok_1["b_029_b_pu_address_street_1"] = warehouse.address1
-
-        if not bok_1.get("b_030_b_pu_address_street_2"):
-            bok_1["b_030_b_pu_address_street_2"] = warehouse.address2
-
-        if not bok_1.get("b_034_b_pu_address_country"):
-            bok_1["b_034_b_pu_address_country"] = "AU"
-
-        if not bok_1.get("b_033_b_pu_address_postalcode"):
-            bok_1["b_033_b_pu_address_postalcode"] = warehouse.postal_code
-
-        if not bok_1.get("b_031_b_pu_address_state"):
-            bok_1["b_031_b_pu_address_state"] = warehouse.state.upper()
-
-        if not bok_1.get("b_032_b_pu_address_suburb"):
-            bok_1["b_032_b_pu_address_suburb"] = warehouse.suburb
-
-        if not bok_1.get("b_021_b_pu_avail_from_date"):
-            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-            bok_1["b_021_b_pu_avail_from_date"] = str(next_biz_day)[:10]
-
-        if not bok_1.get("b_064_b_del_phone_main"):
-            bok_1["b_064_b_del_phone_main"] = "0289682200"
-
-        if not bok_1.get("b_063_b_del_email"):
-            bok_1["b_063_b_del_email"] = "aushelpdesk@plumproducts.com"
-
-        if not bok_1.get("b_061_b_del_contact_full_name"):
-            bok_1["b_061_b_del_contact_full_name"] = "Ben Randall"
-
-        if not bok_1.get("b_054_b_del_company"):
-            bok_1["b_054_b_del_company"] = bok_1["b_061_b_del_contact_full_name"]
-
-        # State and Suburb
-        de_state = bok_1.get("b_057_b_del_address_state")
-        de_suburb = bok_1.get("b_058_b_del_address_suburb")
-        de_postal_code = bok_1.get("b_059_b_del_address_postalcode")
-
-        if not de_postal_code:
-            message = f"Delivery postal code is required."
-            logger.info(f"@885 {LOG_ID} {message}")
-            raise Exception(message)
-
-        if not de_state or not de_suburb:
-            de_state, de_suburb = get_suburb_state(de_postal_code)
-            bok_1["b_057_b_del_address_state"] = de_state.upper()
-            bok_1["b_058_b_del_address_suburb"] = de_suburb.upper()
-        else:
-            bok_1["b_057_b_del_address_state"] = de_state.upper()
-            bok_1["b_058_b_del_address_suburb"] = de_suburb.upper()
-
-        # Check prefix of email and phone - 'eml: ', 'tel: '
-        de_email = bok_1["b_063_b_del_email"]
-
-        if ":" in de_email:
-            bok_1["b_063_b_del_email"] = de_email.split(":")[1].strip()
-
-        de_phone = bok_1["b_064_b_del_phone_main"]
-
-        if ":" in de_phone:
-            bok_1["b_064_b_del_phone_main"] = de_phone.split(":")[1].strip()
-
-        bok_1["b_031_b_pu_address_state"] = bok_1["b_031_b_pu_address_state"].upper()
-        bok_1_serializer = BOK_1_Serializer(data=bok_1)
-
-        if not bok_1_serializer.is_valid():
-            message = f"Serialiser Error - {bok_1_serializer.errors}"
-            logger.info(f"@8821 {LOG_ID} {message}")
-            raise Exception(message)
-
         # Save bok_2s
         if "model_number" in bok_2s[0]:  # Product & Child items
             items = product_oper.get_product_items(bok_2s, client, is_web)
