@@ -152,11 +152,16 @@ def mapBok(id, header):
 
     try:
         dme_client = DME_clients.objects.get(dme_account_num=header.fk_client_id)
-        delivery_time = Utl_fp_delivery_times.objects.filter(
-            fp_name=header.b_001_b_freight_provider,
-            postal_code_from__lte=header.b_059_b_del_address_postalcode,
-            postal_code_to__gte=header.b_059_b_del_address_postalcode,
-        )
+        delivery_times = []
+
+        try:
+            delivery_times = Utl_fp_delivery_times.objects.filter(
+                fp_name=header.b_001_b_freight_provider,
+                postal_code_from__lte=header.b_059_b_del_address_postalcode,
+                postal_code_to__gte=header.b_059_b_del_address_postalcode,
+            )
+        except:
+            pass
 
         # *** EDI solutions start ***#
         de_company = header.b_054_b_del_company
@@ -307,8 +312,8 @@ def mapBok(id, header):
                 b_client_sales_inv_num=sliceString(header.b_client_sales_inv_num, 64),
                 b_client_warehouse_code=sliceString(header.b_client_warehouse_code, 64),
                 b_client_name=sliceString(dme_client.company_name, 36),
-                delivery_kpi_days=delivery_time.first().delivery_days
-                if len(delivery_time) > 0
+                delivery_kpi_days=delivery_times.first().delivery_days
+                if len(delivery_times) > 0
                 else 14,
                 z_api_issue_update_flag_500=1 if header.success == 2 else 0,
                 x_manual_booked_flag=1 if header.success == 6 else 0,
