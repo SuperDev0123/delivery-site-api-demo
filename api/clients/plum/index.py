@@ -859,15 +859,16 @@ def scanned(payload, client):
     pk_booking_id = booking.pk_booking_id
     lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
     line_datas = Booking_lines_data.objects.filter(fk_booking_id=pk_booking_id)
-    original_items = lines.filter(
-        sscc__isnull=True, packed_status=Booking_lines.ORIGINAL
-    )
-    scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
-    repacked_items_count = lines.filter(
-        sscc__isnull=False, e_item="Repacked Item"
-    ).count()
-    model_number_qtys = original_items.values_list("e_item_type", "e_qty")
-    sscc_list = scanned_items.values_list("sscc", flat=True)
+
+    original_items, scanned_items, sscc_list, model_number_qtys = [], [], [], []
+    for line in lines:
+        if not line.sscc and line.packed_status == Booking_lines.ORIGINAL:
+            original_items.append(line)
+            model_number_qtys.append((line.e_item_type, line.e_qty))
+
+        if line.sscc and e_item == "Picked Item":
+            scanned_items.append(line)
+            sscc_list.append(line.sscc)
 
     logger.info(f"@360 {LOG_ID} Booking: {booking}")
     logger.info(f"@361 {LOG_ID} Lines: {lines}")
@@ -876,16 +877,21 @@ def scanned(payload, client):
     logger.info(f"@364 {LOG_ID} model_number and qty(s): {model_number_qtys}")
     logger.info(f"@365 {LOG_ID} sscc(s): {sscc_list}")
 
-    # Delete existing ssccs(for scanned ones)
-    picked_ssccs = []
-    for picked_item in picked_items:
-        picked_ssccs.append(picked_item["sscc"])
-    if picked_ssccs:
-        Booking_lines.objects.filter(sscc__in=picked_ssccs).delete()
+    """
+        Deactivated on 2022-11-22
+            * No double scan from ACR
+            * ACR reprint label when required
+    """
+    # # Delete existing ssccs(for scanned ones)
+    # picked_ssccs = []
+    # for picked_item in picked_items:
+    #     picked_ssccs.append(picked_item["sscc"])
+    # if picked_ssccs:
+    #     Booking_lines.objects.filter(sscc__in=picked_ssccs).delete()
 
-    # Get scanned items again for sequence of label
-    lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
-    scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
+    # # Get scanned items again for sequence of label
+    # lines = Booking_lines.objects.filter(fk_booking_id=pk_booking_id)
+    # scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
 
     # Validation
     invalid_model_numbers = []
@@ -1011,8 +1017,8 @@ def scanned(payload, client):
     # Save
     try:
         labels = []
-        sscc_list = []
-        sscc_lines = {}
+        new_sscc_list = []
+        new_sscc_lines = {}
 
         with transaction.atomic():
             for picked_item in picked_items:
@@ -1074,11 +1080,11 @@ def scanned(payload, client):
                 )
                 new_line.save()
 
-                if picked_item["sscc"] not in sscc_list:
-                    sscc_list.append(picked_item["sscc"])
-                    sscc_lines[picked_item["sscc"]] = [new_line]
+                if picked_item["sscc"] not in new_sscc_list:
+                    new_sscc_list.append(picked_item["sscc"])
+                    new_sscc_lines[picked_item["sscc"]] = [new_line]
                 else:
-                    sscc_lines[picked_item["sscc"]].append(new_line)
+                    new_sscc_lines[picked_item["sscc"]].append(new_line)
 
                 for item in picked_item["items"]:
                     # Create new Line_Data
@@ -1110,11 +1116,6 @@ def scanned(payload, client):
         for item in original_items:
             total_qty += item.e_qty
 
-        # Reset all Api_booking_confirmation_lines
-        Api_booking_confirmation_lines.objects.filter(
-            fk_booking_id=booking.pk_booking_id
-        ).delete()
-
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
@@ -1122,15 +1123,22 @@ def scanned(payload, client):
             booking=booking,
             file_path=file_path,
             total_qty=total_qty,
-            sscc_list=sscc_list,
-            sscc_lines=sscc_lines,
+            sscc_list=new_sscc_list,
+            sscc_lines=new_sscc_lines,
             need_zpl=True,
             scanned_items=scanned_items,
         )
 
         if label_data["urls"]:
             entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"
-            pdf.pdf_merge(label_data["urls"], entire_label_url)
+            label_paths = [label_data["urls"]]
+            pu_state = booking.pu_Address_State
+
+            for sscc in sscc_list:
+                pdf_name = f"{pu_state}_{str(booking.b_bookingID_Visual)}_{sscc}.pdf"
+                label_paths.append(f"{file_path}/{pdf_name}")
+
+            pdf.pdf_merge(label_paths, entire_label_url)
             booking.z_label_url = f"{booking.vx_freight_provider.lower()}_au/DME{booking.b_bookingID_Visual}.pdf"
             booking.v_FPBookingNumber = gen_consignment_num(
                 booking.vx_freight_provider,
@@ -1291,9 +1299,6 @@ def ready_boks(payload, client):
     # Check if Order items are all picked
     original_items = lines.filter(sscc__isnull=True)
     scanned_items = lines.filter(sscc__isnull=False, e_item="Picked Item")
-    repacked_items_count = lines.filter(
-        sscc__isnull=False, e_item="Repacked Item"
-    ).count()
     model_number_qtys = original_items.values_list("e_item_type", "e_qty")
     estimated_picked = {}
     is_picked_all = True
