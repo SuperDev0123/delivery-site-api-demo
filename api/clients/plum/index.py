@@ -866,7 +866,7 @@ def scanned(payload, client):
             original_items.append(line)
             model_number_qtys.append((line.e_item_type, line.e_qty))
 
-        if line.sscc and e_item == "Picked Item":
+        if line.sscc and line.e_item == "Picked Item":
             scanned_items.append(line)
             sscc_list.append(line.sscc)
 
