@@ -330,8 +330,6 @@ def push_boks(payload, client, username, method):
     else:
         if not bok_1.get("b_057_b_del_address_state"):
             message = "'State' is required."
-        if not bok_1.get("b_058_b_del_address_suburb"):
-            message = "'Suburb' is required."
         if not bok_1.get("b_059_b_del_address_postalcode"):
             message = "'Postal Code' is required."
         if (
