@@ -490,6 +490,7 @@ def push_boks(payload, client, username, method):
             bok_1s = BOK_1_headers.objects.filter(
                 fk_client_id=client.dme_account_num,
                 client_booking_id=bok_1["client_booking_id"],
+                success=1,
             )
             if bok_1s.exists():
                 message = f"Order({bok_1['client_booking_id']}) is already sent to ACR."
