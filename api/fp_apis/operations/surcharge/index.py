@@ -17,7 +17,7 @@ from api.fp_apis.operations.surcharge.camerons import camerons
 from api.fp_apis.operations.surcharge.northline import northline
 from api.fp_apis.operations.surcharge.hitrans import hitrans
 from api.fp_apis.operations.surcharge.blacks import blacks
-from api.fp_apis.operations.surcharge.blenner import blenner
+from api.fp_apis.operations.surcharge.blanner import blanner
 from api.fp_apis.operations.surcharge.bluestar import bluestar
 from api.fp_apis.operations.surcharge.vfs import vfs
 from api.fp_apis.operations.surcharge.toll import toll
@@ -266,8 +266,8 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
         surcharge_opt_funcs = hitrans()
     elif fp.fp_company_name.lower() == "blacks":
         surcharge_opt_funcs = blacks()
-    elif fp.fp_company_name.lower() == "blenner":
-        surcharge_opt_funcs = blenner()
+    elif fp.fp_company_name.lower() == "blanner":
+        surcharge_opt_funcs = blanner()
     elif fp.fp_company_name.lower() == "bluestar":
         surcharge_opt_funcs = bluestar()
     elif fp.fp_company_name.lower() == "vfs":

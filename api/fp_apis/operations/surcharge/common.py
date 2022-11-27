@@ -139,7 +139,7 @@ SURCHARGE_NAME_DESC = {
         "Manual Connote": "Automatically charged based on entry method",
         "Over-length Freight - plus GST Capital Lanes": "Where the length of the consignment matches the following dimensions.",
     },
-    "BLENNER": {
+    "BLANNER": {
         "Additional Labour": "Consignments requiring additional labour for services may incur Ad-hoc charges",
         "Dangerous Goods": "Dangerous Goods consignments incurr a 25% surcharge ontop of the freight rate + $15 Basic Charge",
         "Hand Load/Unloda": "",

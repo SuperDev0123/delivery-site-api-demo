@@ -1474,12 +1474,21 @@ class BookingsViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def bulk_booking_update(self, request, format=None):
+        LOG_ID = "[BULK BOOKING UPDATE]"
         booking_ids = request.data["bookingIds"]
         field_name = request.data["fieldName"]
         field_content = request.data["fieldContent"]
 
         if field_content == "":
             field_content = None
+
+        if (
+            request.user.username == "anchor_packaging_afs"
+            and field_name != "vx_freight_provider"
+        ):
+            msg = f"Error: You have no permission to update this field!"
+            logger(f"{LOG_ID} {request.user.username} {msg}")
+            return JsonResponse({"message": msg}, status=400)
 
         try:
             for booking_id in booking_ids:
@@ -4594,6 +4603,7 @@ def build_label(request):
 
     try:
         # Build label with SSCC - one sscc should have one page label
+        booking.puPickUpAvailFrom_Date = convert_to_AU_SYDNEY_tz(datetime.now()).date()
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )

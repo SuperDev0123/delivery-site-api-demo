@@ -279,7 +279,7 @@ def tgp_tgd(param):
 #         return None
 
 
-def blenner():
+def blanner():
     return {
         "order": [
             # asf,
