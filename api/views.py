@@ -85,7 +85,11 @@ from api.fp_apis.operations.tracking import create_fp_status_history
 from api.outputs import tempo
 from api.outputs.email import send_email
 from api.common import status_history
-from api.common.common_times import convert_to_UTC_tz, TIME_DIFFERENCE
+from api.common.common_times import (
+    convert_to_UTC_tz,
+    convert_to_AU_SYDNEY_tz,
+    TIME_DIFFERENCE,
+)
 from api.common.postal_code import get_postal_codes
 from api.common.booking_quote import set_booking_quote
 from api.common.constants import BOOKING_FIELDS_4_ALLBOOKING_TABLE
@@ -4603,7 +4607,11 @@ def build_label(request):
 
     try:
         # Build label with SSCC - one sscc should have one page label
-        booking.puPickUpAvailFrom_Date = convert_to_AU_SYDNEY_tz(datetime.now()).date()
+        if not booking.puPickUpAvailFrom_Date:
+            booking.puPickUpAvailFrom_Date = convert_to_AU_SYDNEY_tz(
+                datetime.now()
+            ).date()
+
         file_path = (
             f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
         )
