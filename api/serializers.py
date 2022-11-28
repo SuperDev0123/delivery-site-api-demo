@@ -177,6 +177,160 @@ class SimpleBookingSerializer(serializers.ModelSerializer):
         )
         fields = read_only_fields + tuple(BOOKING_FIELDS_4_ALLBOOKING_TABLE)
 
+class SimpleBookingLabelSerializer(serializers.ModelSerializer):
+    cost_dollar = serializers.SerializerMethodField(read_only=True)
+    de_Deliver_By_Time = serializers.SerializerMethodField(read_only=True)
+
+    def get_de_Deliver_By_Time(self, obj):
+        if not obj.de_Deliver_By_Minutes:
+            minute = "00"
+        else:
+            minute = str(obj.de_Deliver_By_Minutes).zfill(2)
+
+        if obj.de_Deliver_By_Hours != None:
+            return f"{str(obj.de_Deliver_By_Hours).zfill(2)}:{minute}"
+
+        return None
+
+    def get_cost_dollar(self, obj):
+        if obj.inv_sell_quoted_override:
+            return round(obj.inv_sell_quoted_override, 2)
+        elif obj.inv_booked_quoted:
+            return round(obj.inv_booked_quoted, 2)
+        elif obj.inv_sell_quoted:
+            return round(obj.inv_sell_quoted, 2)
+        elif obj.api_booking_quote:
+            return round(obj.api_booking_quote.client_mu_1_minimum_values, 2)
+
+
+    class Meta:
+        model = Bookings
+        read_only_fields = (
+            "cost_dollar",
+            "de_Deliver_By_Time",            
+        )
+        fields = read_only_fields + (
+            "id",
+            "pk_booking_id",
+            "b_bookingID_Visual",
+            "puCompany",
+            "pu_Address_Street_1",
+            "pu_Address_street_2",
+            "pu_Address_PostalCode",
+            "pu_Address_Suburb",
+            "pu_Address_Country",
+            "pu_Address_City",
+            "de_To_Address_Street_1",
+            "de_To_Address_Street_2",
+            "de_To_Address_PostalCode",
+            "de_To_Address_Suburb",
+            "de_To_Address_Country",
+            "de_To_Address_City",
+            "deToCompanyName",
+            "v_FPBookingNumber",
+            "vx_freight_provider",
+            "z_label_url",
+            "z_pod_url",
+            "z_pod_signed_url",
+            "z_manifest_url",
+            "pu_Address_State",
+            "de_To_Address_State",
+            "b_status",
+            "b_dateBookedDate",
+            "s_20_Actual_Pickup_TimeStamp",
+            "s_21_Actual_Delivery_TimeStamp",
+            "b_client_name",
+            "booking_Created_For",
+            "booking_Created_For_Email",
+            "b_booking_Priority",
+            "b_clientReference_RA_Numbers",
+            "z_lock_status",
+            "puPickUpAvailFrom_Date",
+            "pu_PickUp_Avail_Time_Hours",
+            "pu_PickUp_Avail_Time_Minutes",
+            "pu_PickUp_By_Date",
+            "pu_PickUp_By_Time_Hours",
+            "pu_PickUp_By_Time_Minutes",
+            "de_Deliver_From_Date",
+            "de_Deliver_From_Hours",
+            "de_Deliver_From_Minutes",
+            "de_Deliver_By_Date",
+            "de_Deliver_By_Hours",
+            "de_Deliver_By_Minutes",
+            "total_lines_qty_override",
+            "total_1_KG_weight_override",
+            "total_Cubic_Meter_override",
+            "v_service_Type",
+            "vx_serviceName",
+            "vx_account_code",
+            "fk_fp_pickup_id",
+            "v_vehicle_Type",
+            "inv_billing_status",
+            "inv_billing_status_note",
+            "dme_client_notes",
+            "b_client_sales_inv_num",
+            "b_client_order_num",
+            "b_client_name_sub",
+            "b_promo_code",
+            "inv_dme_invoice_no",
+            "fp_invoice_no",
+            "inv_cost_quoted",
+            "inv_cost_actual",
+            "inv_sell_quoted",
+            "inv_sell_quoted_override",
+            "inv_sell_actual",
+            "x_manual_booked_flag",
+            "b_fp_qty_delivered",
+            "manifest_timestamp",
+            "b_booking_project",
+            "b_project_opened",
+            "b_project_inventory_due",
+            "b_project_wh_unpack",
+            "b_project_dd_receive_date",
+            "z_calculated_ETA",
+            "b_project_due_date",
+            "delivery_booking",
+            "fp_store_event_date",
+            "fp_store_event_time",
+            "fp_store_event_desc",
+            "fp_received_date_time",
+            "b_given_to_transport_date_time",
+            "x_ReadyStatus",
+            "z_downloaded_shipping_label_timestamp",
+            "api_booking_quote",
+            "vx_futile_Booking_Notes",
+            "s_05_Latest_Pick_Up_Date_TimeSet",
+            "s_06_Latest_Delivery_Date_TimeSet",
+            "s_06_Latest_Delivery_Date_Time_Override",
+            "b_handling_Instructions",
+            "b_status_API",
+            "b_booking_Notes",
+            "b_error_Capture",
+            "kf_client_id",
+            "z_locked_status_time",
+            "x_booking_Created_With",
+            "z_CreatedByAccount",
+            "b_send_POD_eMail",
+            "pu_Address_Type",
+            "de_To_AddressType",
+            "b_booking_tail_lift_pickup",
+            "b_booking_tail_lift_deliver",
+            "pu_no_of_assists",
+            "de_no_of_assists",
+            "pu_location",
+            "de_to_location",
+            "pu_access",
+            "de_access",
+            "pu_floor_number",
+            "de_floor_number",
+            "pu_floor_access_by",
+            "de_to_floor_access_by",
+            "pu_service",
+            "de_service",
+            "booking_type",
+            "is_quote_locked",
+            "inv_booked_quoted",
+        )
 
 class BookingSerializer(serializers.ModelSerializer):
     eta_pu_by = serializers.SerializerMethodField(read_only=True)
