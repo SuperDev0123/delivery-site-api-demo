@@ -4856,9 +4856,8 @@ class FileUploadView(views.APIView):
         return Response(result)
 
 
-@permission_classes([AllowAny,])
+@permission_classes([IsAuthenticatedOrReadOnly])
 class FilesViewSet(viewsets.ModelViewSet):
-    permission_classes = [AllowAny]
     def list(self, request):
         file_type = request.GET["fileType"]
         dme_files = DME_Files.objects.filter(file_type=file_type)
