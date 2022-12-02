@@ -215,7 +215,7 @@ def partial_pricing(payload, client, warehouse):
 
 
 @background
-def quoting_in_bg(client, username, bok_1, bok_2s, old_quote):
+def quoting_in_bg(client, username, bok_1_obj, bok_1, bok_2s, old_quote):
     LOG_ID = "[PLUM QUOTING IN BG]"
 
     # create status history
@@ -798,7 +798,7 @@ def push_boks(payload, client, username, method):
 
     # Fast response for sapb1
     if is_biz:
-        quoting_in_bg(client, username, bok_1, bok_2s, old_quote)
+        quoting_in_bg(client, username, bok_1_obj, bok_1, bok_2s, old_quote)
 
         url = f"{settings.WEB_SITE_URL}/status/{bok_1['client_booking_id']}/"
         result = {"success": True, "results": [], "pricePageUrl": url}
