@@ -32,6 +32,7 @@ from api.common import (
     constants as dme_constants,
     status_history,
 )
+from api.common.thread import background
 from api.common.booking_quote import set_booking_quote
 from api.helpers.cubic import get_cubic_meter
 from api.fp_apis.operations.book import book as book_oper
@@ -211,6 +212,127 @@ def partial_pricing(payload, client, warehouse):
     else:
         logger.info(f"@819 {LOG_ID} Failure!")
         return json_results
+
+
+@background
+def quoting_in_bg(client, username, bok_1, bok_2s, old_quote):
+    LOG_ID = "[PLUM QUOTING IN BG]"
+
+    # create status history
+    status_history.create_4_bok(
+        bok_1["pk_header_id"], "Imported / Integrated", username
+    )
+
+    # PU avail
+    pu_avil = datetime.strptime(bok_1["b_021_b_pu_avail_from_date"], "%Y-%m-%d")
+
+    booking = {
+        "pk_booking_id": bok_1["pk_header_id"],
+        "puPickUpAvailFrom_Date": pu_avil.date(),
+        "b_clientReference_RA_Numbers": bok_1["b_000_1_b_clientreference_ra_numbers"],
+        "puCompany": bok_1["b_028_b_pu_company"],
+        "pu_Contact_F_L_Name": bok_1["b_035_b_pu_contact_full_name"],
+        "pu_Email": bok_1["b_037_b_pu_email"],
+        "pu_Phone_Main": bok_1["b_038_b_pu_phone_main"],
+        "pu_Address_Street_1": bok_1["b_029_b_pu_address_street_1"],
+        "pu_Address_street_2": bok_1["b_030_b_pu_address_street_2"],
+        "pu_Address_Country": bok_1["b_034_b_pu_address_country"],
+        "pu_Address_PostalCode": bok_1["b_033_b_pu_address_postalcode"],
+        "pu_Address_State": bok_1["b_031_b_pu_address_state"],
+        "pu_Address_Suburb": bok_1["b_032_b_pu_address_suburb"],
+        "deToCompanyName": bok_1["b_054_b_del_company"],
+        "de_to_Contact_F_LName": bok_1["b_061_b_del_contact_full_name"],
+        "de_Email": bok_1["b_063_b_del_email"],
+        "de_to_Phone_Main": bok_1["b_064_b_del_phone_main"],
+        "de_To_Address_Street_1": bok_1["b_055_b_del_address_street_1"],
+        "de_To_Address_Street_2": bok_1["b_056_b_del_address_street_2"],
+        "de_To_Address_Country": bok_1["b_060_b_del_address_country"],
+        "de_To_Address_PostalCode": bok_1["b_059_b_del_address_postalcode"],
+        "de_To_Address_State": bok_1["b_057_b_del_address_state"],
+        "de_To_Address_Suburb": bok_1["b_058_b_del_address_suburb"],
+        "pu_Address_Type": "business",
+        "de_To_AddressType": "residential",
+        "b_booking_tail_lift_pickup": False,
+        "b_booking_tail_lift_deliver": False,
+        "client_warehouse_code": bok_1["b_client_warehouse_code"],
+        "kf_client_id": bok_1["fk_client_id"],
+        "b_client_name": client.company_name,
+        "pu_no_of_assists": bok_1.get("b_072_b_pu_no_of_assists") or 0,
+        "de_no_of_assists": bok_1.get("b_073_b_del_no_of_assists") or 0,
+        "b_booking_project": None,
+    }
+
+    booking_lines = []
+    for bok_2 in bok_2s:
+        _bok_2 = bok_2["booking_line"]
+        bok_2_line = {
+            "pk_lines_id": _bok_2["pk_lines_id"],
+            "fk_booking_id": _bok_2["fk_header_id"],
+            "e_type_of_packaging": _bok_2["l_001_type_of_packaging"],
+            "e_qty": _bok_2["l_002_qty"],
+            "e_item": _bok_2["l_003_item"],
+            "e_dimUOM": _bok_2["l_004_dim_UOM"],
+            "e_dimLength": _bok_2["l_005_dim_length"],
+            "e_dimWidth": _bok_2["l_006_dim_width"],
+            "e_dimHeight": _bok_2["l_007_dim_height"],
+            "e_weightUOM": _bok_2["l_008_weight_UOM"],
+            "e_weightPerEach": _bok_2["l_009_weight_per_each"],
+            "packed_status": _bok_2["b_093_packed_status"],
+        }
+        booking_lines.append(bok_2_line)
+
+    fc_log, _ = FC_Log.objects.get_or_create(
+        client_booking_id=bok_1["client_booking_id"],
+        old_quote__isnull=True,
+        new_quote__isnull=True,
+    )
+    fc_log.old_quote = old_quote
+    body = {"booking": booking, "booking_lines": booking_lines}
+    _, success, message, quote_set = pricing_oper(
+        body=body,
+        booking_id=None,
+        is_pricing_only=True,
+    )
+    logger.info(
+        f"#519 {LOG_ID} Pricing result: success: {success}, message: {message}, results cnt: {quote_set.count()}"
+    )
+
+    # Select best quotes(fastest, lowest)
+    if quote_set.exists() and quote_set.count() > 0:
+        auto_select_pricing_4_bok(bok_1_obj, quote_set)
+        best_quotes = select_best_options(pricings=quote_set)
+        logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
+
+        context = {"client_customer_mark_up": client.client_customer_mark_up}
+        json_results = SimpleQuoteSerializer(
+            best_quotes, many=True, context=context
+        ).data
+        json_results = dme_time_lib.beautify_eta(json_results, best_quotes, client)
+
+        if bok_1.get("shipping_type") == "DMEA":
+            best_quote = best_quotes[0]
+            bok_1_obj.b_003_b_service_name = best_quote.service_name
+            bok_1_obj.b_001_b_freight_provider = best_quote.freight_provider
+            bok_1_obj.save()
+            fc_log.new_quote = best_quotes[0]
+            fc_log.save()
+
+            # Send order to warehouse
+            paperless.send_order_info(bok_1_obj)
+
+            # Map booking
+            bok_1_obj.success = dme_constants.BOK_SUCCESS_4
+            bok_1_obj.save()
+            BOK_2_lines.objects.filter(fk_header_id=bok_1_obj.pk_header_id).update(
+                success=dme_constants.BOK_SUCCESS_4
+            )
+            BOK_3_lines_data.objects.filter(fk_header_id=bok_1_obj.pk_header_id).update(
+                success=dme_constants.BOK_SUCCESS_4
+            )
+    elif bok_1.get("b_client_order_num"):
+        message = f"#521 {LOG_ID} No Pricing results to select - BOK_1 pk_header_id: {bok_1['pk_header_id']}\nOrder Number: {bok_1['b_client_order_num']}"
+        logger.error(message)
+        send_email_to_admins("No FC result", message)
 
 
 def push_boks(payload, client, username, method):
@@ -673,6 +795,13 @@ def push_boks(payload, client, username, method):
                         raise Exception(message)
 
         bok_1_obj = bok_1_serializer.save()
+
+    # Fast response for sapb1
+    if is_biz:
+        quoting_in_bg(client, username, bok_1, bok_2s, old_quote)
+
+        logger.info(f"@8838 {LOG_ID} success: True, 201_created")
+        return {"success": True, "results": []}
 
     # create status history
     status_history.create_4_bok(

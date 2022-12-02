@@ -1488,7 +1488,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         shutil.move(filename, local_filepath + filename)
         logger.info("#375 Finished - `BookingsWithGaps` XLS")
     elif xls_type == "Whse":
-        from api.serializers import SimpleBookingSerializer
         from api.fp_apis.utils import get_etd_in_hour
         from api.utils import get_sydney_now_time, get_utc_now_time
 
