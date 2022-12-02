@@ -801,7 +801,7 @@ def push_boks(payload, client, username, method):
         quoting_in_bg(client, username, bok_1, bok_2s, old_quote)
 
         logger.info(f"@8838 {LOG_ID} success: True, 201_created")
-        return {"success": True, "results": []}
+        return []
 
     # create status history
     status_history.create_4_bok(
