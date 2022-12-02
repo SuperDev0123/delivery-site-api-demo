@@ -800,8 +800,10 @@ def push_boks(payload, client, username, method):
     if is_biz:
         quoting_in_bg(client, username, bok_1, bok_2s, old_quote)
 
+        url = f"{settings.WEB_SITE_URL}/status/{bok_1['client_booking_id']}/"
+        result = {"success": True, "results": [], "pricePageUrl": url}
         logger.info(f"@8838 {LOG_ID} success: True, 201_created")
-        return {"success": True, "results": []}
+        return result
 
     # create status history
     status_history.create_4_bok(
