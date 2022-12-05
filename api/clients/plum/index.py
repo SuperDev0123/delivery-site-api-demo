@@ -797,10 +797,10 @@ def push_boks(payload, client, username, method):
         bok_1_obj = bok_1_serializer.save()
 
     # Fast response for sapb1
-    if is_biz:
+    if is_biz and bok_1.get("shipping_type") == "DMEA":
         quoting_in_bg(client, username, bok_1_obj, bok_1, bok_2s, old_quote)
 
-        url = f"{settings.WEB_SITE_URL}/status/{bok_1['client_booking_id']}/"
+        url = f"{settings.WEB_SITE_URL}/price/{bok_1['client_booking_id']}/"
         result = {"success": True, "results": [], "pricePageUrl": url}
         logger.info(f"@8838 {LOG_ID} success: True, 201_created")
         return result
