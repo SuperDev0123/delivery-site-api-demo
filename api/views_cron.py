@@ -52,7 +52,7 @@ def mapBokToBooking(request):
         ).seconds
         message = "No booking is mapped!"
 
-        if not option_value.is_running or run_time > 30:
+        if not option_value.is_running and run_time > 30:
             option_value.is_running = 1
             option_value.start_time = datetime.now()
             option_value.save()
@@ -329,7 +329,6 @@ def mapBok(id, header):
             logger.info(
                 f"{LOG_ID} {booking.b_bookingID_Visual} is mapped! --- {booking.pk_booking_id}"
             )
-            booking.save()
             header.success = 1
             header.save()
 
