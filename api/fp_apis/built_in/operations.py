@@ -479,15 +479,15 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
     rule_ids = []
 
     qty = 0
-    max_weight = 0
+    max_dead_weight, total_dead_weight = 0, 0
     for line in booking_lines:
         weight = _get_weight_amount(line.e_weightUOM) * line.e_weightPerEach
         qty += line.e_qty
+        total_dead_weight += weight
+        if max_dead_weight < weight:
+            max_dead_weight = weight
 
-        if max_weight < weight:
-            max_weight = weight
-
-    max_cubic_weight = 0
+    max_cubic_weight, total_cubic_weight = 0, 0
     m3_to_kg_factor = get_m3_to_kg_factor(fp.fp_company_name)
     for line in booking_lines:
         weight = (
@@ -496,8 +496,18 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
             )
             * m3_to_kg_factor
         )
+        total_cubic_weight += weight
         if max_cubic_weight < weight:
             max_cubic_weight = weight
+
+    max_weight = (
+        max_dead_weight if max_dead_weight > max_cubic_weight else max_cubic_weight
+    )
+    total_weight = (
+        total_dead_weight
+        if total_dead_weight > total_cubic_weight
+        else total_cubic_weight
+    )
 
     for rule in rules:
         cost = rule.cost
@@ -524,14 +534,15 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
                 continue
             if cost.start_qty and cost.start_qty > qty:
                 continue
+            if c_weight < max_weight:
+                continue
         else:
-            if cost.end_qty and cost.end_qty < qty:
+            if cost.end_qty and cost.end_qty < total_weight:
                 continue
-            if cost.start_qty and cost.start_qty > qty:
+            if cost.start_qty and cost.start_qty > total_weight:
                 continue
-
-        if c_weight < max_weight or c_weight < max_cubic_weight:
-            continue
+            if c_weight < total_weight:
+                continue
 
         rule_ids.append(rule.id)
 
