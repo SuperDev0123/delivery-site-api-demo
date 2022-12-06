@@ -9,6 +9,7 @@ from .views_zoho import *
 from .views_cron import *
 from .views_external_apis import *
 from .views_spojit import *
+from .views_webhook import *
 from .fp_apis import apis as fp_apis
 from .file_operations.uploads import get_upload_status
 
@@ -139,6 +140,7 @@ urlpatterns += [
     url(r"^spojit/whse/manifest/", spojit_manifest),
     # Webhooks
     url(r"^webhook/spojit/whse/push/", spojit_push_webhook),
+    url(r"^webhook/startrack/tracking/", st_tracking_webhook),
     # PricingOnly
     url(r"^get-quick-pricing/", quick_pricing),
     # url(r"^bulk_pricing/", bulk_pricing),
