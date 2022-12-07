@@ -1,8 +1,11 @@
 from base64 import b64encode
+from datetime import datetime
 
 from django.conf import settings
 
 from api.models import Bookings, Booking_lines
+from api.clients.biopak.constants import FTP_INFO
+from api.common import sftp, trace_error
 
 
 def reprint_label(params, client):
@@ -66,3 +69,24 @@ def reprint_label(params, client):
         labels.append(label)
 
     return {"success": True, "labels": labels}
+
+
+def _csv_write(fp_path, f):
+    pass
+
+
+def update_biopak(booking, fp, status, event_at):
+    csv_name = str(datetime.now().strftime("%d-%m-%Y__%H_%M_%S")) + ".csv"
+    f = open(CSV_DIR + csv_name, "w")
+    csv_write(fpath, f)
+    f.close()
+
+    sftp.upload_sftp(
+        FTP_INFO["host"],
+        FTP_INFO["username"],
+        FTP_INFO["password"],
+        FTP_INFO["sftp_filepath"],
+        FTP_INFO["local_filepath"],
+        FTP_INFO["local_filepath_archive"],
+        csv_name,
+    )

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django_filters",
     "api",
     "rest_framework",
+    "rest_framework_xml",
     "django_rest_passwordreset",
     "corsheaders",
 ]
@@ -67,6 +68,14 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework_jwt.authentication.JSONWebTokenAuthentication",
+    ),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework_xml.renderers.XMLRenderer",
+    ),
+    "DEFAULT_PARSER_CLASSES": (
+        "rest_framework.parsers.JSONParser",
+        "rest_framework_xml.parsers.XMLParser",
     ),
 }
 
