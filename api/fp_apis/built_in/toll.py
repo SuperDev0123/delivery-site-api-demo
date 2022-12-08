@@ -101,7 +101,7 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
             for booking_line in booking_lines:
                 price1 += (
                     booking_line.e_qty
-                    * booking_line.e_Total_KG_weight
+                    * booking_line.e_weightPerEach
                     * cost.per_UOM_charge
                 )
 
@@ -110,7 +110,9 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
         price0 += cost.basic_charge
         net_price = price0 if price0 > cost.min_charge else cost.min_charge
 
-        logger.info(f"{LOG_ID} {fp_name.upper()} - final cost - {cost}")
+        logger.info(
+            f"{LOG_ID} Final cost: {cost} ({cost.basic_charge}, {cost.min_charge}, {cost.per_UOM_charge}, {cost.m3_to_kg_factor})"
+        )
         price = {
             "netPrice": net_price,
             "totalTaxes": 0,

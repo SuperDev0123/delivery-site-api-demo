@@ -314,7 +314,7 @@ def send_order_info(bok_1):
         log.request_payload = body.decode("utf-8")
         log.save()
         response = send_soap_request(url, body, headers)
-        logger.error(
+        logger.info(
             f"@9001 - {LOG_ID} response status_code: {response.status_code}, content: {response.content}"
         )
         log.request_status = response.status_code
