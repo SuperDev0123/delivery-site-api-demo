@@ -63,7 +63,7 @@ def bulk_tracking(request, fp_name):
     booking_ids = body["booking_ids"].split(",")
 
     try:
-        bookings = Bookings.objects.get(pk__in=booking_ids)
+        bookings = Bookings.objects.filter(pk__in=booking_ids)
         payload = get_tracking_payload(bookings, fp_name, True)
 
         logger.info(f"### Payload ({fp_name} tracking): {payload}")
