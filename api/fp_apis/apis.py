@@ -80,7 +80,7 @@ def bulk_tracking(request, fp_name):
             request_status="SUCCESS",
             request_type=f"{fp_name.upper()} BULK TRACKING",
             response=res_content,
-            fk_booking_id=booking.id,
+            fk_booking_id=booking_ids[0],
         ).save()
         consignmentTrackDetails = json_data["consignmentTrackDetails"]
         results = []
