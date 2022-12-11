@@ -105,6 +105,7 @@ urlpatterns += [
     # External apis
     url(r"^external/paperless/send_order_to_paperless/", send_order_to_paperless),
     # Freight Provider apis
+    url(r"^fp-api/(?P<fp_name>[^/]+)/bulk_tracking/", fp_apis.bulk_tracking),
     url(r"^fp-api/(?P<fp_name>[^/]+)/tracking/", fp_apis.tracking),
     url(r"^fp-api/(?P<fp_name>[^/]+)/reprint/", fp_apis.reprint),
     url(r"^fp-api/(?P<fp_name>[^/]+)/rebook/", fp_apis.rebook),

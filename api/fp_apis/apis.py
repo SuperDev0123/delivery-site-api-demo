@@ -58,13 +58,95 @@ logger = logging.getLogger(__name__)
 @api_view(["POST"])
 @authentication_classes((SessionAuthentication, BasicAuthentication))
 @permission_classes((AllowAny,))
+def bulk_tracking(request, fp_name):
+    body = literal_eval(request.body.decode("utf8"))
+    booking_ids = body["booking_ids"].split(",")
+
+    try:
+        bookings = Bookings.objects.get(pk_in=booking_ids)
+        payload = get_tracking_payload(bookings, fp_name, True)
+
+        logger.info(f"### Payload ({fp_name} tracking): {payload}")
+        url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
+        response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
+        res_content = response.content.decode("utf8").replace("'", '"')
+        json_data = json.loads(res_content)
+        # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
+        # disabled on 2021-07-05
+        # logger.info(f"### Response ({fp_name} tracking): {s0}")
+
+        Log(
+            request_payload=payload,
+            request_status="SUCCESS",
+            request_type=f"{fp_name.upper()} TRACKING",
+            response=res_content,
+            fk_booking_id=booking.id,
+        ).save()
+        consignmentTrackDetails = json_data["consignmentTrackDetails"]
+        results = []
+
+        for trackDetail in consignmentTrackDetails:
+            _booking = None
+            result = {"v_FPBookingNumber": trackDetail.consignmentNumber}
+
+            for booking in bookings:
+                if trackDetail.consignmentNumber == booking.v_FPBookingNumber:
+                    _booking = booking
+
+            if not _booking:
+                pass
+
+            consignmentStatuses = trackDetail["consignmentStatuses"]
+            has_new = populate_fp_status_history(_booking, consignmentStatuses)
+            result["b_booking_visualID"] = _booking.b_bookingID_Visual
+            result["v_FPBookingNumber"] = _booking.v_FPBookingNumber
+            result["has_new_status"] = has_new
+
+            if has_new:
+                update_booking_with_tracking_result(
+                    request, _booking, fp_name, consignmentStatuses
+                )
+                _booking.b_error_Capture = None
+                _booking.save()
+                result["b_status"] = _booking.b_status
+
+            results.append(result)
+
+        return JsonResponse(
+            {
+                "message": f"Successfully updated {len(booking_ids)} bookings status!",
+                "result": results,
+            },
+            status=status.HTTP_200_OK,
+        )
+    except KeyError:
+        if "errorMessage" in json_data:
+            error_msg = json_data["errorMessage"]
+            _set_error(booking, error_msg)
+            logger.info(f"#510 ERROR: {error_msg}")
+        else:
+            error_msg = "Failed Tracking"
+
+        trace_error.print()
+        return JsonResponse({"error": error_msg}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        trace_error.print()
+        logger.error(f"#512 ERROR: {e}")
+        return JsonResponse(
+            {"message": "Tracking failed"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(["POST"])
+@authentication_classes((SessionAuthentication, BasicAuthentication))
+@permission_classes((AllowAny,))
 def tracking(request, fp_name):
     body = literal_eval(request.body.decode("utf8"))
     booking_id = body["booking_id"]
 
     try:
         booking = Bookings.objects.get(id=booking_id)
-        payload = get_tracking_payload(booking, fp_name)
+        payload = get_tracking_payload(booking, fp_name, False)
 
         logger.info(f"### Payload ({fp_name} tracking): {payload}")
         url = DME_LEVEL_API_URL + "/tracking/trackconsignment"
@@ -76,7 +158,7 @@ def tracking(request, fp_name):
             res_content = response.content.decode("utf8").replace("'", '"')
 
         json_data = json.loads(res_content)
-        s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
+        # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         # disabled on 2021-07-05
         # logger.info(f"### Response ({fp_name} tracking): {s0}")
 
@@ -89,14 +171,14 @@ def tracking(request, fp_name):
                 fk_booking_id=booking.id,
             ).save()
 
-            consignmentTrackDetails = json_data["consignmentTrackDetails"][0]
-            consignmentStatuses = consignmentTrackDetails["consignmentStatuses"]
+            consignmentTrackDetail = json_data["consignmentTrackDetails"][0]
+            consignmentStatuses = consignmentTrackDetail["consignmentStatuses"]
             has_new = populate_fp_status_history(booking, consignmentStatuses)
 
             # Allied POD
             if booking.vx_freight_provider.lower() == "allied":
-                if consignmentTrackDetails["pods"]:
-                    podData = consignmentTrackDetails["pods"][0]["podData"]
+                if consignmentTrackDetail["pods"]:
+                    podData = consignmentTrackDetail["pods"][0]["podData"]
 
                     _fp_name = fp_name.lower()
                     pod_file_name = f"allied_POD_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
@@ -108,7 +190,7 @@ def tracking(request, fp_name):
 
                     booking.z_pod_url = f"{fp_name.lower()}_au/{pod_file_name}"
 
-                signatures = consignmentTrackDetails["signatures"]
+                signatures = consignmentTrackDetail["signatures"]
                 if signatures:
                     if "signatureImage" in signatures[0]:
                         posData = signatures[0]["signatureImage"]
@@ -124,8 +206,8 @@ def tracking(request, fp_name):
                             f"{fp_name.lower()}_au/{pos_file_name}"
                         )
 
-                if consignmentTrackDetails["scheduledDeliveryDate"]:
-                    scheduledDeliveryDate = consignmentTrackDetails[
+                if consignmentTrackDetail["scheduledDeliveryDate"]:
+                    scheduledDeliveryDate = consignmentTrackDetail[
                         "scheduledDeliveryDate"
                     ]
                     event_at = datetime.strptime(

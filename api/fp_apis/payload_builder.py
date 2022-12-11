@@ -140,19 +140,33 @@ def get_de_to(booking, fp_name):
         return _de_to
 
 
-def get_tracking_payload(booking, fp_name):
+def get_tracking_payload(bookingOrBookings, fp_name, bulk_mode=False):
     try:
         payload = {}
         consignmentDetails = []
-        consignmentDetails.append(
-            {
-                "consignmentNumber": booking.v_FPBookingNumber,
-                "de_to_address_postcode": booking.de_To_Address_PostalCode,
-            }
-        )
-        payload["consignmentDetails"] = consignmentDetails
-        payload["spAccountDetails"] = get_account_detail(booking, fp_name)
         payload["serviceProvider"] = get_service_provider(fp_name)
+
+        if bulk_mode:
+            bookings = bookingOrBookings
+            payload["spAccountDetails"] = get_account_detail(bookings[0], fp_name)
+
+            for booking in bookings:
+                consignmentDetails.append(
+                    {
+                        "consignmentNumber": booking.v_FPBookingNumber,
+                    }
+                )
+        else:
+            booking = bookingOrBookings
+            payload["spAccountDetails"] = get_account_detail(booking, fp_name)
+            consignmentDetails.append(
+                {
+                    "consignmentNumber": booking.v_FPBookingNumber,
+                    "de_to_address_postcode": booking.de_To_Address_PostalCode,
+                }
+            )
+
+        payload["consignmentDetails"] = consignmentDetails
         return payload
     except Exception as e:
         logger.error(f"#400 - Error while build payload: {e}")
