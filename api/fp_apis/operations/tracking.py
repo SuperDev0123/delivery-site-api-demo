@@ -63,6 +63,11 @@ def _extract_bulk(fp_name, consignmentStatuses):
             b_status_API = consignmentStatus["status"]
             event_time = None
             status_desc = ""
+
+            if "statusDate" in consignmentStatus:
+                event_time = consignmentStatus["statusDate"]
+                event_time = datetime.strptime(event_time[:19], "%Y-%m-%dT%H:%M:%S")
+                event_time = str(convert_to_UTC_tz(event_time))
         elif fp_name.lower() in ["tnt"]:
             b_status_API = consignmentStatus["status"][0]
             status_desc = consignmentStatus["statusDescription"][0]
