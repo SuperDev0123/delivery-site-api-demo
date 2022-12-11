@@ -286,10 +286,11 @@ def populate_fp_status_history(booking, consignmentStatuses):
 
             for fp_status_history in fp_status_histories:
                 # Compare status and event_time
-                if _new["b_status_API"] == fp_status_history.status and _new[
-                    "event_time"
-                ][:19] == fp_status_history.event_timestamp.strftime(
-                    "%Y-%m-%d %H:%M:%S"
+                if (
+                    _new["b_status_API"] == fp_status_history.status
+                    and fp_status_history.event_timestamp
+                    and _new["event_time"][:19]
+                    == fp_status_history.event_timestamp.strftime("%Y-%m-%d %H:%M:%S")
                 ):
                     has_already = True
 
