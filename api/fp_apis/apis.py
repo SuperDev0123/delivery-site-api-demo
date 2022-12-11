@@ -71,9 +71,9 @@ def bulk_tracking(request, fp_name):
         response = requests.post(url, params={}, json=payload, headers=HEADER_FOR_NODE)
         res_content = response.content.decode("utf8").replace("'", '"')
         json_data = json.loads(res_content)
-        s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
+        # s0 = json.dumps(json_data, indent=2, sort_keys=True)  # Just for visual
         # disabled on 2021-07-05
-        logger.info(f"### Response ({fp_name} tracking): {s0}")
+        # logger.info(f"### Response ({fp_name} tracking): {s0}")
 
         Log(
             request_payload=payload,
