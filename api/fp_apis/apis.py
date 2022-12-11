@@ -87,10 +87,10 @@ def bulk_tracking(request, fp_name):
 
         for trackDetail in consignmentTrackDetails:
             _booking = None
-            result = {"v_FPBookingNumber": trackDetail.consignmentNumber}
+            result = {"v_FPBookingNumber": trackDetail["consignmentNumber"]}
 
             for booking in bookings:
-                if trackDetail.consignmentNumber == booking.v_FPBookingNumber:
+                if trackDetail["consignmentNumber"] == booking.v_FPBookingNumber:
                     _booking = booking
 
             if not _booking:
