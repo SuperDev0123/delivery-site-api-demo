@@ -78,7 +78,7 @@ def bulk_tracking(request, fp_name):
         Log(
             request_payload=payload,
             request_status="SUCCESS",
-            request_type=f"{fp_name.upper()} TRACKING",
+            request_type=f"{fp_name.upper()} BULK TRACKING",
             response=res_content,
             fk_booking_id=booking.id,
         ).save()
@@ -119,21 +119,11 @@ def bulk_tracking(request, fp_name):
             },
             status=status.HTTP_200_OK,
         )
-    except KeyError:
-        if "errorMessage" in json_data:
-            error_msg = json_data["errorMessage"]
-            _set_error(booking, error_msg)
-            logger.info(f"#510 ERROR: {error_msg}")
-        else:
-            error_msg = "Failed Tracking"
-
-        trace_error.print()
-        return JsonResponse({"error": error_msg}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         trace_error.print()
         logger.error(f"#512 ERROR: {e}")
         return JsonResponse(
-            {"message": "Tracking failed"}, status=status.HTTP_400_BAD_REQUEST
+            {"message": "Bulk Tracking failed"}, status=status.HTTP_400_BAD_REQUEST
         )
 
 
