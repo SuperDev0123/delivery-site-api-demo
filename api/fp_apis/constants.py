@@ -112,6 +112,33 @@ FP_CREDENTIALS = {
                 "accountPassword": "x06503301e1ddfb58a7a",
             },
         },
+        "dme": {
+            "DELIVERME_YGBZ": {
+                "accountCode": "10170477",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
+            "DELIVERME_QLS_YGCZ": {
+                "accountCode": "10170478",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
+            "DELIVERME_XPOZ": {
+                "accountCode": "10170226",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
+            "DELIVERME_QLD_XPXZ": {
+                "accountCode": "10170227",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
+            "DELIVERME_VIC_XPXZ": {
+                "accountCode": "10170228",
+                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
+                "accountPassword": "x81775935aece65541c9",
+            },
+        },
         "biopak": {
             "BIO - BON": {
                 "accountCode": "10145902",

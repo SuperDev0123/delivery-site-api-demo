@@ -39,12 +39,10 @@ def get_account_detail(booking, fp_name):
                 if detail["accountCode"] == account_code:
                     account_detail = detail
 
-    if _fp_name in ["startrack"] and _b_client_name == "biopak":
-        _warehouse_code = booking.fk_client_warehouse.client_warehouse_code
-
+    if _fp_name in ["startrack"]:
         for client_name in FP_CREDENTIALS[_fp_name].keys():
             for key in FP_CREDENTIALS[_fp_name][client_name].keys():
-                if key == _warehouse_code:
+                if key == booking.b_client_warehouse_code:
                     account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
 
     if _fp_name in ["allied"]:
