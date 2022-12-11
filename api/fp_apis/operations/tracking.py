@@ -298,6 +298,12 @@ def populate_fp_status_history(booking, consignmentStatuses):
                     == fp_status_history.event_timestamp.strftime("%Y-%m-%d %H:%M:%S")
                 ):
                     has_already = True
+                if (
+                    not fp_status_history.event_timestamp
+                    and fp_status_history.status == _new["b_status_API"]
+                ):
+                    has_already = True
+                    break
 
             if not has_already:
                 news.append(_new)
