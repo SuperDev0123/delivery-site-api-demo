@@ -14,6 +14,7 @@ from api.common.common_times import convert_to_AU_SYDNEY_tz
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.common.constants import PALLETS
 from api.operations.booking.refs import get_gapRas, get_clientRefNumbers
+from api.helpers import cubic
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             filename = f"Bookings to Send Boxes ({date_range}).xlsx"
         elif xls_type == "futile":
             filename = f"Futile Bookings ({date_range}).xlsx"
-        elif xls_type == "goods_delivered":
+        elif xls_type == "bookings_delivered":
             filename = f"Bookings Delivered ({date_range}).xlsx"
     else:
         _tail = f'__{str(len(bookings))}__{str(datetime.now().strftime("%d-%m-%Y %H_%M_%S"))}.xlsx'
@@ -74,7 +75,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             filename = f"Bookings to Send Boxes {_tail}"
         elif xls_type == "futile":
             filename = f"Futile Bookings {_tail}"
-        elif xls_type == "goods_delivered":
+        elif xls_type == "bookings_delivered":
             filename = f"Bookings Delivered {_tail}"
 
     workbook = xlsxwriter.Workbook(filename, {"remove_timezone": True})
@@ -2508,8 +2509,8 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
         logger.info("#349 Finished - `Futile Bookings` XLS")
-    elif xls_type == "goods_delivered":
-        logger.info("#350 Get started to build `Goods Delivered Bookings` XLS")
+    elif xls_type == "bookings_delivered":
+        logger.info("#350 Get started to build `Bookings Delivered` XLS")
         worksheet.set_column(0, 15, width=25)
 
         if show_field_name:
@@ -2635,10 +2636,10 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.info("#359 Finished - `Goods Delivered Bookings` XLS")
+        logger.info("#359 Finished - `Bookings Delivered` XLS")
 
-    elif xls_type == "goods_sent":
-        logger.info("#310 Get started to build `Goods Sent` XLS")
+    elif xls_type == "bookings_sent":
+        logger.info("#310 Get started to build `Bookings Sent` XLS")
         worksheet.set_column(0, 20, width=30)
 
         if show_field_name:
@@ -2795,6 +2796,197 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
         workbook.close()
         shutil.move(filename, local_filepath + filename)
-        logger.info("#319 Finished - `Goods Sent` XLS")
+        logger.info("#319 Finished - `Bookings Sent` XLS")
+
+    elif xls_type == "booking_lines_sent":
+        logger.info("#310 Get started to build `Booking Lines Sent` XLS")
+        worksheet.set_column(0, 20, width=30)
+
+        if show_field_name:
+            worksheet.write("A1", "Client Name", bold)
+            worksheet.write("B1", "Warehouse Code", bold)
+            worksheet.write("C1", "Delivery Entity", bold)
+            worksheet.write("D1", "Consignment Number", bold)
+            worksheet.write("E1", "Your Invoice No", bold)
+            worksheet.write("F1", "Delivery : Street 1", bold)
+            worksheet.write("G1", "Delivery : Street 2", bold)
+            worksheet.write("H1", "Delivery : Suburb", bold)
+            worksheet.write("I1", "Delivery : State", bold)
+            worksheet.write("J1", "Delivery : Postal Code ", bold)
+            worksheet.write("K1", "Actual Packed : Total Qty*", bold)
+            worksheet.write("L1", "Actual Packed : Total KG*", bold)
+            worksheet.write("M1", "Actual Packed : Total cbm*", bold)
+            worksheet.write("N1", "Delivery : Tel", bold)
+            worksheet.write("O1", "Delivery : email", bold)
+            worksheet.write("P1", "Qty of Cartons in Actual Packed : Total Qty*", bold)
+            worksheet.write("Q1", "Qty of Pallets in Actual Packed : Total Qty*", bold)
+            worksheet.write("R1", "Send as Is Item descriptions seperated by , ", bold)
+            worksheet.write("S1", "DE Inst Address and DE Inst Contact", bold)
+            worksheet.write("T1", "Delivery : Address Type", bold)
+            worksheet.write("U1", "e_qty", bold)
+            worksheet.write("V1", "e_dimLength", bold)
+            worksheet.write("W1", "e_dimWidth", bold)
+            worksheet.write("X1", "e_dimHeight", bold)
+            worksheet.write("Y1", "e_weightPerEach", bold)
+
+            worksheet.write("A2", "Client Name", bold)
+            worksheet.write("B2", "Warehouse Code", bold)
+            worksheet.write("C2", "Deliver To", bold)
+            worksheet.write("D2", "Consignment Number", bold)
+            worksheet.write("E2", "Customer Invoice", bold)
+            worksheet.write("F2", "Street 1", bold)
+            worksheet.write("G2", "Street 2", bold)
+            worksheet.write("H2", "Suburb", bold)
+            worksheet.write("I2", "State", bold)
+            worksheet.write("J2", "Postal Code ", bold)
+            worksheet.write("K2", "Qty", bold)
+            worksheet.write("L2", "KG", bold)
+            worksheet.write("M2", "cbm", bold)
+            worksheet.write("N2", "Cust Tel", bold)
+            worksheet.write("O2", "Cust Email", bold)
+            worksheet.write("P2", "Qty Cartons", bold)
+            worksheet.write("Q2", "Qty Pallets", bold)
+            worksheet.write("R2", "Items , ", bold)
+            worksheet.write("S2", "Instruc & Notes", bold)
+            worksheet.write("T2", "Consignment Type. Eg. Delivery", bold)
+            worksheet.write("U2", "Qty", bold)
+            worksheet.write("V2", "Length", bold)
+            worksheet.write("W2", "Width", bold)
+            worksheet.write("X2", "Height", bold)
+            worksheet.write("Y2", "Weight Per Each", bold)
+
+            row = 2
+        else:
+            worksheet.write("A1", "Client Name", bold)
+            worksheet.write("B1", "Warehouse Code", bold)
+            worksheet.write("C1", "Delivery Entity", bold)
+            worksheet.write("D1", "Consignment Number", bold)
+            worksheet.write("E1", "Your Invoice No", bold)
+            worksheet.write("F1", "Delivery : Street 1", bold)
+            worksheet.write("G1", "Delivery : Street 2", bold)
+            worksheet.write("H1", "Delivery : Suburb", bold)
+            worksheet.write("I1", "Delivery : State", bold)
+            worksheet.write("J1", "Delivery : Postal Code ", bold)
+            worksheet.write("K1", "Actual Packed : Total Qty*", bold)
+            worksheet.write("L1", "Actual Packed : Total KG*", bold)
+            worksheet.write("M1", "Actual Packed : Total cbm*", bold)
+            worksheet.write("N1", "Delivery : Tel", bold)
+            worksheet.write("O1", "Delivery : email", bold)
+            worksheet.write("P1", "Qty of Cartons in Actual Packed : Total Qty*", bold)
+            worksheet.write("Q1", "Qty of Pallets in Actual Packed : Total Qty*", bold)
+            worksheet.write("R1", "Send as Is Item descriptions seperated by , ", bold)
+            worksheet.write("S1", "DE Inst Address and DE Inst Contact", bold)
+            worksheet.write("T1", "Delivery : Address Type", bold)
+            worksheet.write("U1", "Qty", bold)
+            worksheet.write("V1", "Length", bold)
+            worksheet.write("W1", "Width", bold)
+            worksheet.write("X1", "Height", bold)
+            worksheet.write("Y1", "Weight Per Each", bold)
+
+            row = 1
+
+        pk_booking_ids = []
+        for booking in bookings:
+            pk_booking_ids.append(booking.pk_booking_id)
+
+        original_lines = Booking_lines.objects.filter(
+            fk_booking_id__in=pk_booking_ids, packed_status="original"
+        ).only("fk_booking_id", "e_item")
+        scanned_lines = Booking_lines.objects.filter(
+            fk_booking_id__in=pk_booking_ids, packed_status="scanned"
+        ).only(
+            "fk_booking_id",
+            "e_qty",
+            "e_weightPerEach",
+            "e_weightUOM",
+            "e_1_Total_dimCubicMeter",
+            "e_type_of_packaging",
+        )
+
+        logger.info(f"#311 Total cnt: {len(bookings)}")
+        for booking_ind, booking in enumerate(bookings):
+            total_qty = 0
+            total_kgs = 0
+            total_cbm = 0
+            carton_cnt = 0
+            pallet_cnt = 0
+
+            for booking_line in scanned_lines:
+                if booking_line.fk_booking_id == booking.pk_booking_id:
+                    if booking_line.e_qty:
+                        total_qty += booking_line.e_qty
+                    if booking_line.e_weightPerEach and booking_line.e_weightPerEach:
+                        total_kgs = (
+                            _get_weight_amount(booking_line.e_weightUOM)
+                            * booking_line.e_weightPerEach
+                        ) * booking_line.e_qty
+                    if booking_line.e_1_Total_dimCubicMeter:
+                        total_cbm = (
+                            booking_line.e_1_Total_dimCubicMeter * booking_line.e_qty
+                        )
+                    if (
+                        booking_line.e_type_of_packaging
+                        and booking_line.e_type_of_packaging.upper() in PALLETS
+                    ):
+                        pallet_cnt += booking_line.e_qty
+                    if (
+                        booking_line.e_type_of_packaging
+                        and not booking_line.e_type_of_packaging.upper() in PALLETS
+                    ):
+                        carton_cnt += booking_line.e_qty
+
+            line_descriptions = []
+            for booking_line in original_lines:
+                if booking_line.fk_booking_id == booking.pk_booking_id:
+                    if booking_line.e_item:
+                        line_descriptions.append(booking_line.e_item)
+
+            for line in scanned_lines:
+                worksheet.write(row, col + 0, booking.b_client_name)
+                worksheet.write(row, col + 1, booking.b_client_warehouse_code)
+                worksheet.write(row, col + 2, booking.deToCompanyName)
+                worksheet.write(row, col + 3, booking.v_FPBookingNumber)
+                worksheet.write(row, col + 4, booking.b_client_sales_inv_num)
+                worksheet.write(row, col + 5, booking.de_To_Address_Street_1)
+                worksheet.write(row, col + 6, booking.de_To_Address_Street_2)
+                worksheet.write(row, col + 7, booking.de_To_Address_Suburb)
+                worksheet.write(row, col + 8, booking.de_To_Address_State)
+                worksheet.write(row, col + 9, booking.de_To_Address_PostalCode)
+                worksheet.write(row, col + 10, total_qty)
+                worksheet.write(row, col + 11, total_kgs)
+                worksheet.write(row, col + 12, total_cbm)
+                worksheet.write(row, col + 13, booking.de_to_Phone_Main)
+                worksheet.write(row, col + 14, booking.de_Email)
+                worksheet.write(row, col + 15, carton_cnt)
+                worksheet.write(row, col + 16, pallet_cnt)
+                worksheet.write(row, col + 17, ", ".join(line_descriptions))
+                worksheet.write(
+                    row,
+                    col + 18,
+                    (booking.de_to_Pick_Up_Instructions_Contact or "")
+                    + (booking.de_to_PickUp_Instructions_Address or ""),
+                )
+                worksheet.write(row, col + 19, booking.de_To_AddressType)
+                worksheet.write(row, col + 20, line.e_qty)
+                worksheet.write(
+                    row, col + 21, line.e_dimLength * _get_dim_amount(line.e_dimUOM)
+                )
+                worksheet.write(
+                    row, col + 22, line.e_dimWidth * _get_dim_amount(line.e_dimUOM)
+                )
+                worksheet.write(
+                    row, col + 23, line.e_dimHeight * _get_dim_amount(line.e_dimUOM)
+                )
+                worksheet.write(
+                    row,
+                    col + 24,
+                    line.e_weightPerEach * _get_weight_amount(line.e_weightUOM),
+                )
+
+                row += 1
+
+        workbook.close()
+        shutil.move(filename, local_filepath + filename)
+        logger.info("#319 Finished - `Booking Lines Sent` XLS")
 
     return local_filepath + filename

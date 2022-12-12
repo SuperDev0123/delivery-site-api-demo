@@ -2773,27 +2773,49 @@ def build_xls_and_send(
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
         )
-    elif report_type == "goods_delivered":
+    elif report_type == "bookings_delivered":
         filepath = build_xls(
-            bookings, "goods_delivered", username, start_date, end_date, show_field_name
+            bookings,
+            "bookings_delivered",
+            username,
+            start_date,
+            end_date,
+            show_field_name,
         )
         send_email(
             [email_addr],
             [],
             [],  # BCC
-            "Goods Delivered Bookings XLS Report from Deliver-Me",  # Subject of email
+            "Bookings Delivered XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
         )
-    elif report_type == "goods_sent":
+    elif report_type == "bookings_sent":
         filepath = build_xls(
-            bookings, "goods_sent", username, start_date, end_date, show_field_name
+            bookings, "bookings_sent", username, start_date, end_date, show_field_name
         )
         send_email(
             [email_addr],
             [],
             [],  # BCC
-            "Goods Sent XLS Report from Deliver-Me",  # Subject of email
+            "Bookings Sent XLS Report from Deliver-Me",  # Subject of email
+            "Here is the excel report you generated from Deliver-Me.",  # Message of email
+            [filepath],  # Attachment file path(list)
+        )
+    elif report_type == "booking_lines_sent":
+        filepath = build_xls(
+            bookings,
+            "booking_lines_sent",
+            username,
+            start_date,
+            end_date,
+            show_field_name,
+        )
+        send_email(
+            [email_addr],
+            [],
+            [],  # BCC
+            "Booking Lines Sent XLS Report from Deliver-Me",  # Subject of email
             "Here is the excel report you generated from Deliver-Me.",  # Message of email
             [filepath],  # Attachment file path(list)
         )

@@ -1255,7 +1255,7 @@ class BookingsViewSet(viewsets.ViewSet):
                         convert_to_UTC_tz(last_date),
                     )
                 )
-            elif report_type == "goods_delivered":
+            elif report_type == "bookings_delivered":
                 queryset = queryset.filter(
                     s_21_Actual_Delivery_TimeStamp__range=(
                         convert_to_UTC_tz(first_date),
@@ -1263,7 +1263,7 @@ class BookingsViewSet(viewsets.ViewSet):
                     ),
                     b_status__iexact="delivered",
                 )
-            elif report_type == "goods_sent":
+            elif report_type in ["bookings_sent", "booking_lines_sent"]:
                 queryset = queryset.filter(
                     b_dateBookedDate__range=(
                         convert_to_UTC_tz(first_date),
