@@ -2911,8 +2911,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             carton_cnt = 0
             pallet_cnt = 0
 
+            booking_lines = []
             for booking_line in scanned_lines:
                 if booking_line.fk_booking_id == booking.pk_booking_id:
+                    booking_lines.append(booking_line)
+
                     if booking_line.e_qty:
                         total_qty += booking_line.e_qty
                     if booking_line.e_weightPerEach and booking_line.e_weightPerEach:
@@ -2941,7 +2944,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     if booking_line.e_item:
                         line_descriptions.append(booking_line.e_item)
 
-            for line in scanned_lines:
+            for line in booking_lines:
                 worksheet.write(row, col + 0, booking.b_client_name)
                 worksheet.write(row, col + 1, booking.b_client_warehouse_code)
                 worksheet.write(row, col + 2, booking.deToCompanyName)
