@@ -155,11 +155,16 @@ def post_new_status(booking, dme_status_history, new_status, event_timestamp, us
     category_old = get_status_category_from_status(dme_status_history.status_old)
 
     if category_new == "Transit" and category_old != "Transit":
-        if not booking.b_given_to_transport_date_time:
-            booking.b_given_to_transport_date_time = datetime.now()
-
-        if not booking.s_20_Actual_Pickup_TimeStamp:
-            booking.s_20_Actual_Pickup_TimeStamp = datetime.now()
+        if event_timestamp:
+            if not booking.b_given_to_transport_date_time:
+                booking.b_given_to_transport_date_time = event_timestamp[:10]
+            elif not booking.s_20_Actual_Pickup_TimeStamp:
+                booking.s_20_Actual_Pickup_TimeStamp = event_timestamp[:10]
+        else:
+            if not booking.b_given_to_transport_date_time:
+                booking.b_given_to_transport_date_time = datetime.now()
+            elif not booking.s_20_Actual_Pickup_TimeStamp:
+                booking.s_20_Actual_Pickup_TimeStamp = datetime.now()
 
     if new_status.lower() == "booked":
         booking.s_05_Latest_Pick_Up_Date_TimeSet = get_eta_pu_by(booking)
