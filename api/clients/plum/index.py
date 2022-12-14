@@ -46,7 +46,6 @@ from api.operations.booking_line import index as line_oper
 from api.clients.operations.index import get_warehouse, get_suburb_state
 from api.clients.plum.operations import detect_modified_data
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -968,6 +967,62 @@ def push_boks(payload, client, username, method):
         return {"success": True, "results": [], "message": message}
 
 
+@background
+def scan_process_in_bg(booking):
+    LOG_ID = "[SCAN IN BG]"
+    # Should get pricing again when if fully picked
+    next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
+    booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
+    booking.save()
+
+    new_fc_log = FC_Log.objects.create(
+        client_booking_id=booking.b_client_booking_ref_num,
+        old_quote=booking.api_booking_quote,
+    )
+    new_fc_log.save()
+    logger.info(
+        f"#371 {LOG_ID} - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
+    )
+    _, success, message, quotes = pricing_oper(
+        body=None,
+        booking_id=booking.pk,
+        is_pricing_only=False,
+        packed_statuses=[Booking_lines.SCANNED_PACK],
+    )
+    logger.info(
+        f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
+    )
+
+    # Select best quotes(fastest, lowest)
+    if quotes.exists() and quotes.count() > 0:
+        quotes = quotes.filter(
+            freight_provider__iexact=booking.vx_freight_provider,
+            service_name=booking.vx_serviceName,
+            packed_status=Booking_lines.SCANNED_PACK,
+        )
+        best_quotes = select_best_options(pricings=quotes)
+        logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
+
+        if best_quotes:
+            set_booking_quote(booking, best_quotes[0])
+            new_fc_log.new_quote = booking.api_booking_quote
+            new_fc_log.save()
+        else:
+            set_booking_quote(booking, None)
+
+    status_history.create(booking, "Ready for Booking", "Plum")
+    booking.save()
+
+    success, message = book_oper(booking.vx_freight_provider, booking, "DME_API")
+
+    if not success:
+        error_msg = f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
+        logger.error(error_msg)
+        send_email_to_admins(f"Plum {LOG_ID}", f"{error_msg}")
+        message = "Please contact DME support center. <bookings@deliver-me.com.au>"
+        raise Exception(message)
+
+
 def scanned(payload, client):
     """
     called as get_label
@@ -1297,47 +1352,6 @@ def scanned(payload, client):
             )
             booking.save()
 
-        # Should get pricing again when if fully picked
-        if is_picked_all:
-            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-            booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
-            booking.save()
-
-            new_fc_log = FC_Log.objects.create(
-                client_booking_id=booking.b_client_booking_ref_num,
-                old_quote=booking.api_booking_quote,
-            )
-            new_fc_log.save()
-            logger.info(
-                f"#371 {LOG_ID} - Picked all items: {booking.b_bookingID_Visual}, now getting Quotes again..."
-            )
-            _, success, message, quotes = pricing_oper(
-                body=None,
-                booking_id=booking.pk,
-                is_pricing_only=False,
-                packed_statuses=[Booking_lines.SCANNED_PACK],
-            )
-            logger.info(
-                f"#372 {LOG_ID} - Pricing result: success: {success}, message: {message}, results cnt: {quotes.count()}"
-            )
-
-            # Select best quotes(fastest, lowest)
-            if quotes.exists() and quotes.count() > 0:
-                quotes = quotes.filter(
-                    freight_provider__iexact=booking.vx_freight_provider,
-                    service_name=booking.vx_serviceName,
-                    packed_status=Booking_lines.SCANNED_PACK,
-                )
-                best_quotes = select_best_options(pricings=quotes)
-                logger.info(f"#373 {LOG_ID} - Selected Best Pricings: {best_quotes}")
-
-                if best_quotes:
-                    set_booking_quote(booking, best_quotes[0])
-                    new_fc_log.new_quote = booking.api_booking_quote
-                    new_fc_log.save()
-                else:
-                    set_booking_quote(booking, None)
-
         # If Hunter Order?
         if is_picked_all and booking.b_status != "Picking":
             logger.info(
@@ -1354,24 +1368,8 @@ def scanned(payload, client):
                 ),
                 "labels": [],
             }
-        elif is_picked_all and booking.b_status == "Picking":
-            next_biz_day = dme_time_lib.next_business_day(date.today(), 1)
-            booking.puPickUpAvailFrom_Date = str(next_biz_day)[:10]
-            status_history.create(booking, "Ready for Booking", "jason_l")
-            booking.save()
-
-            success, message = book_oper(
-                booking.vx_freight_provider, booking, "DME_API"
-            )
-
-            if not success:
-                error_msg = f"#374 {LOG_ID} - HUNTER order BOOK falied. Booking Id: {booking.b_bookingID_Visual}, message: {message}"
-                logger.error(error_msg)
-                send_email_to_admins(f"Plum {LOG_ID}", f"{error_msg}")
-                message = (
-                    "Please contact DME support center. <bookings@deliver-me.com.au>"
-                )
-                raise Exception(message)
+        else:
+            scan_process_in_bg(booking)
 
         logger.info(
             f"#379 {LOG_ID} - Successfully scanned. Booking Id: {booking.b_bookingID_Visual}"
