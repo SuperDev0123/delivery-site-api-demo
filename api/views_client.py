@@ -998,6 +998,7 @@ def get_delivery_status(request):
             "b_063_b_del_email": booking.de_Email,
             "b_064_b_del_phone_main": booking.de_to_Phone_Main,
             "b_000_3_consignment_number": booking.v_FPBookingNumber,
+            "s_06_Latest_Delivery_Date_Time_Override": booking.s_06_Latest_Delivery_Date_Time_Override,
             "vx_freight_provider": booking.vx_freight_provider,
             "vx_serviceName": booking.vx_serviceName,
             "z_pod_signed_url": booking.z_pod_signed_url,
