@@ -1056,7 +1056,7 @@ class BookingsViewSet(viewsets.ViewSet):
             items.append(_total_cbm)
             result = OrderedDict(items)
             _results.append(result)
-        result = _results
+        results = _results
 
         # surcharge count
         _results = []
@@ -1071,11 +1071,11 @@ class BookingsViewSet(viewsets.ViewSet):
             items.append(surcharge_cnt)
             result = OrderedDict(items)
             _results.append(result)
-        result = _results
+        results = _results
 
         return JsonResponse(
             {
-                "bookings": result,
+                "bookings": results,
                 "filtered_booking_ids": filtered_booking_ids,
                 "filtered_booking_visual_ids": filtered_booking_visual_ids,
                 "filtered_consignments": filtered_consignments,
