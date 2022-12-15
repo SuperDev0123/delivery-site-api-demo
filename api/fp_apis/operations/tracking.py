@@ -325,3 +325,29 @@ def populate_fp_status_history(booking, consignmentStatuses):
                 return False
 
         return True
+
+
+def populate_items_status(booking, itemStatusList):
+    bcls = Api_booking_confirmation_lines.objects.filter(
+        fk_booking_id=booking.pk_booking_id
+    )
+
+    for itemStatus in itemStatusList:
+        does_bcl_exist = False
+
+        if not "status" in itemStatus:
+            continue
+
+        for bcl in bcls:
+            if bcl.api_artical_id == itemStatus["articleId"]:
+                does_bcl_exist = True
+                bcl.api_status = itemStatus["status"]
+                bcl.save()
+
+        if not does_bcl_exist:
+            Api_booking_confirmation_lines(
+                fk_booking_id=booking.pk_booking_id,
+                api_status=itemStatus["status"],
+                service_provider=booking.vx_freight_provider,
+                api_consignment_id=booking.v_FPBookingNumber,
+            ).save()

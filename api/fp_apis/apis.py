@@ -38,6 +38,7 @@ from api.fp_apis.operations.common import _set_error
 from api.fp_apis.operations.tracking import (
     update_booking_with_tracking_result,
     populate_fp_status_history,
+    populate_items_status,
 )
 from api.fp_apis.operations.book import book as book_oper
 from api.fp_apis.operations.pricing import pricing as pricing_oper
@@ -97,6 +98,8 @@ def bulk_tracking(request, fp_name):
                 pass
 
             consignmentStatuses = trackDetail["consignmentStatuses"]
+            items = trackDetail["items"]
+            populate_items_status(_booking, items)
             has_new = populate_fp_status_history(_booking, consignmentStatuses)
             result["b_booking_visualID"] = _booking.b_bookingID_Visual
             result["v_FPBookingNumber"] = _booking.v_FPBookingNumber
