@@ -347,6 +347,7 @@ def populate_items_status(booking, itemStatusList):
         if not does_bcl_exist:
             Api_booking_confirmation_lines(
                 fk_booking_id=booking.pk_booking_id,
+                api_artical_id=itemStatus["articleId"],
                 api_status=itemStatus["status"],
                 service_provider=booking.vx_freight_provider,
                 api_consignment_id=booking.v_FPBookingNumber,
