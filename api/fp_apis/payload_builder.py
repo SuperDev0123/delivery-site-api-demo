@@ -980,13 +980,14 @@ def get_pricing_payload(
             return None
 
         for i in range(line.e_qty):
+            volume = round(width * height * length / 1000000, 5)
             item = {
                 "dangerous": 0,
                 "width": 0 or width,
                 "height": 0 or height,
                 "length": 0 or length,
                 "quantity": 1,
-                "volume": round(width * height * length / 1000000, 5),
+                "volume": max(volume, 0.01),
                 "weight": 0 or weight,
                 "description": line.e_item,
             }
