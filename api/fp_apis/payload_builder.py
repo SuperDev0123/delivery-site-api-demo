@@ -304,13 +304,14 @@ def get_book_payload(booking, fp_name):
         weight = _convert_UOM(line.e_weightPerEach, line.e_weightUOM, "weight", fp_name)
 
         for i in range(line.e_qty):
+            volume = round(width * height * length / 1000000, 5)
             item = {
                 "dangerous": 0,
                 "width": width or 0,
                 "height": height or 0,
                 "length": length or 0,
                 "quantity": 1,
-                "volume": round(width * height * length / 1000000, 5),
+                "volume": max(volume, 0.01),
                 "weight": weight or 0,
                 "reference": line.sscc or "",
                 "description": line.e_item,
@@ -664,6 +665,8 @@ def get_getlabel_payload(booking, fp_name):
         )
 
         for i in range(line.e_qty):
+            volume = round(width * height * length / 1000000, 5)
+
             item = {
                 "dangerous": 0,
                 "itemId": "EXP",
@@ -671,7 +674,7 @@ def get_getlabel_payload(booking, fp_name):
                 "height": 0 or height,
                 "length": 0 or length,
                 "quantity": 1,
-                "volume": round(width * height * length / 1000000, 5),
+                "volume": "volume": max(volume, 0.01),
                 "weight": 0 or weight,
                 "description": ", ".join(descriptions)[:20] if descriptions else "_",
                 "gapRa": ", ".join(gaps)[:15],
