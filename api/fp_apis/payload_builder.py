@@ -674,7 +674,7 @@ def get_getlabel_payload(booking, fp_name):
                 "height": 0 or height,
                 "length": 0 or length,
                 "quantity": 1,
-                "volume": "volume": max(volume, 0.01),
+                "volume": max(volume, 0.01),
                 "weight": 0 or weight,
                 "description": ", ".join(descriptions)[:20] if descriptions else "_",
                 "gapRa": ", ".join(gaps)[:15],
