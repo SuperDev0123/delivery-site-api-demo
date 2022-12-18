@@ -1271,6 +1271,14 @@ class BookingsViewSet(viewsets.ViewSet):
                     ),
                     b_dateBookedDate__isnull=False,
                 )
+            elif report_type in ["delivery"]:
+                queryset = queryset.filter(
+                    b_dateBookedDate__range=(
+                        convert_to_UTC_tz(first_date),
+                        convert_to_UTC_tz(last_date),
+                    ),
+                    b_dateBookedDate__isnull=False,
+                )
             else:
                 # Date filter
                 if user_type == "DME":

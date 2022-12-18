@@ -2985,5 +2985,161 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         workbook.close()
         shutil.move(filename, local_filepath + filename)
         logger.info("#319 Finished - `Booking Lines Sent` XLS")
+    elif xls_type == "delivery":
+        logger.info("#310 Get started to build `Delivery` XLS")
+        logger.info(f"#311 Total cnt: {len(bookings)}")
+        worksheet.set_column(0, 26, width=30)
+
+        if show_field_name:
+            worksheet.write("A1", "b_status", bold)
+            worksheet.write("B1", "s_20_Actual_Pickup_TimeStamp", bold)
+            worksheet.write("C1", "s_21_Actual_Delivery_TimeStamp", bold)
+            worksheet.write("D1", "s_06_Latest_Delivery_Date_TimeSet", bold)
+            worksheet.write("E1", "No. of boxes delivered", bold)
+            worksheet.write("F1", "Short", bold)
+            worksheet.write("G1", "CSV #", bold)
+            worksheet.write("H1", "b_client_order_num", bold)
+            worksheet.write("I1", "deToCompanyName", bold)
+            worksheet.write("J1", "deToCompanyName 2", bold)
+            worksheet.write("K1", "de_To_Address_Street_1", bold)
+            worksheet.write("L1", "de_to_address_suburb", bold)
+            worksheet.write("M1", "de_To_Address_State", bold)
+            worksheet.write("N1", "de_to_address_postcode", bold)
+            worksheet.write("O1", "b_booking_visualID", bold)
+            worksheet.write("P1", "v_FPBookingNumber", bold)
+            worksheet.write("Q1", "No of units", bold)
+            worksheet.write("R1", "No of boxes Booked", bold)
+            worksheet.write("S1", "note", bold)
+
+            worksheet.write("A2", "Status", bold)
+            worksheet.write("B2", "Pickup Date", bold)
+            worksheet.write("C2", "Deliver Date", bold)
+            worksheet.write("D2", "Expected Delivery Date", bold)
+            worksheet.write("E2", "No. of Boxes Delivered", bold)
+            worksheet.write("F2", "Short", bold)
+            worksheet.write("G2", "CSV #", bold)
+            worksheet.write("H2", "External Document No.", bold)
+            worksheet.write("I2", "Ship-to Name", bold)
+            worksheet.write("J2", "Ship-to Name2 ", bold)
+            worksheet.write("K2", "Ship-to Address", bold)
+            worksheet.write("L2", "Ship-to City", bold)
+            worksheet.write("M2", "Ship-to County", bold)
+            worksheet.write("N2", "Ship-to PostCode", bold)
+            worksheet.write("O2", "DME ID", bold)
+            worksheet.write("P2", "Connote Number", bold)
+            worksheet.write("Q2", "No of Units", bold)
+            worksheet.write("R2", "No of Boxes Booked , ", bold)
+            worksheet.write("S2", "Notes", bold)
+
+            row = 2
+        else:
+            worksheet.write("A1", "Status", bold)
+            worksheet.write("B1", "Pickup Date", bold)
+            worksheet.write("C1", "Deliver Date", bold)
+            worksheet.write("D1", "Expected Delivery Date", bold)
+            worksheet.write("E1", "No. of Boxes Delivered", bold)
+            worksheet.write("F1", "Short", bold)
+            worksheet.write("G1", "CSV #", bold)
+            worksheet.write("H1", "External Document No.", bold)
+            worksheet.write("I1", "Ship-to Name", bold)
+            worksheet.write("J1", "Ship-to Name2 ", bold)
+            worksheet.write("K1", "Ship-to Address", bold)
+            worksheet.write("L1", "Ship-to City", bold)
+            worksheet.write("M1", "Ship-to County", bold)
+            worksheet.write("N1", "Ship-to PostCode", bold)
+            worksheet.write("O1", "DME ID", bold)
+            worksheet.write("P1", "Connote Number", bold)
+            worksheet.write("Q1", "No of Units", bold)
+            worksheet.write("R1", "No of Boxes Booked , ", bold)
+            worksheet.write("S1", "Notes", bold)
+
+            row = 1
+
+        pk_booking_ids = []
+        for booking in bookings:
+            pk_booking_ids.append(booking.pk_booking_id)
+
+        bcls = Api_booking_confirmation_lines.objects
+        bcls = bcls.filter(fk_booking_id__in=pk_booking_ids)
+        lines = Booking_lines.objects
+        lines = lines.filter(fk_booking_id__in=pk_booking_ids)
+        histories = Dme_status_history.objects
+        histories = histories.filter(fk_booking_id__in=pk_booking_ids).order_by("-id")
+
+        for booking_ind, booking in enumerate(bookings):
+            status_history_note = ""
+            lines_qty = 0
+            no_boxes_booked = 0
+            no_boxes_delivered = 0
+
+            for bcl in bcls:
+                if bcl.fk_booking_id == booking.pk_booking_id:
+                    no_boxes_booked += 1
+
+                    if bcl.api_status == "Item Delivered":
+                        no_boxes_delivered += 1
+
+            for line in lines:
+                if line.fk_booking_id == booking.pk_booking_id:
+                    lines_qty += 1
+
+            for history in histories:
+                if history.dme_notes:
+                    status_history_note = history.dme_notes
+                    break
+
+            worksheet.write(row, col + 0, booking.b_status)
+
+            if booking.s_20_Actual_Pickup_TimeStamp:
+                worksheet.write_datetime(
+                    row,
+                    col + 1,
+                    convert_to_AU_SYDNEY_tz(
+                        booking.s_20_Actual_Pickup_TimeStamp
+                    ).date(),
+                    date_format,
+                )
+
+            if booking.s_21_Actual_Delivery_TimeStamp:
+                worksheet.write_datetime(
+                    row,
+                    col + 2,
+                    convert_to_AU_SYDNEY_tz(
+                        booking.s_21_Actual_Delivery_TimeStamp
+                    ).date(),
+                    date_format,
+                )
+
+            if booking.s_06_Latest_Delivery_Date_TimeSet:
+                worksheet.write_datetime(
+                    row,
+                    col + 3,
+                    convert_to_AU_SYDNEY_tz(
+                        booking.s_06_Latest_Delivery_Date_TimeSet
+                    ).date(),
+                    date_format,
+                )
+
+            worksheet.write(row, col + 4, no_boxes_delivered)
+            worksheet.write(row, col + 5, no_boxes_booked - no_boxes_delivered)
+            # worksheet.write(row, col + 6, "") # CSV #
+            worksheet.write(row, col + 7, booking.b_client_order_num)
+            worksheet.write(row, col + 8, booking.deToCompanyName)
+            worksheet.write(row, col + 9, "")
+            worksheet.write(row, col + 10, booking.de_To_Address_Street_1)
+            worksheet.write(row, col + 11, booking.de_To_Address_Suburb)
+            worksheet.write(row, col + 12, booking.de_To_Address_State)
+            worksheet.write(row, col + 13, booking.de_To_Address_PostalCode)
+            worksheet.write(row, col + 14, booking.b_bookingID_Visual)
+            worksheet.write(row, col + 15, booking.v_FPBookingNumber)
+            worksheet.write(row, col + 16, lines_qty)
+            worksheet.write(row, col + 17, no_boxes_booked)
+            worksheet.write(row, col + 18, status_history_note)
+
+            row += 1
+
+        workbook.close()
+        shutil.move(filename, local_filepath + filename)
+        logger.info("#319 Finished - `Booking Lines Sent` XLS")
 
     return local_filepath + filename
