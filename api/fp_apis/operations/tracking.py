@@ -339,13 +339,12 @@ def populate_items_status(booking, itemStatusList):
             continue
 
         for bcl in bcls:
-            if (
-                bcl.api_artical_id == itemStatus["articleId"]
-                and bcl.api_status != itemStatus["status"]
-            ):
+            if bcl.api_artical_id == itemStatus["articleId"]:
                 does_bcl_exist = True
-                bcl.api_status = itemStatus["status"]
-                bcl.save()
+
+                if bcl.api_status != itemStatus["status"]:
+                    bcl.api_status = itemStatus["status"]
+                    bcl.save()
 
         if not does_bcl_exist:
             Api_booking_confirmation_lines(
