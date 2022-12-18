@@ -3062,7 +3062,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         bcls = Api_booking_confirmation_lines.objects
         bcls = bcls.filter(fk_booking_id__in=pk_booking_ids)
         lines = Booking_lines.objects
-        lines = lines.filter(fk_booking_id__in=pk_booking_ids)
+        lines = lines.filter(fk_booking_id__in=pk_booking_ids, packed_status="scanned")
         histories = Dme_status_history.objects
         histories = histories.filter(fk_booking_id__in=pk_booking_ids).order_by("-id")
 
