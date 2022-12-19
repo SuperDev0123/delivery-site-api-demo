@@ -2999,17 +2999,18 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("F1", "Short", bold)
             worksheet.write("G1", "CSV #", bold)
             worksheet.write("H1", "b_client_order_num", bold)
-            worksheet.write("I1", "deToCompanyName", bold)
-            worksheet.write("J1", "deToCompanyName 2", bold)
-            worksheet.write("K1", "de_To_Address_Street_1", bold)
-            worksheet.write("L1", "de_to_address_suburb", bold)
-            worksheet.write("M1", "de_To_Address_State", bold)
-            worksheet.write("N1", "de_to_address_postcode", bold)
-            worksheet.write("O1", "b_booking_visualID", bold)
-            worksheet.write("P1", "v_FPBookingNumber", bold)
-            worksheet.write("Q1", "No of units", bold)
-            worksheet.write("R1", "No of boxes Booked", bold)
-            worksheet.write("S1", "note", bold)
+            worksheet.write("I1", "External Document No.", bold)
+            worksheet.write("J1", "deToCompanyName", bold)
+            worksheet.write("K1", "deToCompanyName 2", bold)
+            worksheet.write("L1", "de_To_Address_Street_1", bold)
+            worksheet.write("M1", "de_to_address_suburb", bold)
+            worksheet.write("N1", "de_To_Address_State", bold)
+            worksheet.write("O1", "de_to_address_postcode", bold)
+            worksheet.write("P1", "b_booking_visualID", bold)
+            worksheet.write("Q1", "v_FPBookingNumber", bold)
+            worksheet.write("R1", "No of units", bold)
+            worksheet.write("S1", "No of boxes Booked", bold)
+            worksheet.write("T1", "note", bold)
 
             worksheet.write("A2", "Status", bold)
             worksheet.write("B2", "Pickup Date", bold)
@@ -3019,17 +3020,18 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("F2", "Short", bold)
             worksheet.write("G2", "CSV #", bold)
             worksheet.write("H2", "External Document No.", bold)
-            worksheet.write("I2", "Ship-to Name", bold)
-            worksheet.write("J2", "Ship-to Name2 ", bold)
-            worksheet.write("K2", "Ship-to Address", bold)
-            worksheet.write("L2", "Ship-to City", bold)
-            worksheet.write("M2", "Ship-to County", bold)
-            worksheet.write("N2", "Ship-to PostCode", bold)
-            worksheet.write("O2", "DME ID", bold)
-            worksheet.write("P2", "Connote Number", bold)
-            worksheet.write("Q2", "No of Units", bold)
-            worksheet.write("R2", "No of Boxes Booked , ", bold)
-            worksheet.write("S2", "Notes", bold)
+            worksheet.write("I2", "SINV #", bold)
+            worksheet.write("J2", "Ship-to Name", bold)
+            worksheet.write("K2", "Ship-to Name2 ", bold)
+            worksheet.write("L2", "Ship-to Address", bold)
+            worksheet.write("M2", "Ship-to City", bold)
+            worksheet.write("N2", "Ship-to County", bold)
+            worksheet.write("O2", "Ship-to PostCode", bold)
+            worksheet.write("P2", "DME ID", bold)
+            worksheet.write("Q2", "Connote Number", bold)
+            worksheet.write("R2", "No of Units", bold)
+            worksheet.write("S2", "No of Boxes Booked , ", bold)
+            worksheet.write("T2", "Notes", bold)
 
             row = 2
         else:
@@ -3041,17 +3043,18 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("F1", "Short", bold)
             worksheet.write("G1", "CSV #", bold)
             worksheet.write("H1", "External Document No.", bold)
-            worksheet.write("I1", "Ship-to Name", bold)
-            worksheet.write("J1", "Ship-to Name2 ", bold)
-            worksheet.write("K1", "Ship-to Address", bold)
-            worksheet.write("L1", "Ship-to City", bold)
-            worksheet.write("M1", "Ship-to County", bold)
-            worksheet.write("N1", "Ship-to PostCode", bold)
-            worksheet.write("O1", "DME ID", bold)
-            worksheet.write("P1", "Connote Number", bold)
-            worksheet.write("Q1", "No of Units", bold)
-            worksheet.write("R1", "No of Boxes Booked , ", bold)
-            worksheet.write("S1", "Notes", bold)
+            worksheet.write("I1", "SINV #", bold)
+            worksheet.write("J1", "Ship-to Name", bold)
+            worksheet.write("K1", "Ship-to Name2 ", bold)
+            worksheet.write("L1", "Ship-to Address", bold)
+            worksheet.write("M1", "Ship-to City", bold)
+            worksheet.write("N1", "Ship-to County", bold)
+            worksheet.write("O1", "Ship-to PostCode", bold)
+            worksheet.write("P1", "DME ID", bold)
+            worksheet.write("Q1", "Connote Number", bold)
+            worksheet.write("R1", "No of Units", bold)
+            worksheet.write("S1", "No of Boxes Booked , ", bold)
+            worksheet.write("T1", "Notes", bold)
 
             row = 1
 
@@ -3063,12 +3066,14 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
         bcls = bcls.filter(fk_booking_id__in=pk_booking_ids)
         lines = Booking_lines.objects
         lines = lines.filter(fk_booking_id__in=pk_booking_ids, packed_status="scanned")
+        line_datas = Booking_lines_data.objects
+        line_datas = line_datas.filter(fk_booking_id__in=pk_booking_ids)
         histories = Dme_status_history.objects
         histories = histories.filter(fk_booking_id__in=pk_booking_ids).order_by("-id")
 
         for booking_ind, booking in enumerate(bookings):
             status_history_note = ""
-            lines_qty = 0
+            no_unites = 0
             no_boxes_booked = 0
             no_boxes_delivered = 0
 
@@ -3081,7 +3086,11 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             for line in lines:
                 if line.fk_booking_id == booking.pk_booking_id:
-                    lines_qty += 1
+                    no_boxes_booked += line.e_qty
+
+            for line_data in line_datas:
+                if line_data.fk_booking_id == booking.pk_booking_id:
+                    no_unites += line_data.quantity
 
             for history in histories:
                 if history.dme_notes:
@@ -3122,19 +3131,20 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             worksheet.write(row, col + 4, no_boxes_delivered)
             worksheet.write(row, col + 5, no_boxes_booked - no_boxes_delivered)
-            # worksheet.write(row, col + 6, "") # CSV #
+            worksheet.write(row, col + 6, booking.b_booking_project)
             worksheet.write(row, col + 7, booking.b_client_order_num)
-            worksheet.write(row, col + 8, booking.deToCompanyName)
-            worksheet.write(row, col + 9, "")
-            worksheet.write(row, col + 10, booking.de_To_Address_Street_1)
-            worksheet.write(row, col + 11, booking.de_To_Address_Suburb)
-            worksheet.write(row, col + 12, booking.de_To_Address_State)
-            worksheet.write(row, col + 13, booking.de_To_Address_PostalCode)
-            worksheet.write(row, col + 14, booking.b_bookingID_Visual)
-            worksheet.write(row, col + 15, booking.v_FPBookingNumber)
-            worksheet.write(row, col + 16, lines_qty)
-            worksheet.write(row, col + 17, no_boxes_booked)
-            worksheet.write(row, col + 18, status_history_note)
+            worksheet.write(row, col + 8, booking.b_client_order_num)
+            worksheet.write(row, col + 9, booking.deToCompanyName)
+            worksheet.write(row, col + 10, "")
+            worksheet.write(row, col + 11, booking.de_To_Address_Street_1)
+            worksheet.write(row, col + 12, booking.de_To_Address_Suburb)
+            worksheet.write(row, col + 13, booking.de_To_Address_State)
+            worksheet.write(row, col + 14, booking.de_To_Address_PostalCode)
+            worksheet.write(row, col + 15, booking.b_bookingID_Visual)
+            worksheet.write(row, col + 16, booking.v_FPBookingNumber)
+            worksheet.write(row, col + 17, no_unites)
+            worksheet.write(row, col + 18, no_boxes_booked)
+            worksheet.write(row, col + 19, status_history_note)
 
             row += 1
 
