@@ -3133,7 +3133,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 5, no_boxes_booked - no_boxes_delivered)
             worksheet.write(row, col + 6, booking.b_booking_project)
             worksheet.write(row, col + 7, booking.b_client_order_num)
-            worksheet.write(row, col + 8, booking.b_client_order_num)
+            worksheet.write(row, col + 8, booking.b_client_sales_inv_num)
             worksheet.write(row, col + 9, booking.deToCompanyName)
             worksheet.write(row, col + 10, "")
             worksheet.write(row, col + 11, booking.de_To_Address_Street_1)
