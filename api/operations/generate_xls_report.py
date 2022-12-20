@@ -3097,6 +3097,9 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
                     status_history_note = history.dme_notes
                     break
 
+            if booking.b_status == "Delivered" and no_boxes_delivered == 0:
+                no_boxes_delivered = no_boxes_booked
+
             worksheet.write(row, col + 0, booking.b_status)
 
             if booking.s_20_Actual_Pickup_TimeStamp:
