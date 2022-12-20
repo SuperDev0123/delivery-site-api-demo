@@ -4,11 +4,12 @@ from datetime import datetime
 
 from django.conf import settings
 
-from api.models import Bookings, Booking_lines
+from api.models import Bookings, Booking_lines, Log
 from api.operations.csv.cope import build_csv as build_COPE_csv
 from api.operations.csv.dhl import build_csv as build_DHL_csv
 from api.operations.csv.state_transport import build_csv as build_STATE_TRANSPORT_csv
 from api.operations.csv.century import build_csv as build_CENTURY_csv
+from api.operations.csv.dme_log import build_csv as build_DME_log_csv
 from api.fp_apis.utils import gen_consignment_num
 from api.utils import get_sydney_now_time
 
@@ -104,6 +105,33 @@ def build_csv(booking_ids):
     elif vx_freight_provider == "century":
         has_error = build_CENTURY_csv(f, bookings, booking_lines)
 
+    f.close()
+
+    if has_error:
+        os.remove(f.name)
+
+    return has_error
+
+def dme_log_csv(log_date):
+    LOG_ID = "[CSV DME LOG]"
+    logger.error(f"{LOG_ID} log_date: {log_date}")
+
+    logs = Log.objects.filter(z_createdTimeStamp__date=log_date)
+
+    csv_name = f"dme_log__{log_date}.csv"
+
+    # Open CSV file
+    if settings.ENV == "prod":
+        f = open(f"/dme_sftp/dme_logs/{csv_name}", "w")        
+    else:
+        local_path = f"{settings.STATIC_PUBLIC}/csvs/dme_logs/"
+        if not os.path.exists(local_path):
+            os.makedirs(local_path)
+        f = open(f"{settings.STATIC_PUBLIC}/csvs/dme_logs/{csv_name}", "w")
+
+    # Build CSV
+    has_error = build_DME_log_csv(f, logs)
+    
     f.close()
 
     if has_error:
