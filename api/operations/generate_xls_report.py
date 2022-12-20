@@ -3011,6 +3011,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("R1", "No of units", bold)
             worksheet.write("S1", "No of boxes Booked", bold)
             worksheet.write("T1", "note", bold)
+            worksheet.write("U1", "vx_freight_provider", bold)
 
             worksheet.write("A2", "Status", bold)
             worksheet.write("B2", "Pickup Date", bold)
@@ -3032,6 +3033,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("R2", "No of Units", bold)
             worksheet.write("S2", "No of Boxes Booked , ", bold)
             worksheet.write("T2", "Notes", bold)
+            worksheet.write("U2", "Fright Provider", bold)
 
             row = 2
         else:
@@ -3055,6 +3057,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write("R1", "No of Units", bold)
             worksheet.write("S1", "No of Boxes Booked , ", bold)
             worksheet.write("T1", "Notes", bold)
+            worksheet.write("U1", "Fright Provider", bold)
 
             row = 1
 
@@ -3148,6 +3151,7 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
             worksheet.write(row, col + 17, no_unites)
             worksheet.write(row, col + 18, no_boxes_booked)
             worksheet.write(row, col + 19, status_history_note)
+            worksheet.write(row, col + 20, booking.vx_freight_provider)
 
             row += 1
 
