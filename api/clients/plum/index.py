@@ -967,7 +967,7 @@ def push_boks(payload, client, username, method):
         return {"success": True, "results": [], "message": message}
 
 
-@background
+# @background
 def scan_process_in_bg(booking):
     LOG_ID = "[SCAN IN BG]"
     # Should get pricing again when if fully picked
