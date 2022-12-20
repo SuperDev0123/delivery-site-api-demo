@@ -3082,8 +3082,6 @@ def build_xls(bookings, xls_type, username, start_date, end_date, show_field_nam
 
             for bcl in bcls:
                 if bcl.fk_booking_id == booking.pk_booking_id:
-                    no_boxes_booked += 1
-
                     if bcl.api_status == "Item Delivered":
                         no_boxes_delivered += 1
 
