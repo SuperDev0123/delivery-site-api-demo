@@ -150,4 +150,5 @@ urlpatterns += [
     url(r"^find-a-booking/", find_a_booking),
     # Logs for debugging
     url(r"^logs/", get_logs),
+    url(r"^get-request-type/", get_request_type),  # build & download PDF
 ]

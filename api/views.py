@@ -4234,7 +4234,10 @@ def download(request):
                     
     elif download_option == "dme_logs":
         log_date = body["log_date"]
-        has_error = dme_log_csv(log_date)
+        fp_id = body["selected_fp"]
+        request_status = body["selected_status"]
+        request_type = body["selected_type"]
+        has_error = dme_log_csv(log_date, fp_id, request_status, request_type)
 
         if has_error:
             return JsonResponse(
@@ -5725,6 +5728,17 @@ class DMEBookingCSNoteViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.info(f"Delete Fp Status Error: {str(e)}")
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+@authentication_classes([JSONWebTokenAuthentication])
+def get_request_type(request):
+    try:
+        result = Log.objects.values('request_type').annotate(dcount=Count('request_type'))
+        return JsonResponse({"success": "success", "result": list(result)})
+    except Exception as e:
+        # print('get_pdf error: ', e)
+        return JsonResponse({"error": "error"})
 
 
 @api_view(["GET"])

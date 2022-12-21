@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 
 from django.conf import settings
+from django.db.models import Q
 
 from api.models import Bookings, Booking_lines, Log
 from api.operations.csv.cope import build_csv as build_COPE_csv
@@ -112,12 +113,24 @@ def build_csv(booking_ids):
 
     return has_error
 
-def dme_log_csv(log_date):
+def dme_log_csv(log_date, fp_id, request_status, request_type):
     LOG_ID = "[CSV DME LOG]"
-    logger.error(f"{LOG_ID} log_date: {log_date}")
+    logger.error(f"{LOG_ID} log_date: {log_date}, fp: {fp_id}, status: {request_status}")
 
     logs = Log.objects.filter(z_createdTimeStamp__date=log_date)
+    
+    if fp_id > 0:
+        logs.filter(fk_service_provider_id=fp_id)
+        
+    if request_status >= 0:
+        if request_status:
+            logs.filter(Q(request_status__iexact='SUCCESS') | Q(request_status__iexact='200'))
+        else:
+            logs.filter(Q(request_status__iexact='ERROR') | Q(request_status__iexact='500'))
 
+    if request_type:
+        logs.filter(request_type__iexact=request_type)
+    
     csv_name = f"dme_log__{log_date}.csv"
 
     # Open CSV file
