@@ -1368,7 +1368,8 @@ def scanned(payload, client):
                 ),
                 "labels": [],
             }
-        else:
+
+        if is_picked_all:
             scan_process_in_bg(booking)
 
         logger.info(
