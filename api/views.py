@@ -70,7 +70,7 @@ from api.utils import (
     get_clientname_with_request,
 )
 from api.operations.manifests.index import build_manifest
-from api.operations.csv.index import build_csv
+from api.operations.csv.index import build_csv, dme_log_csv
 from api.operations.email_senders import send_booking_status_email
 from api.operations.labels.index import build_label as build_label_oper
 from api.operations.booking.auto_augment import auto_augment as auto_augment_oper
@@ -4091,7 +4091,7 @@ def download(request):
     prefixes = []
     logger.info(f"{LOG_ID} Option: {download_option}")
 
-    if download_option not in ["logs", "quote-report"]:
+    if download_option not in ["logs", "dme_logs", "quote-report"]:
         if download_option in ["pricing-only", "pricing-rule", "xls import"]:
             file_name = body["fileName"]
         elif download_option == "manifest":
@@ -4239,6 +4239,17 @@ def download(request):
 
                 if os.path.exists(path):
                     file_paths.append(path)
+                    
+    elif download_option == "dme_logs":
+        log_date = body["log_date"]
+        has_error = dme_log_csv(log_date)
+
+        if has_error:
+            return JsonResponse(
+                {"status": False, "message": "Failed to create CSV"}, status=400
+            )   
+        file_paths = [f"{settings.STATIC_PUBLIC}/csvs/dme_logs/dme_log__{log_date}.csv"]
+                    
     elif download_option == "quote-report":
         kf_client_ids = body.get("kfClientIds")
         start_date = body.get("startDate")
