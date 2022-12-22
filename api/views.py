@@ -119,6 +119,7 @@ from api.operations.booking.refs import (
 from api.operations.genesis.index import update_shared_booking
 from api.operations.email_senders import send_email_to_admins
 from api.fps.index import get_fp_fl
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
 if settings.ENV == "local":
     S3_URL = "./static"
@@ -5739,6 +5740,46 @@ def get_request_type(request):
     except Exception as e:
         # print('get_pdf error: ', e)
         return JsonResponse({"error": "error"})
+
+@api_view(["POST"])
+@permission_classes((IsAuthenticated,))
+@authentication_classes([JSONWebTokenAuthentication])
+def get_dme_logs(request):
+    # try:
+    LOG_ID = "[GET_DME_LOGS]"
+    body = literal_eval(request.body.decode("utf8"))
+    log_date = body["log_date"]
+    cur_page = body["currentPage"]
+    fp_id = body["selected_fp"]
+    request_status = body["selected_status"]
+    request_type = body["selected_type"]
+    logs = Log.objects.filter(z_createdTimeStamp__date=log_date)
+
+    if fp_id > 0:
+        logs.filter(fk_service_provider_id=fp_id)
+        
+    if request_status >= 0:
+        if request_status:
+            logs.filter(Q(request_status__iexact='SUCCESS') | Q(request_status__iexact='200'))
+        else:
+            logs.filter(Q(request_status__iexact='ERROR') | Q(request_status__iexact='500'))
+
+    if request_type:
+        logs.filter(request_type__iexact=request_type)
+        
+    paginator = Paginator(logs.order_by('id'), per_page=20)
+    
+    try:
+        objects = paginator.page(cur_page + 1)
+    except PageNotAnInteger:
+        objects = paginator.page(1)
+    except EmptyPage:
+        objects = paginator.page(paginator.num_pages)
+    
+    return Response(data={"success": "success", "result": list(objects.object_list.values()), "allPageCount": paginator.num_pages})
+    # except Exception as e:
+    #     # print('get_pdf error: ', e)
+    #     return JsonResponse({"error": "error"})
 
 
 @api_view(["GET"])
