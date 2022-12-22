@@ -1066,7 +1066,7 @@ def scanned(payload, client):
 
     original_items, scanned_items, sscc_list, model_number_qtys = [], [], [], []
     for line in lines:
-        if not line.sscc and line.packed_status == Booking_lines.ORIGINAL:
+        if line.packed_status == Booking_lines.ORIGINAL:
             original_items.append(line)
             model_number_qtys.append((line.e_item_type, line.e_qty))
 
