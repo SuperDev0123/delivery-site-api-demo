@@ -3976,6 +3976,7 @@ class ApiBCLViewSet(viewsets.ViewSet):
                         "client_item_reference": resultObject.client_item_reference,
                         "fp_event_date": resultObject.fp_event_date,
                         "fp_event_time": resultObject.fp_event_time,
+                        "api_status": resultObject.api_status,
                     }
                 )
             return JsonResponse({"results": return_data})
@@ -4239,7 +4240,7 @@ def download(request):
 
                 if os.path.exists(path):
                     file_paths.append(path)
-                    
+
     elif download_option == "dme_logs":
         log_date = body["log_date"]
         has_error = dme_log_csv(log_date)
@@ -4247,9 +4248,9 @@ def download(request):
         if has_error:
             return JsonResponse(
                 {"status": False, "message": "Failed to create CSV"}, status=400
-            )   
+            )
         file_paths = [f"{settings.STATIC_PUBLIC}/csvs/dme_logs/dme_log__{log_date}.csv"]
-                    
+
     elif download_option == "quote-report":
         kf_client_ids = body.get("kfClientIds")
         start_date = body.get("startDate")
