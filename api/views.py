@@ -3972,7 +3972,8 @@ class ApiBCLViewSet(viewsets.ViewSet):
                         "id": resultObject.id,
                         "fk_booking_id": resultObject.fk_booking_id,
                         "fk_booking_line_id": resultObject.fk_booking_line_id,
-                        "label_code": resultObject.label_code,
+                        "label_code": resultObject.label_code
+                        or resultObject.api_artical_id,
                         "client_item_reference": resultObject.client_item_reference,
                         "fp_event_date": resultObject.fp_event_date,
                         "fp_event_time": resultObject.fp_event_time,
