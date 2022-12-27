@@ -56,7 +56,7 @@ class DME_Roles(models.Model):
 class DME_clients(models.Model):
     pk_id_dme_client = models.AutoField(primary_key=True)
     company_name = models.CharField(
-        verbose_name=_("Company Name"), max_length=128, blank=False, null=False
+        verbose_name=_("Company Name"), max_length=128, null=False
     )
     dme_account_num = models.CharField(
         verbose_name=_("dme account num"), max_length=64, default=None, null=False
@@ -70,23 +70,21 @@ class DME_clients(models.Model):
         default="z_CreatedTimestamp",
     )
     current_freight_provider = models.CharField(
-        verbose_name=_("Related FP"), max_length=30, blank=False, null=True, default="*"
+        verbose_name=_("Related FP"), max_length=30, null=True, default="*"
     )
     logo_url = models.CharField(
         verbose_name=_("Logo Url"), max_length=200, null=True, default=None
     )
-    client_mark_up_percent = models.FloatField(default=0, null=True, blank=True)
-    client_min_markup_startingcostvalue = models.FloatField(
-        default=0, null=True, blank=True
-    )
-    client_min_markup_value = models.FloatField(default=0, null=True, blank=True)
-    augment_pu_by_time = models.TimeField(blank=True, null=True, default=None)
-    augment_pu_available_time = models.TimeField(blank=True, null=True, default=None)
-    client_customer_mark_up = models.FloatField(default=0, null=True, blank=True)
-    gap_percent = models.FloatField(default=0, null=True, blank=True)
-    status_email = models.CharField(max_length=64, default=None, null=False)
-    status_phone = models.CharField(max_length=16, default=None, null=False)
-    status_send_flag = models.BooleanField(default=False, null=False)
+    client_mark_up_percent = models.FloatField(default=0, null=True)
+    client_min_markup_startingcostvalue = models.FloatField(default=0, null=True)
+    client_min_markup_value = models.FloatField(default=0, null=True)
+    augment_pu_by_time = models.TimeField(null=True, default=None)
+    augment_pu_available_time = models.TimeField(null=True, default=None)
+    client_customer_mark_up = models.FloatField(default=0, null=True)
+    gap_percent = models.FloatField(default=0, null=True)
+    status_email = models.CharField(max_length=64, default=None, null=True)
+    status_phone = models.CharField(max_length=16, default=None, null=True)
+    status_send_flag = models.BooleanField(default=False, null=True)
 
     class Meta:
         db_table = "dme_clients"

@@ -1062,6 +1062,17 @@ class RoleSerializer(serializers.ModelSerializer):
 
 
 class ClientSerializer(serializers.ModelSerializer):
+    phone = serializers.IntegerField(required=False)
+    client_filter_date_field = serializers.CharField(required=False)
+    current_freight_provider = serializers.CharField(allow_blank=True, required=False)
+    logo_url = serializers.CharField(allow_blank=True, required=False)
+    gap_percent = serializers.FloatField(required=False)
+    augment_pu_by_time = serializers.TimeField(required=False)
+    augment_pu_available_time = serializers.TimeField(required=False)
+    status_email = serializers.CharField(required=False)
+    status_phone = serializers.CharField(required=False)
+    status_send_flag = serializers.BooleanField(required=False)
+
     class Meta:
         model = DME_clients
         fields = "__all__"
