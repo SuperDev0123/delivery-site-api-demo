@@ -82,9 +82,9 @@ class DME_clients(models.Model):
     augment_pu_available_time = models.TimeField(null=True, default=None)
     client_customer_mark_up = models.FloatField(default=0, null=True)
     gap_percent = models.FloatField(default=0, null=True)
-    status_email = models.CharField(max_length=64, default=None, null=True)
-    status_phone = models.CharField(max_length=16, default=None, null=True)
-    status_send_flag = models.BooleanField(default=False, null=True)
+    status_email = models.CharField(max_length=64, default=None, null=True, blank=True)
+    status_phone = models.CharField(max_length=16, default=None, null=True, blank=True)
+    status_send_flag = models.BooleanField(default=False, null=True, blank=True)
 
     class Meta:
         db_table = "dme_clients"

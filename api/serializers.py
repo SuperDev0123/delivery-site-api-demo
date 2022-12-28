@@ -1,6 +1,7 @@
 import re
 import time
 import pytz
+import uuid
 from datetime import datetime
 
 from rest_framework import serializers
@@ -1069,13 +1070,19 @@ class ClientSerializer(serializers.ModelSerializer):
     gap_percent = serializers.FloatField(required=False)
     augment_pu_by_time = serializers.TimeField(required=False)
     augment_pu_available_time = serializers.TimeField(required=False)
-    status_email = serializers.CharField(required=False)
-    status_phone = serializers.CharField(required=False)
+    status_email = serializers.CharField(allow_blank=True, required=False)
+    status_phone = serializers.CharField(allow_blank=True, required=False)
     status_send_flag = serializers.BooleanField(required=False)
 
     class Meta:
         model = DME_clients
         fields = "__all__"
+
+    def create(self, validated_data):
+        validated_data["dme_account_num"] = str(uuid.uuid4())
+        client = DME_clients(**validated_data)
+        client.save()
+        return client
 
 
 class PalletSerializer(serializers.ModelSerializer):
