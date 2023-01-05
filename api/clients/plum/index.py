@@ -164,6 +164,7 @@ def partial_pricing(payload, client, warehouse):
 
     # Select best quotes(fastest, lowest)
     if quote_set.count() > 0:
+        quote_set = quote_set.filter(freight_provider="Allied")
         best_quotes = select_best_options(pricings=quote_set)
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
 
