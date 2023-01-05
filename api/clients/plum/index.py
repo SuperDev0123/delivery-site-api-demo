@@ -298,6 +298,7 @@ def quoting_in_bg(client, username, bok_1_obj, bok_1, bok_2s, old_quote):
 
     # Select best quotes(fastest, lowest)
     if quote_set.exists() and quote_set.count() > 0:
+        quote_set = quote_set.filter(freight_provider="Allied")
         auto_select_pricing_4_bok(bok_1_obj, quote_set)
         best_quotes = select_best_options(pricings=quote_set)
         logger.info(f"#520 {LOG_ID} Selected Best Pricings: {best_quotes}")
