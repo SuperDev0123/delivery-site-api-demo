@@ -43,6 +43,7 @@ from api.models import (
     FP_status_history,
     DMEBookingCSNote,
     BOK_1_headers,
+    PreBookingError,
 )
 from api import utils
 from api.fp_apis.utils import _is_deliverable_price
@@ -54,6 +55,8 @@ from api.fp_apis.operations.surcharge.index import (
 )
 from api.fp_apis.constants import SPECIAL_FPS
 
+import logging
+logger = logging.getLogger(__name__)
 
 class WarehouseSerializer(serializers.HyperlinkedModelSerializer):
     client_company_name = serializers.SerializerMethodField(read_only=True)
@@ -1125,4 +1128,16 @@ class FPStatusHistorySerializer(serializers.ModelSerializer):
 class DMEBookingCSNoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = DMEBookingCSNote
+        fields = "__all__"
+
+class PreBookingErrorSerializer(serializers.ModelSerializer):
+    booking_number = serializers.SerializerMethodField(read_only=True)
+    invoice_number = serializers.SerializerMethodField(read_only=True)
+
+    def get_booking_number(self, obj):
+        return Bookings.objects.filter(pk_booking_id=obj.pk_booking_id).first().b_bookingID_Visual
+    def get_invoice_number(self, obj):
+        return Bookings.objects.filter(pk_booking_id=obj.pk_booking_id).first().b_client_sales_inv_num
+    class Meta:
+        model = PreBookingError
         fields = "__all__"

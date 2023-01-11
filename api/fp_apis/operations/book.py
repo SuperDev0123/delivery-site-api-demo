@@ -9,7 +9,7 @@ from api.common import status_history, trace_error
 from api.file_operations.directory import create_dir
 from api.operations.email_senders import send_booking_status_email
 from api.operations.api_booking_confirmation_lines import index as api_bcl
-from api.models import Log, Api_booking_confirmation_lines, Dme_manifest_log
+from api.models import Log, Api_booking_confirmation_lines, Dme_manifest_log, PreBookingError
 
 from api.fp_apis.pre_check import pre_check_book
 from api.fp_apis.payload_builder import get_book_payload
@@ -44,8 +44,19 @@ def built_in_book(booking, booker):
 def book(fp_name, booking, booker):
     _fp_name = fp_name.lower()
     error_msg = pre_check_book(booking)
-
     if error_msg:
+        error_hist = PreBookingError.objects.filter(pk_booking_id=booking.pk_booking_id, is_deleted = 0, status = PreBookingError.OPEN_STATUS)
+        if len(error_hist) > 0:
+            error_hist = error_hist.first()
+            error_hist.error = error_msg
+            error_hist.api_type="booking"
+            error_hist.save()
+        else:
+            PreBookingError(
+                api_type="booking",
+                error=error_msg,
+                pk_booking_id = booking.pk_booking_id,
+                ).save()
         return False, error_msg
 
     try:

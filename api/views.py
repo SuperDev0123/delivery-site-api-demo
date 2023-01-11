@@ -289,7 +289,6 @@ class UserViewSet(viewsets.ViewSet):
     def get_clients(self, request, format=None):
         user_id = self.request.user.id
         dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
-
         if dme_employee is not None:
             user_type = "DME"
             dme_clients = DME_clients.objects.all().order_by("company_name")

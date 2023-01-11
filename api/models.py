@@ -5583,3 +5583,31 @@ class LinehaulOrder(models.Model):
 
     class Meta:
         db_table = "dme_linehaul_orders"
+
+class PreBookingError(models.Model):    
+    OPEN_STATUS = "open"
+    CLOSE_STATUS = "closed"
+    id = models.AutoField(primary_key=True)
+    pk_booking_id = models.CharField(
+        verbose_name=_("Booking ID"), max_length=64, blank=True, null=True, default=None
+    )
+    api_type = models.CharField(max_length=64, default=None, null=True)
+    error = models.CharField(max_length=255, default=None, null=True)
+    created_at = models.DateTimeField(
+        verbose_name=_("Created Timestamp"),
+        null=True,
+        blank=True,
+        auto_now_add=True,
+    )
+    resolved_timestamp = models.DateTimeField(
+        verbose_name=_("Resolved Timestamp"),
+        null=True,
+        blank=True,
+        auto_now_add=False,
+    )
+    is_deleted = models.BooleanField(null=True, default=False)
+    status = models.CharField(max_length=15, default=OPEN_STATUS, null=True)
+    resolved_by = models.CharField(max_length=255, default=None, null=True)
+
+    class Meta:
+        db_table = "dme_prebooking_errors"

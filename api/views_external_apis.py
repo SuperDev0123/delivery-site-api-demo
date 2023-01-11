@@ -18,11 +18,13 @@ from rest_framework import views, serializers, status
 from rest_framework.permissions import IsAuthenticated
 
 from api.serializers_client import *
-from api.serializers import ApiBookingQuotesSerializer
+from api.serializers import ApiBookingQuotesSerializer, PreBookingErrorSerializer
 from api.models import *
 from api.operations import paperless
 from api.fp_apis.constants import AVAILABLE_FPS_4_FC, BUILT_IN_PRICINGS
 from api.fp_apis.operations.pricing import pricing as pricing_oper
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from ast import literal_eval
 
 logger = logging.getLogger(__name__)
 
@@ -179,3 +181,48 @@ def do_bulk_pricing(bookings, booking_lines):
     #     {"success": True, "error": None, "result": result}, status=status.HTTP_200_OK
     # )
     return result
+
+@api_view(['PUT', 'POST'])
+@authentication_classes([JSONWebTokenAuthentication])
+def get_prebooking_errors(request):    
+    if request.method == 'POST':
+        try:
+            LOG_ID = "[GET_DME_LOGS]"
+            body = literal_eval(request.body.decode("utf8"))
+            cur_page = body["currentPage"]
+            error_status = body["status"]
+            errors = PreBookingError.objects.filter(is_deleted=0)
+            if error_status != 'all':
+                errors = errors.filter(status=error_status)
+            paginator = Paginator(errors.order_by('id'), per_page=20)
+            try:
+                objects = paginator.page(cur_page + 1)
+            except PageNotAnInteger:
+                objects = paginator.page(1)
+            except EmptyPage:
+                objects = paginator.page(paginator.num_pages)
+            serializer = PreBookingErrorSerializer(objects, many=True)
+            return Response(
+                {"success": True, "errors": serializer.data, "allPageCount": paginator.num_pages}, status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
+    elif request.method == 'PUT':   
+        try:
+            LOG_ID = "[UPDATE_DME_LOGS]"
+            body = literal_eval(request.body.decode("utf8"))
+            pk_booking_id = body["pk_booking_id"]
+            error_status = body["status"]
+            error = PreBookingError.objects.filter(pk_booking_id=pk_booking_id).first()
+            error.status = error_status
+            error.resolved_by = request.user.username
+            error.save()
+            return Response(
+                {"success": True}, status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST
+            )

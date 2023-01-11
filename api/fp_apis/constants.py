@@ -2,7 +2,8 @@ from django.conf import settings
 
 
 if settings.ENV == "local":
-    DME_LEVEL_API_URL = "http://localhost:3000"
+    # DME_LEVEL_API_URL = "http://localhost:3000"
+    DME_LEVEL_API_URL = "http://52.62.109.115:3000"
     S3_URL = "./static"
 elif settings.ENV == "dev":
     DME_LEVEL_API_URL = "http://52.62.109.115:3000"

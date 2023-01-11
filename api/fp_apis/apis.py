@@ -271,7 +271,7 @@ def book(request, fp_name):
 
     try:
         booking = Bookings.objects.get(id=booking_id)
-
+        
         if fp_name.lower() not in FP_CREDENTIALS:
             booking.b_status = "Booked"
             booking.b_dateBookedDate = datetime.now()
