@@ -46,9 +46,8 @@ def mapBokToBooking(request):
             )
             max_id = max_id if max_id else 89600
             start_id = max_id + 1
-            bok_headers = BOK_1_headers.objects.filter(success__in=[2, 4, 5]).order_by(
-                "-success"
-            )[:10]
+            bok_headers = BOK_1_headers.objects.filter(success__in=[2, 4, 5])
+            bok_headers = bok_headers.order_by("success")[:10]
             headers_count = len(bok_headers)
             logger.info(f"{LOG_ID} {headers_count} can be mapped.")
             end_id = start_id + headers_count - 1
