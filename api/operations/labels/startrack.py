@@ -386,7 +386,7 @@ def build_label(
                             "<font color='%s'><b>%s</b></font>"
                             % (
                                 colors.white
-                                if booking.vx_serviceName == "PRM"
+                                if booking.vx_serviceName == "PRM" or booking.vx_serviceName == "FPP"
                                 else colors.black,
                                 booking.vx_serviceName,
                             ),
@@ -400,7 +400,7 @@ def build_label(
                     *tableStyle,
                     *(
                         [("BACKGROUND", (0, 0), (-1, -1), "black")]
-                        if booking.vx_serviceName == "PRM"
+                        if booking.vx_serviceName == "PRM" or booking.vx_serviceName == "FPP"
                         else []
                     ),
                 ],
