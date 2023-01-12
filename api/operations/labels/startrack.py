@@ -129,7 +129,7 @@ def myLaterPages(canvas, doc):
 
 
 def gen_ReceiverBarcode(booking, location_info):
-    service_name = str(booking.vx_serviceName)
+    service_name = get_serviceName(str(booking.vx_serviceName))
     postal_code = str(booking.de_To_Address_PostalCode)
     depote_code = str(location_info["R1"] or "")
 
@@ -221,16 +221,11 @@ def get_ATL_number(booking):
     freight_provider.update(last_atl_number=last_atl_number + 1)
     return last_atl_number + 1
 
+def get_serviceName(temp):
+    return "PRM" if temp == "FPP" else temp
 
 def build_label(
-    booking,
-    filepath,
-    pre_data,
-    lines,
-    label_index,
-    sscc,
-    sscc_cnt=1,
-    one_page_label=True,
+    booking, filepath, pre_data, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
 ):
     logger.info(
         f"#110 [{booking.vx_freight_provider} LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
