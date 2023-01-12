@@ -56,6 +56,20 @@ def _save_import_file(dme_account_num, file, client_company_name):
 
 
 def upload_import_file(user_id, file, uploader):
+    # Plum
+    if uploader == "Plum Products Australia Ltd":
+        if settings.ENV in ["prod", "dev"]:  # PROD & DEV
+            file_path = "/dme_sftp/sapb1/order_transaction_csvs/indata/"
+        else:  # LOCAL
+            file_path = "./static/uploaded"
+
+        file_name = file.name
+        full_path = f"{file_path}/{file_name}"
+        with open(full_path, "wb+") as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+        return file_name
+
     dme_employee = DME_employees.objects.filter(fk_id_user=user_id).first()
     user_type = "DME" if dme_employee else "CLIENT"
 
@@ -217,7 +231,7 @@ def upload_pricing_rule_file(user_id, username, file, upload_option, rule_type):
 
 def upload_client_products_file(user_id, username, client_id, file):
     wb = openpyxl.load_workbook(file)
-    ws = wb['Product Import']
+    ws = wb["Product Import"]
 
     if client_id is None:
         client_employee = Client_employees.objects.get(fk_id_user=int(user_id))
@@ -225,18 +239,19 @@ def upload_client_products_file(user_id, username, client_id, file):
             pk_id_dme_client=client_employee.fk_id_dme_client_id
         )
     else:
-        dme_client = DME_clients.objects.get(
-            pk_id_dme_client=client_id
-        )
+        dme_client = DME_clients.objects.get(pk_id_dme_client=client_id)
 
     def check_data(data):
         not_empty_cols = [
-            'parent_model_number', 'child_model_number', 'description', 'qty'
+            "parent_model_number",
+            "child_model_number",
+            "description",
+            "qty",
         ]
         for key in data:
-            if key in not_empty_cols and (data[key] == None or data[key] == 'NULL'):
+            if key in not_empty_cols and (data[key] == None or data[key] == "NULL"):
                 return False
-            elif key not in not_empty_cols and data[key] == 'NULL':
+            elif key not in not_empty_cols and data[key] == "NULL":
                 data[key] = None
         return data
 
@@ -245,35 +260,33 @@ def upload_client_products_file(user_id, username, client_id, file):
     wrong_type_rows = []
     try:
         Client_Products.objects.filter(fk_id_dme_client=dme_client).delete()
-        delete_status = 'success'
+        delete_status = "success"
     except Exception as e:
-        delete_status = 'failed'
+        delete_status = "failed"
 
     success_count = 0
     failure_count = 0
     created_products = []
     for r in range(2, ws.max_row + 1):
         data = {
-            'fk_id_dme_client': dme_client,
-            'parent_model_number': ws.cell(row = r, column = 1).value,
-            'child_model_number': ws.cell(row = r, column = 2).value,
-            'description': ws.cell(row = r, column = 3).value,
-            'qty': ws.cell(row = r, column = 4).value,
-            'e_dimUOM': str(ws.cell(row = r, column = 5).value).lower(),
-            'e_weightUOM': str(ws.cell(row = r, column = 6).value).lower(),
-            'e_dimLength': ws.cell(row = r, column = 7).value,
-            'e_dimWidth': ws.cell(row = r, column = 8).value,
-            'e_dimHeight': ws.cell(row = r, column = 9).value,
-            'e_weightPerEach': ws.cell(row = r, column = 10).value,
-            'z_createdByAccount': username,
+            "fk_id_dme_client": dme_client,
+            "parent_model_number": ws.cell(row=r, column=1).value,
+            "child_model_number": ws.cell(row=r, column=2).value,
+            "description": ws.cell(row=r, column=3).value,
+            "qty": ws.cell(row=r, column=4).value,
+            "e_dimUOM": str(ws.cell(row=r, column=5).value).lower(),
+            "e_weightUOM": str(ws.cell(row=r, column=6).value).lower(),
+            "e_dimLength": ws.cell(row=r, column=7).value,
+            "e_dimWidth": ws.cell(row=r, column=8).value,
+            "e_dimHeight": ws.cell(row=r, column=9).value,
+            "e_weightPerEach": ws.cell(row=r, column=10).value,
+            "z_createdByAccount": username,
         }
 
         valid_data = check_data(data)
-        if (valid_data):
+        if valid_data:
             try:
-                created = Client_Products.objects.create(
-                    **valid_data
-                )
+                created = Client_Products.objects.create(**valid_data)
                 created.save()
                 success_count = success_count + 1
                 created_products.append(model_to_dict(created))
@@ -284,24 +297,18 @@ def upload_client_products_file(user_id, username, client_id, file):
         else:
             failure_count = failure_count + 1
             empty_field_rows.append(r)
-    
+
     return {
-        'file_name': file.name,
-        'delete_status': delete_status,
-        'import_status': {
-            'success_count': success_count,
-            'failure_count': failure_count,
-            'success_rows': import_success_results,
-            'failure_rows': {
-                'empty_field_error': empty_field_rows,
-                'wrong_type_error': wrong_type_rows
-            }
+        "file_name": file.name,
+        "delete_status": delete_status,
+        "import_status": {
+            "success_count": success_count,
+            "failure_count": failure_count,
+            "success_rows": import_success_results,
+            "failure_rows": {
+                "empty_field_error": empty_field_rows,
+                "wrong_type_error": wrong_type_rows,
+            },
         },
-        'created_products': created_products
+        "created_products": created_products,
     }
-        
-
-        
-        
-
-    

@@ -12,6 +12,190 @@ from api.operations.email_senders import send_email_to_admins
 logger = logging.getLogger(__name__)
 
 
+def build_xml_with_booking(booking, lines):
+    # Validations
+    message = None
+
+    if not booking.b_client_order_num:
+        message = "'b_client_order_num' is missing"
+
+    if not booking.de_to_Contact_F_LName:
+        message = (
+            "{booking.b_client_order_num} issue: 'de_to_Contact_F_LName' is missing"
+        )
+
+    if not booking.de_To_Address_Street_1:
+        message = (
+            "{booking.b_client_order_num} issue: 'de_To_Address_Street_1' is missing"
+        )
+
+    if not booking.de_To_Address_Suburb:
+        message = (
+            "{booking.b_client_order_num} issue: 'de_To_Address_Suburb' is missing"
+        )
+
+    if not booking.de_To_Address_State:
+        message = "{booking.b_client_order_num} issue: 'de_To_Address_State' is missing"
+
+    if not booking.quote:
+        message = "{booking.b_client_order_num} issue: no quotes"
+
+    if not booking.de_To_Address_PostalCode:
+        message = (
+            "{booking.b_client_order_num} issue: 'de_To_Address_PostalCode' is missing"
+        )
+
+    if message:
+        raise Exception(message)
+
+    # Constants
+    dme_account_num = "50365"
+    customer_order_number = "y"
+    order_type_code = "QI"
+    customer_country = "AU"
+    order_priority = "11"
+    warehouse_code = "01"
+    geographic_code = ""
+    reference_number = ""
+    send_status = "x"
+
+    # Init result var
+    _xml = ET.Element(
+        "soapenv:Envelope",
+        {
+            "xmlns:soapenv": "http://schemas.xmlsoap.org/soap/envelope/",
+            "xmlns:sal": "http://www.paperless-warehousing.com/ACR/SalesOrderToWMS",
+        },
+    )
+
+    # Add XML Header
+    ET.SubElement(_xml, "soapenv:Header")
+
+    # Build XML Body
+    Body = ET.SubElement(_xml, "soapenv:Body")
+    SalesOrderToWMS = ET.SubElement(Body, "sal:SalesOrderToWMS")
+
+    # Build Header
+    Header = ET.SubElement(SalesOrderToWMS, "Header")
+
+    if not booking.b_client_order_num:
+        raise Exception({"message": "Order number is null."})
+
+    OrderNumber = ET.SubElement(Header, "OrderNumber")
+    OrderNumber.text = f"{dme_account_num}{booking.b_client_order_num}"
+
+    NumberOfDetails = ET.SubElement(Header, "NumberOfDetails")
+    NumberOfDetails.text = str(lines.count())
+
+    HostOrderNumber = ET.SubElement(Header, "HostOrderNumber")
+    HostOrderNumber.text = f"{dme_account_num}{booking.pk}"
+
+    CustomerNumber = ET.SubElement(Header, "CustomerNumber")
+    CustomerNumber.text = f"{dme_account_num}{booking.b_client_order_num}"
+
+    CustomerName = ET.SubElement(Header, "CustomerName")
+    CustomerName.text = booking.de_to_Contact_F_LName or ""
+
+    CustomerOrderNumber = ET.SubElement(Header, "CustomerOrderNumber")
+    CustomerOrderNumber.text = customer_order_number
+
+    OrderTypeCode = ET.SubElement(Header, "OrderTypeCode")
+    OrderTypeCode.text = order_type_code
+
+    CustomerStreet1 = ET.SubElement(Header, "CustomerStreet1")
+    CustomerStreet1.text = booking.de_To_Address_Street_1 or ""
+
+    CustomerStreet2 = ET.SubElement(Header, "CustomerStreet2")
+    CustomerStreet2.text = booking.de_To_Address_Street_2 or ""
+
+    CustomerStreet3 = ET.SubElement(Header, "CustomerStreet3")
+    CustomerStreet3.text = ""
+
+    CustomerSuburb = ET.SubElement(Header, "CustomerSuburb")
+    CustomerSuburb.text = booking.de_To_Address_Suburb
+
+    CustomerState = ET.SubElement(Header, "CustomerState")
+    CustomerState.text = booking.de_To_Address_State
+
+    CustomerPostCode = ET.SubElement(Header, "CustomerPostCode")
+    CustomerPostCode.text = booking.de_To_Address_PostalCode
+
+    CustomerCountry = ET.SubElement(Header, "CustomerCountry")
+    CustomerCountry.text = customer_country
+
+    OrderPriority = ET.SubElement(Header, "OrderPriority")
+    OrderPriority.text = order_priority
+
+    DeliveryInstructions = ET.SubElement(Header, "DeliveryInstructions")
+    DeliveryInstructions.text = f"{booking.de_to_Pick_Up_Instructions_Contact or ''} {booking.de_to_PickUp_Instructions_Address or ''}"
+
+    WarehouseCode = ET.SubElement(Header, "WarehouseCode")
+    WarehouseCode.text = warehouse_code
+
+    GeographicCode = ET.SubElement(Header, "GeographicCode")
+    GeographicCode.text = geographic_code
+
+    SpecialInstructions = ET.SubElement(Header, "SpecialInstructions")
+    SpecialInstructions.text = booking.pu_pickup_instructions_address or ""
+
+    Carrier = ET.SubElement(Header, "Carrier")
+    _fp_name = booking.quote.freight_provider.lower()
+
+    if not booking.quote:
+        Carrier.text = ""
+    elif _fp_name == "tnt":
+        Carrier.text = "D_TNT"
+    elif _fp_name == "hunter":
+        Carrier.text = "D_HTX"
+    elif _fp_name == "camerons":
+        Carrier.text = "D_CAM"
+    elif _fp_name == "allied":
+        Carrier.text = "D_ADD"
+    elif _fp_name == "sendle":
+        Carrier.text = "D_SEN"
+    elif _fp_name == "auspost" and booking.quote.account_code == "2006871123":
+        Carrier.text = "D_EPI"
+
+    ReferenceNumber = ET.SubElement(Header, "ReferenceNumber")
+    ReferenceNumber.text = reference_number
+
+    # DespatchDate = ET.SubElement(Header, "DespatchDate")
+    # DespatchDate.text = ""
+
+    SendStatus = ET.SubElement(Header, "SendStatus")
+    SendStatus.text = send_status
+
+    ContactPhoneNumber1 = ET.SubElement(Header, "ContactPhoneNumber1")
+    ContactPhoneNumber1.text = booking.de_to_Phone_Main
+
+    CustomerEmailAddress = ET.SubElement(Header, "CustomerEmailAddress")
+    CustomerEmailAddress.text = booking.de_Email
+
+    if len(lines) == 0:
+        message = f"{booking.b_client_order_num} issue: 0 lines"
+        raise Exception(message)
+
+    # Build Detail(s)
+    for index, line in enumerate(lines):
+        Detail = ET.SubElement(SalesOrderToWMS, "Detail")
+
+        DetailSequenceNum = ET.SubElement(Detail, "DetailSequenceNum")
+        DetailSequenceNum.text = str(index + 1)
+
+        HostLineNumber = ET.SubElement(Detail, "HostLineNumber")
+        HostLineNumber.text = str(line.pk)
+
+        ProductCode = ET.SubElement(Detail, "ProductCode")
+        ProductCode.text = f"{dme_account_num}{line.e_item_type}"
+
+        QuantityOrdered = ET.SubElement(Detail, "QuantityOrdered")
+        QuantityOrdered.text = str(line.e_qty)
+
+    # ET.dump(_xml)  # Only used for debugging
+    result = ET.tostring(_xml)
+    return result
+
+
 def build_xml_with_bok(bok_1, bok_2s):
     # Validations
     message = None
