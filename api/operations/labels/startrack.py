@@ -129,7 +129,7 @@ def myLaterPages(canvas, doc):
 
 
 def gen_ReceiverBarcode(booking, location_info):
-    service_name = str(get_serviceName(booking.vx_serviceName))
+    service_name = str(booking.vx_serviceName)
     postal_code = str(booking.de_To_Address_PostalCode)
     depote_code = str(location_info["R1"] or "")
 
@@ -205,11 +205,6 @@ def gen_barcode(booking, v_FPBookingNumber, item_no=0):
     label_code = f"{v_FPBookingNumber}{service_name}{item_index}"
 
     return label_code
-
-
-def get_serviceName(temp):
-    return "PRM" if temp == "FPP" else temp
-
 
 def get_ATL_number(booking):
     freight_provider = Fp_freight_providers.objects.filter(
@@ -381,10 +376,10 @@ def build_label(
                         Paragraph(
                             "<font color='%s'><b>%s</b></font>"
                             % (
-                                colors.black
-                                if booking.vx_serviceName == "EXP"
-                                else colors.white,
-                                get_serviceName(booking.vx_serviceName),
+                                colors.white
+                                if booking.vx_serviceName == "PRM"
+                                else colors.black,
+                                booking.vx_serviceName,
                             ),
                             style_PRD,
                         ),
@@ -395,9 +390,9 @@ def build_label(
                 style=[
                     *tableStyle,
                     *(
-                        []
-                        if booking.vx_serviceName == "EXP"
-                        else [("BACKGROUND", (0, 0), (-1, -1), "black")]
+                        [("BACKGROUND", (0, 0), (-1, -1), "black")]
+                        if booking.vx_serviceName == "PRM"
+                        else []
                     ),
                 ],
             )
