@@ -37,7 +37,7 @@ def build_xml_with_booking(booking, lines):
     if not booking.de_To_Address_State:
         message = "{booking.b_client_order_num} issue: 'de_To_Address_State' is missing"
 
-    if not booking.quote:
+    if not booking.api_booking_quote:
         message = "{booking.b_client_order_num} issue: no quotes"
 
     if not booking.de_To_Address_PostalCode:
@@ -139,9 +139,9 @@ def build_xml_with_booking(booking, lines):
     SpecialInstructions.text = booking.pu_pickup_instructions_address or ""
 
     Carrier = ET.SubElement(Header, "Carrier")
-    _fp_name = booking.quote.freight_provider.lower()
+    _fp_name = booking.api_booking_quote.freight_provider.lower()
 
-    if not booking.quote:
+    if not booking.api_booking_quote:
         Carrier.text = ""
     elif _fp_name == "tnt":
         Carrier.text = "D_TNT"
@@ -153,7 +153,9 @@ def build_xml_with_booking(booking, lines):
         Carrier.text = "D_ADD"
     elif _fp_name == "sendle":
         Carrier.text = "D_SEN"
-    elif _fp_name == "auspost" and booking.quote.account_code == "2006871123":
+    elif (
+        _fp_name == "auspost" and booking.api_booking_quote.account_code == "2006871123"
+    ):
         Carrier.text = "D_EPI"
 
     ReferenceNumber = ET.SubElement(Header, "ReferenceNumber")
