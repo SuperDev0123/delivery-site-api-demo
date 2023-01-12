@@ -115,7 +115,7 @@ def mapBok(id, header):
         bookingStatusCategory = ""
         if header.success:
             success = int(header.success)
-            if success == 2:
+            if success in [2, 5]:
                 if header.b_000_3_consignment_number:
                     bookingStatus = "Booked"
                     bookingStatusCategory = "Booked"
@@ -124,9 +124,6 @@ def mapBok(id, header):
                     bookingStatusCategory = "Pre Booking"
             elif success == 4:
                 bookingStatus = "Picking"
-                bookingStatusCategory = "Pre Booking"
-            elif success == 5:
-                bookingStatus = "Imported / Integrated"
                 bookingStatusCategory = "Pre Booking"
 
         with transaction.atomic():
