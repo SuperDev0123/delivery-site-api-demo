@@ -133,50 +133,75 @@ QUOTE_LIST = [
 def can_use(booking):
     for quote in QUOTE_LIST:
         if (
-            quote["from_suburb"].lower() == booking.pu_Address_Suburb.lower()
-            and quote["to_suburb"].lower() == booking.de_To_Address_Suburb.lower()
+            quote["from_suburb"].lower() == booking.pu_Address_Suburb.lower()            
             and quote["from_state"].lower() == booking.pu_Address_State.lower()
             and quote["to_state"].lower() == booking.de_To_Address_State.lower()
+            and (
+                quote["to_suburb"].lower() == booking.de_To_Address_Suburb.lower()
+                or (
+                    quote["to_suburb"].lower() == 'MELBOURNE METRO'
+                    and (
+                        (booking.pu_Address_PostalCode >= 3000 and booking.pu_Address_PostalCode <= 3207)
+                        or (booking.pu_Address_PostalCode >= 8000 and booking.pu_Address_PostalCode <= 8499)
+                    )
+                )
+                or (
+                    quote["to_suburb"].lower() == 'BRISBANE METRO'
+                    and (
+                        (booking.pu_Address_PostalCode >= 4000 and booking.pu_Address_PostalCode <= 4207)
+                        or (booking.pu_Address_PostalCode >= 9000 and booking.pu_Address_PostalCode <= 9499)
+                    )
+                )
+                or (
+                    quote["to_suburb"].lower() == 'ADELAIDE METRO'
+                    and (
+                        (booking.pu_Address_PostalCode >= 5000 and booking.pu_Address_PostalCode <= 5199)
+                        or (booking.pu_Address_PostalCode >= 5900 and booking.pu_Address_PostalCode <= 5999)
+                    )
+                )
+                or (
+                    quote["to_suburb"].lower() == 'PERTH METRO'
+                    and (
+                        (booking.pu_Address_PostalCode >= 6000 and booking.pu_Address_PostalCode <= 6199)
+                        or (booking.pu_Address_PostalCode >= 6800 and booking.pu_Address_PostalCode <= 6999)
+                    )
+                )
+            )
         ):
-            return True
+            return quote 
     return False
 
 
 def get_value_by_formula(booking, booking_lines):
     net_price = 0
-    for quote in QUOTE_LIST:
-        if (
-            quote["from_suburb"].lower() == booking.pu_Address_Suburb.lower()
-            and quote["to_suburb"].lower() == booking.de_To_Address_Suburb.lower()
-            and quote["from_state"].lower() == booking.pu_Address_State.lower()
-            and quote["to_state"].lower() == booking.de_To_Address_State.lower()
-        ):
-            total_qty = 0
-            dead_weight, cubic_weight = 0, 0
-            m3_to_kg_factor = quote["cubic"]
+    quote = can_use(booking)
+    total_qty = 0
+    dead_weight, cubic_weight = 0, 0
+    m3_to_kg_factor = quote["cubic"]
 
-            for item in booking_lines:
-                dead_weight += (
-                    item.e_weightPerEach
-                    * _get_weight_amount(item.e_weightUOM)
-                    * item.e_qty
-                )
-                cubic_weight += (
-                    get_cubic_meter(
-                        item.e_dimLength,
-                        item.e_dimWidth,
-                        item.e_dimHeight,
-                        item.e_dimUOM,
-                        item.e_qty,
-                    )
-                    * m3_to_kg_factor
-                )
-                total_qty += item.e_qty
-
-            net_price = quote["basic_price"] or 0
-            chargable_weight = (
-                dead_weight if dead_weight > cubic_weight else cubic_weight
+    for item in booking_lines:
+        dead_weight += (
+            item.e_weightPerEach
+            * _get_weight_amount(item.e_weightUOM)
+            * item.e_qty
+        )
+        cubic_weight += (
+            get_cubic_meter(
+                item.e_dimLength,
+                item.e_dimWidth,
+                item.e_dimHeight,
+                item.e_dimUOM,
+                item.e_qty,
             )
-            net_price += float(quote["per_price"] or 0) * math.ceil(chargable_weight)
+            * m3_to_kg_factor
+        )
+        total_qty += item.e_qty
+
+    net_price = quote["basic_price"] or 0
+    chargable_weight = (
+        dead_weight if dead_weight > cubic_weight else cubic_weight
+    )
+    net_price += float(quote["per_price"] or 0) * math.ceil(chargable_weight)
+            
 
     return net_price
