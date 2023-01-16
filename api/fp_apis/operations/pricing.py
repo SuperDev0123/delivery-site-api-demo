@@ -197,13 +197,13 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
     if can_use_mrl_sampson(booking):
         quote_3 = quote_0
         quote_3.pk = None
-        quote_3.freight_provider = "In House Fleet"
+        quote_3.freight_provider = "MRL Sapson"
         quote_3.service_name = None
         value_by_formula = get_value_by_mrl_sampson_formula(booking_lines)
-        logger.info(f"[In House Fleet] value_by_formula: {value_by_formula}")
-        quote_3.client_mu_1_minimum_values = value_by_formula
+        logger.info(f"[MRL Sapson] value_by_formula: {value_by_formula}")
+        quote_3.fee = value_by_formula
         quote_3.save()
-        return
+        return value_by_formula
     
     # JasonL (SYD - SYD)
     if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002" and (
