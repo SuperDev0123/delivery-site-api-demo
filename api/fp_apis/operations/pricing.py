@@ -37,6 +37,7 @@ from api.fp_apis.constants import (
     HEADER_FOR_NODE,
 )
 from api.clients.jason_l.operations import get_total_sales, get_value_by_formula
+from api.fp_apis.built_in.mrl_sampson import can_use as can_use_mrl_sampson, get_value_by_formula as get_value_by_mrl_sampson_formula
 from api.fp_apis.utils import _convert_UOM
 
 
@@ -193,6 +194,17 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
     quote_0.x_price_surcharge = manual_surcharges_total
     quote_0.mu_percentage_fuel_levy = 0
 
+    if can_use_mrl_sampson(booking):
+        quote_3 = quote_0
+        quote_3.pk = None
+        quote_3.freight_provider = "In House Fleet"
+        quote_3.service_name = None
+        value_by_formula = get_value_by_mrl_sampson_formula(booking_lines)
+        logger.info(f"[In House Fleet] value_by_formula: {value_by_formula}")
+        quote_3.client_mu_1_minimum_values = value_by_formula
+        quote_3.save()
+        return
+    
     # JasonL (SYD - SYD)
     if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002" and (
         (de_postal_code >= 1000 and de_postal_code <= 2249)

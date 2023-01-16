@@ -1,4 +1,5 @@
 import logging
+import math
 import traceback
 
 from api.common.ratio import _get_dim_amount, _get_weight_amount
@@ -31,8 +32,40 @@ QUOTE_LIST = [
     Quote('SYD', 'PERD', 'SMITHFIELD', 'Welshpool DEPOT', 12.50, 0.8550, 180, 333, 2.5),
     Quote('SYD', 'PER', 'SMITHFIELD', 'PERTH METRO', 12.50, 0.8950, 250, 333, 2.5),
 ]
+    
 def can_use(booking):
     for quote in QUOTE_LIST:
        if(quote.from_suburb.lower() == booking.pu_Address_Suburb.lower() and quote.to_suburb.lower() == booking.de_To_Address_Suburb.lower()):
            return True
     return False
+
+def get_value_by_formula(booking_lines, booking):
+    net_price = 0
+    for quote in QUOTE_LIST:
+        if(quote.from_suburb.lower() == booking.pu_Address_Suburb.lower() and quote.to_suburb.lower() == booking.de_To_Address_Suburb.lower()):
+            total_qty = 0
+            dead_weight, cubic_weight = 0, 0
+            m3_to_kg_factor = 333
+
+            for item in booking_lines:
+                dead_weight += (
+                    item.e_weightPerEach * _get_weight_amount(item.e_weightUOM) * item.e_qty
+                )
+                cubic_weight += (
+                    get_cubic_meter(
+                        item.e_dimLength,
+                        item.e_dimWidth,
+                        item.e_dimHeight,
+                        item.e_dimUOM,
+                        item.e_qty,
+                    )
+                    * m3_to_kg_factor
+                )
+                total_qty += item.e_qty
+
+            net_price = quote.basic_price or 0
+            chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
+            net_price += float(quote.per_price or 0) * math.ceil(chargable_weight)
+
+    return net_price
+
