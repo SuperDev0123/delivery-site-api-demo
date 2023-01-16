@@ -202,7 +202,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         quote_3.pk = None
         quote_3.freight_provider = "MRL Sapson"
         quote_3.service_name = None
-        value_by_formula = get_price_of_mrl_sampson(booking_lines)
+        value_by_formula = get_price_of_mrl_sampson(booking, booking_lines)
         logger.info(f"[MRL Sapson] value_by_formula: {value_by_formula}")
         quote_3.fee = value_by_formula
         quote_3.save()
