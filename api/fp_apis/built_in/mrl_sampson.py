@@ -4,7 +4,6 @@ import traceback
 
 from api.common.ratio import _get_dim_amount, _get_weight_amount
 from api.helpers.cubic import get_cubic_meter
-from api.fp_apis.utils import get_m3_to_kg_factor
 from api.common.constants import PALLETS, SKIDS
 
 logger = logging.getLogger(__name__)

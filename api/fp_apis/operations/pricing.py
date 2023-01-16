@@ -200,10 +200,10 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
     if can_use_mrl_sampson(booking):
         quote_3 = quote_0
         quote_3.pk = None
-        quote_3.freight_provider = "MRL Sapson"
+        quote_3.freight_provider = "MRL Sampson"
         quote_3.service_name = None
         value_by_formula = get_price_of_mrl_sampson(booking, booking_lines)
-        logger.info(f"[MRL Sapson] value_by_formula: {value_by_formula}")
+        logger.info(f"[MRL Sampson] value_by_formula: {value_by_formula}")
         quote_3.fee = value_by_formula
         quote_3.save()
         return value_by_formula
