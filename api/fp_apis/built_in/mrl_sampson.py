@@ -14,7 +14,7 @@ QUOTE_LIST = [
         "from_zone": "SYD",
         "to_zone": "MELD",
         "from_suburb": "SMITHFIELD",
-        "to_suburb": "DERRIMUT DEPOT",
+        "to_suburb": "DERRIMUT",
         "from_state": "NSW",
         "to_state": "VIC",
         "basic_price": 12.50,
@@ -40,7 +40,7 @@ QUOTE_LIST = [
         "from_zone": "SYD",
         "to_zone": "BNED",
         "from_suburb": "SMITHFIELD",
-        "to_suburb": "ARCHERFIELD DEPOT",
+        "to_suburb": "ARCHERFIELD",
         "from_state": "NSW",
         "to_state": "QLD",
         "basic_price": 12.50,
@@ -65,7 +65,7 @@ QUOTE_LIST = [
     {
         "from_zone": "MEL",
         "to_zone": "SYD",
-        "from_suburb": "DERRIMUT DEPOT",
+        "from_suburb": "DERRIMUT",
         "to_suburb": "SMITHFIELD",
         "from_state": "VIC",
         "to_state": "NSW",
@@ -79,7 +79,7 @@ QUOTE_LIST = [
         "from_zone": "SYD",
         "to_zone": "ADLD",
         "from_suburb": "SMITHFIELD",
-        "to_suburb": "Green Fields DEPOT",
+        "to_suburb": "Green Fields",
         "from_state": "NSW",
         "to_state": "SA",
         "basic_price": 12.50,
@@ -105,7 +105,7 @@ QUOTE_LIST = [
         "from_zone": "SYD",
         "to_zone": "PERD",
         "from_suburb": "SMITHFIELD",
-        "to_suburb": "Welshpool DEPOT",
+        "to_suburb": "Welshpool",
         "from_state": "NSW",
         "to_state": "WA",
         "basic_price": 12.50,
@@ -133,42 +133,66 @@ QUOTE_LIST = [
 def can_use(booking):
     for quote in QUOTE_LIST:
         if (
-            quote["from_suburb"].lower() == booking.pu_Address_Suburb.lower()            
+            quote["from_suburb"].lower() == booking.pu_Address_Suburb.lower()
             and quote["from_state"].lower() == booking.pu_Address_State.lower()
             and quote["to_state"].lower() == booking.de_To_Address_State.lower()
             and (
                 quote["to_suburb"].lower() == booking.de_To_Address_Suburb.lower()
                 or (
-                    quote["to_suburb"].lower() == 'MELBOURNE METRO'
+                    quote["to_suburb"].lower() == "MELBOURNE METRO"
                     and (
-                        (booking.pu_Address_PostalCode >= 3000 and booking.pu_Address_PostalCode <= 3207)
-                        or (booking.pu_Address_PostalCode >= 8000 and booking.pu_Address_PostalCode <= 8499)
+                        (
+                            booking.pu_Address_PostalCode >= 3000
+                            and booking.pu_Address_PostalCode <= 3207
+                        )
+                        or (
+                            booking.pu_Address_PostalCode >= 8000
+                            and booking.pu_Address_PostalCode <= 8499
+                        )
                     )
                 )
                 or (
-                    quote["to_suburb"].lower() == 'BRISBANE METRO'
+                    quote["to_suburb"].lower() == "BRISBANE METRO"
                     and (
-                        (booking.pu_Address_PostalCode >= 4000 and booking.pu_Address_PostalCode <= 4207)
-                        or (booking.pu_Address_PostalCode >= 9000 and booking.pu_Address_PostalCode <= 9499)
+                        (
+                            booking.pu_Address_PostalCode >= 4000
+                            and booking.pu_Address_PostalCode <= 4207
+                        )
+                        or (
+                            booking.pu_Address_PostalCode >= 9000
+                            and booking.pu_Address_PostalCode <= 9499
+                        )
                     )
                 )
                 or (
-                    quote["to_suburb"].lower() == 'ADELAIDE METRO'
+                    quote["to_suburb"].lower() == "ADELAIDE METRO"
                     and (
-                        (booking.pu_Address_PostalCode >= 5000 and booking.pu_Address_PostalCode <= 5199)
-                        or (booking.pu_Address_PostalCode >= 5900 and booking.pu_Address_PostalCode <= 5999)
+                        (
+                            booking.pu_Address_PostalCode >= 5000
+                            and booking.pu_Address_PostalCode <= 5199
+                        )
+                        or (
+                            booking.pu_Address_PostalCode >= 5900
+                            and booking.pu_Address_PostalCode <= 5999
+                        )
                     )
                 )
                 or (
-                    quote["to_suburb"].lower() == 'PERTH METRO'
+                    quote["to_suburb"].lower() == "PERTH METRO"
                     and (
-                        (booking.pu_Address_PostalCode >= 6000 and booking.pu_Address_PostalCode <= 6199)
-                        or (booking.pu_Address_PostalCode >= 6800 and booking.pu_Address_PostalCode <= 6999)
+                        (
+                            booking.pu_Address_PostalCode >= 6000
+                            and booking.pu_Address_PostalCode <= 6199
+                        )
+                        or (
+                            booking.pu_Address_PostalCode >= 6800
+                            and booking.pu_Address_PostalCode <= 6999
+                        )
                     )
                 )
             )
         ):
-            return quote 
+            return quote
     return False
 
 
@@ -181,9 +205,7 @@ def get_value_by_formula(booking, booking_lines):
 
     for item in booking_lines:
         dead_weight += (
-            item.e_weightPerEach
-            * _get_weight_amount(item.e_weightUOM)
-            * item.e_qty
+            item.e_weightPerEach * _get_weight_amount(item.e_weightUOM) * item.e_qty
         )
         cubic_weight += (
             get_cubic_meter(
@@ -198,10 +220,7 @@ def get_value_by_formula(booking, booking_lines):
         total_qty += item.e_qty
 
     net_price = quote["basic_price"] or 0
-    chargable_weight = (
-        dead_weight if dead_weight > cubic_weight else cubic_weight
-    )
+    chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
     net_price += float(quote["per_price"] or 0) * math.ceil(chargable_weight)
-            
 
     return net_price
