@@ -275,9 +275,11 @@ def book(request, fp_name):
         if fp_name.lower() not in FP_CREDENTIALS:
             booking.b_status = "Booked"
             booking.b_dateBookedDate = datetime.now()
+            booking.b_error_Capture = None
             booking.v_FPBookingNumber = gen_consignment_num(
                 fp_name, booking.b_bookingID_Visual
             )
+            status_history.create(booking, "Booked", booker)
             booking.save()
 
             if booking.vx_freight_provider not in SPECIAL_FPS:

@@ -4487,11 +4487,11 @@ def get_manifest(request):
                     or clientname == "dme"
                 ) and not booking.b_dateBookedDate:
                     if booking.vx_freight_provider in SPECIAL_FPS:
-                        status_history.create(booking, "Booked", username)
                         booking.b_dateBookedDate = timestamp or datetime.now()
                         booking.v_FPBookingNumber = gen_consignment_num(
                             booking.vx_freight_provider, booking.b_bookingID_Visual
                         )
+                        status_history.create(booking, "Booked", username)
 
                         # Update status to `In Transit` for DME linehaul
                         if booking.vx_freight_provider == "Deliver-ME":

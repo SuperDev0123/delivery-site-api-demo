@@ -97,7 +97,7 @@ def pre_save_handler(instance, update_fields):
         if old.b_dateBookedDate and intersection(GENESIS_FIELDS, update_fields or []):
             update_shared_booking(instance)
 
-        if old.b_status != instance.b_status:
+        if old.b_status != instance.b_status and not instance.b_dateBookedDate:
             if instance.b_status == "Booked":
                 instance.b_dateBookedDate = datetime.now()
 
