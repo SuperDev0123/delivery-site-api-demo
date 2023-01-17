@@ -2931,7 +2931,9 @@ def get_clientname_with_request(request):
 def get_pu_by(booking):
     pu_by = None
 
-    if booking.pu_PickUp_By_Date:
+    if booking.b_dateBookedDate:
+        return booking.b_dateBookedDate
+    elif booking.pu_PickUp_By_Date:
         pu_PickUp_By_Date = booking.pu_PickUp_By_Date
 
         if isinstance(pu_PickUp_By_Date, str):
@@ -2965,8 +2967,6 @@ def get_pu_by(booking):
         )
 
         return convert_to_UTC_tz(pu_by)
-    elif booking.b_dateBookedDate:
-        return booking.b_dateBookedDate
     else:
         return datetime.now()
 
