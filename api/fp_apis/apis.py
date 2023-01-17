@@ -279,7 +279,7 @@ def book(request, fp_name):
             booking.v_FPBookingNumber = gen_consignment_num(
                 fp_name, booking.b_bookingID_Visual
             )
-            status_history.create(booking, "Booked", booker)
+            status_history.create(booking, "Booked", username)
             booking.save()
 
             if booking.vx_freight_provider not in SPECIAL_FPS:
