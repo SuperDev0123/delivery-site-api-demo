@@ -40,6 +40,7 @@ from api.clients.jason_l.operations import get_total_sales, get_value_by_formula
 from api.fp_apis.built_in.mrl_sampson import (
     can_use as can_use_mrl_sampson,
     get_value_by_formula as get_price_of_mrl_sampson,
+    get_etd_by_formula,
 )
 from api.fp_apis.utils import _convert_UOM
 
@@ -205,6 +206,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         value_by_formula = get_price_of_mrl_sampson(booking, booking_lines)
         logger.info(f"[MRL Sampson] value_by_formula: {value_by_formula}")
         quote_3.fee = value_by_formula
+        quote_3.etd = get_etd_by_formula(booking)
         quote_3.save()
         return value_by_formula
 

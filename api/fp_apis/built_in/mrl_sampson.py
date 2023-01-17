@@ -21,6 +21,7 @@ QUOTE_LIST = [
         "minimum_price": 65,
         "cubic": 333,
         "rebate": 2.5,
+        "etd": "2 days",
     },
     {
         "from_zone": "SYD",
@@ -34,6 +35,7 @@ QUOTE_LIST = [
         "minimum_price": 150,
         "cubic": 333,
         "rebate": 2.5,
+        "etd": "2 days",
     },
     {
         "from_zone": "SYD",
@@ -47,6 +49,7 @@ QUOTE_LIST = [
         "minimum_price": 65,
         "cubic": 333,
         "rebate": 2.5,
+        "etd": "2 days",
     },
     {
         "from_zone": "SYD",
@@ -60,6 +63,7 @@ QUOTE_LIST = [
         "minimum_price": 150,
         "cubic": 333,
         "rebate": 2.5,
+        "etd": "2 days",
     },
     {
         "from_zone": "MEL",
@@ -73,6 +77,7 @@ QUOTE_LIST = [
         "minimum_price": 70,
         "cubic": 333,
         "rebate": 2.5,
+        "etd": "2 days",
     },
     {
         "from_zone": "SYD",
@@ -86,6 +91,7 @@ QUOTE_LIST = [
         "minimum_price": 90,
         "cubic": 333,
         "rebate": 2.5,
+        "etd": "3 days",
     },
     {
         "from_zone": "SYD",
@@ -99,6 +105,7 @@ QUOTE_LIST = [
         "minimum_price": 150,
         "cubic": 333,
         "rebate": 2.5,
+        "etd": "3 days",
     },
     {
         "from_zone": "SYD",
@@ -112,6 +119,7 @@ QUOTE_LIST = [
         "minimum_price": 180,
         "cubic": 333,
         "rebate": 2.5,
+        "etd": "7 days",
     },
     {
         "from_zone": "SYD",
@@ -125,6 +133,7 @@ QUOTE_LIST = [
         "minimum_price": 250,
         "cubic": 333,
         "rebate": 2.5,
+        "etd": "7 days",
     },
 ]
 
@@ -223,3 +232,9 @@ def get_value_by_formula(booking, booking_lines):
     net_price += float(quote["per_price"] or 0) * math.ceil(chargable_weight)
 
     return net_price
+
+
+def get_etd_by_formula(booking):
+    quote = can_use(booking)
+    
+    return quote['etd']
