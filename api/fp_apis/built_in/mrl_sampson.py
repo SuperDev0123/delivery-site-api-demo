@@ -150,12 +150,12 @@ def can_use(booking):
                     quote["to_suburb"].lower() == "MELBOURNE METRO"
                     and (
                         (
-                            booking.pu_Address_PostalCode >= 3000
-                            and booking.pu_Address_PostalCode <= 3207
+                            booking.de_To_Address_PostalCode >= 3000
+                            and booking.de_To_Address_PostalCode <= 3207
                         )
                         or (
-                            booking.pu_Address_PostalCode >= 8000
-                            and booking.pu_Address_PostalCode <= 8499
+                            booking.de_To_Address_PostalCode >= 8000
+                            and booking.de_To_Address_PostalCode <= 8499
                         )
                     )
                 )
@@ -163,12 +163,12 @@ def can_use(booking):
                     quote["to_suburb"].lower() == "BRISBANE METRO"
                     and (
                         (
-                            booking.pu_Address_PostalCode >= 4000
-                            and booking.pu_Address_PostalCode <= 4207
+                            booking.de_To_Address_PostalCode >= 4000
+                            and booking.de_To_Address_PostalCode <= 4207
                         )
                         or (
-                            booking.pu_Address_PostalCode >= 9000
-                            and booking.pu_Address_PostalCode <= 9499
+                            booking.de_To_Address_PostalCode >= 9000
+                            and booking.de_To_Address_PostalCode <= 9499
                         )
                     )
                 )
@@ -176,12 +176,12 @@ def can_use(booking):
                     quote["to_suburb"].lower() == "ADELAIDE METRO"
                     and (
                         (
-                            booking.pu_Address_PostalCode >= 5000
-                            and booking.pu_Address_PostalCode <= 5199
+                            booking.de_To_Address_PostalCode >= 5000
+                            and booking.de_To_Address_PostalCode <= 5199
                         )
                         or (
-                            booking.pu_Address_PostalCode >= 5900
-                            and booking.pu_Address_PostalCode <= 5999
+                            booking.de_To_Address_PostalCode >= 5900
+                            and booking.de_To_Address_PostalCode <= 5999
                         )
                     )
                 )
@@ -189,12 +189,12 @@ def can_use(booking):
                     quote["to_suburb"].lower() == "PERTH METRO"
                     and (
                         (
-                            booking.pu_Address_PostalCode >= 6000
-                            and booking.pu_Address_PostalCode <= 6199
+                            booking.de_To_Address_PostalCode >= 6000
+                            and booking.de_To_Address_PostalCode <= 6199
                         )
                         or (
-                            booking.pu_Address_PostalCode >= 6800
-                            and booking.pu_Address_PostalCode <= 6999
+                            booking.de_To_Address_PostalCode >= 6800
+                            and booking.de_To_Address_PostalCode <= 6999
                         )
                     )
                 )
