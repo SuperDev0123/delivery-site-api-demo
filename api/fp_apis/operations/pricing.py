@@ -198,17 +198,6 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
     quote_0.x_price_surcharge = manual_surcharges_total
     quote_0.mu_percentage_fuel_levy = 0
 
-    # if can_use_mrl_sampson(booking):
-    #     quote_3 = quote_0
-    #     quote_3.pk = None
-    #     quote_3.freight_provider = "MRL Sampson"
-    #     quote_3.service_name = None
-    #     value_by_formula = get_price_of_mrl_sampson(booking, booking_lines)
-    #     logger.info(f"[MRL Sampson] value_by_formula: {value_by_formula}")
-    #     quote_3.fee = value_by_formula
-    #     quote_3.etd = get_etd_by_formula(booking)
-    #     quote_3.save()
-
     # JasonL (SYD - SYD)
     if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002" and (
         (de_postal_code >= 1000 and de_postal_code <= 2249)
@@ -257,6 +246,23 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         quote_2.freight_provider = "Customer Collect"
         quote_2.tax_value_5 = None
         quote_2.save()
+
+    # Plum & JasonL & BSD
+    if (
+        booking.kf_client_id == "461162D2-90C7-BF4E-A905-000000000004"
+        or booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+        or booking.kf_client_id == "9e72da0f-77c3-4355-a5ce-70611ffd0bc8"
+    ):
+        if can_use_mrl_sampson(booking):
+            quote_3 = quote_0
+            quote_3.pk = None
+            quote_3.freight_provider = "MRL Sampson"
+            quote_3.service_name = None
+            value_by_formula = get_price_of_mrl_sampson(booking, booking_lines)
+            logger.info(f"[MRL Sampson] value_by_formula: {value_by_formula}")
+            quote_3.fee = value_by_formula
+            quote_3.etd = get_etd_by_formula(booking)
+            quote_3.save()
 
 
 def pricing(

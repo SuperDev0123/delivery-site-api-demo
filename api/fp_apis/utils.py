@@ -218,7 +218,10 @@ def _is_deliverable_price(pricing, booking):
 def _get_fastest_price(pricings):
     fastest_pricing = {}
     for pricing in pricings:
-        if pricing.freight_provider in SPECIAL_FPS:
+        if (
+            pricing.freight_provider in SPECIAL_FPS
+            or pricing.freight_provider == "MRL Sampson"
+        ):
             continue
 
         etd = get_etd_in_hour(pricing)
@@ -257,7 +260,10 @@ def _get_lowest_price(pricings, client=None):
                 return pricing
 
     for pricing in pricings:
-        if pricing.freight_provider in SPECIAL_FPS:
+        if (
+            pricing.freight_provider in SPECIAL_FPS
+            or pricing.freight_provider == "MRL Sampson"
+        ):
             continue
 
         if not lowest_pricing and pricing.client_mu_1_minimum_values:
@@ -329,8 +335,10 @@ def auto_select_pricing(booking, pricings, auto_select_type, client=None):
 
     non_air_freight_pricings = []
     for pricing in pricings:
-        if not pricing.service_name or (
-            pricing.service_name and pricing.service_name != "Air Freight"
+        if (
+            not pricing.service_name
+            or (pricing.service_name and pricing.service_name != "Air Freight")
+            or pricing.freight_provider == "MRL Sampson"
         ):
             non_air_freight_pricings.append(pricing)
 
@@ -388,8 +396,10 @@ def auto_select_pricing_4_bok(
 
     non_air_freight_pricings = []
     for pricing in _quotes:
-        if not pricing.service_name or (
-            pricing.service_name and pricing.service_name != "Air Freight"
+        if (
+            not pricing.service_name
+            or (pricing.service_name and pricing.service_name != "Air Freight")
+            or pricing.freight_provider == "MRL Sampson"
         ):
             non_air_freight_pricings.append(pricing)
 
