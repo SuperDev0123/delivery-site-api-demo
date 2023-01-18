@@ -106,7 +106,7 @@ def quick_pricing(payload):
             line["e_dimHeight"] = line_obj.e_dimHeight
             line["e_weightPerEach"] = line_obj.e_weightPerEach
             line["e_weightUOM"] = line_obj.e_weightUOM
-            line["is_deleted"] = line_obj.is_deleted
+            line["is_deleted"] = False
             line["packed_status"] = BOK_2_lines.AUTO_PACK
             lines.append(line)
 
