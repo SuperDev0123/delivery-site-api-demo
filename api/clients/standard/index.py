@@ -100,12 +100,12 @@ def quick_pricing(payload):
             line = {}
             line["e_type_of_packaging"] = "PAL"
             line["e_qty"] = item["quantity"]
-            line["e_dimUOM"] = line_obj.l_004_dim_UOM
-            line["e_dimLength"] = line_obj.l_005_dim_length
-            line["e_dimWidth"] = line_obj.l_006_dim_width
-            line["e_dimHeight"] = line_obj.l_007_dim_height
-            line["e_weightPerEach"] = line_obj.l_009_weight_per_each
-            line["e_weightUOM"] = line_obj.l_008_weight_UOM
+            line["e_dimUOM"] = line_obj.e_dimUOM
+            line["e_dimLength"] = line_obj.e_dimLength
+            line["e_dimWidth"] = line_obj.e_dimWidth
+            line["e_dimHeight"] = line_obj.e_dimHeight
+            line["e_weightPerEach"] = line_obj.e_weightPerEach
+            line["e_weightUOM"] = line_obj.e_weightUOM
             line["is_deleted"] = line_obj.is_deleted
             line["packed_status"] = BOK_2_lines.AUTO_PACK
             lines.append(line)
