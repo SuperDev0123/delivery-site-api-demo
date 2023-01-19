@@ -1153,7 +1153,7 @@ def get_delivery_status(request):
                     booking, booking.api_booking_quote
                 )
                 booking.save()
-                s_06 = s_06_Latest_Delivery_Date_TimeSet
+                s_06 = booking.s_06_Latest_Delivery_Date_TimeSet
 
             eta = s_06.strftime("%d/%m/%Y %H:%M")
         try:
