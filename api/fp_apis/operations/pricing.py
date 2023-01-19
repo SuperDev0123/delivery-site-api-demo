@@ -207,7 +207,7 @@ def build_special_fp_pricings(booking, booking_lines, packed_status):
         quote_3.pk = None
         quote_3.freight_provider = "In House Fleet"
         quote_3.service_name = None
-        value_by_formula = get_value_by_formula(booking, booking_lines)
+        value_by_formula = get_value_by_formula(booking_lines)
         logger.info(f"[In House Fleet] value_by_formula: {value_by_formula}")
         quote_3.client_mu_1_minimum_values = value_by_formula
         quote_3.save()
