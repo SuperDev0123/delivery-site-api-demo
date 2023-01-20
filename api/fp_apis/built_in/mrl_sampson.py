@@ -231,7 +231,7 @@ def get_value_by_formula(booking, booking_lines):
     chargable_weight = dead_weight if dead_weight > cubic_weight else cubic_weight
     net_price += float(quote["per_price"] or 0) * math.ceil(chargable_weight)
 
-    return net_price
+    return net_price if net_price > quote['minimum_price'] else quote['minimum_price']
 
 
 def get_etd_by_formula(booking):
