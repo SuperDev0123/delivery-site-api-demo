@@ -39,22 +39,15 @@ def mapBokToBooking(request):
             option_value.is_running = 1
             option_value.start_time = datetime.now()
             option_value.save()
-            max_id = (
-                Bookings.objects.filter()
-                .aggregate(max_id=Max("b_bookingID_Visual"))
-                .get("max_id")
-            )
-            max_id = max_id if max_id else 89600
-            start_id = max_id + 1
+
             bok_headers = BOK_1_headers.objects.filter(success__in=[2, 4, 5])
             bok_headers = bok_headers.order_by("success")[:10]
-            headers_count = len(bok_headers)
+            headers_count = bok_headers.count()
             logger.info(f"{LOG_ID} {headers_count} can be mapped.")
-            end_id = start_id + headers_count - 1
 
             if headers_count > 0:
-                for idx, header in enumerate(bok_headers):
-                    mapBok(start_id + idx, header)
+                for header in bok_headers:
+                    mapBok(header)
                 message += f"Rows moved to dme_bookings = {headers_count}"
 
             option_value.is_running = 0
@@ -70,7 +63,7 @@ def mapBokToBooking(request):
         return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
-def mapBok(id, header):
+def mapBok(header):
     LOG_ID = "[MAPPING]"
     sid = transaction.savepoint()
 
@@ -213,7 +206,6 @@ def mapBok(id, header):
                     header.v_client_pk_consigment_num, 64
                 ),
                 z_CreatedTimestamp=header.z_createdTimeStamp,
-                b_bookingID_Visual=id,
                 fk_client_warehouse_id=header.fk_client_warehouse_id,
                 kf_client_id=sliceString(header.fk_client_id, 64),
                 vx_serviceName=sliceString(header.b_003_b_service_name, 50),
@@ -353,7 +345,6 @@ def mapBok(id, header):
 
             if first_name == "Bathroom":
                 booking.booking_Created_For_Email = "info@bathroomsalesdirect.com.au"
-                booking.save()
             else:
                 booking_created_for_emails = Client_employees.objects.filter(
                     fk_id_dme_client_id=pk_id_dme_client
@@ -376,7 +367,6 @@ def mapBok(id, header):
                     if len(booking_created_for_emails) > 0
                     else ""
                 )
-                booking.save()
 
             if api_booking_quote_id:
                 booking_quote = API_booking_quotes.objects.filter(
@@ -386,7 +376,14 @@ def mapBok(id, header):
                 booking.inv_cost_quoted = booking_quote.fee * (
                     1 + booking_quote.mu_percentage_fuel_levy
                 )
-                booking.save()
+
+            max_visual_id = (
+                Bookings.objects.filter()
+                .aggregate(max_visual_id=Max("b_bookingID_Visual"))
+                .get("max_visual_id")
+            )
+            booking.b_bookingID_Visual = max_visual_id
+            booking.save()
     except Exception as e:
         logger.info(f"{LOG_ID} Error: {str(e)}\n Header: {header}")
         trace_error.print()
