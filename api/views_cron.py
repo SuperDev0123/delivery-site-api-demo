@@ -48,7 +48,7 @@ def mapBokToBooking(request):
             if headers_count > 0:
                 for header in bok_headers:
                     mapBok(header)
-                message += f"Rows moved to dme_bookings = {headers_count}"
+                message = f"Rows moved to dme_bookings = {headers_count}"
 
             option_value.is_running = 0
             option_value.end_time = datetime.now()
