@@ -382,7 +382,7 @@ def mapBok(header):
                 .aggregate(max_visual_id=Max("b_bookingID_Visual"))
                 .get("max_visual_id")
             )
-            booking.b_bookingID_Visual = max_visual_id
+            booking.b_bookingID_Visual = max_visual_id + 1
             booking.save()
     except Exception as e:
         logger.info(f"{LOG_ID} Error: {str(e)}\n Header: {header}")
