@@ -439,7 +439,6 @@ def build_label(
                     [
                         Paragraph(
                             "<b>AUTHORITY TO LEAVE</b>",
-                            "",
                             style_center,
                         ),
                         code128.Code128(
