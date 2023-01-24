@@ -348,12 +348,12 @@ def build_label(
         )
 
     if sscc:
-        j = 1 + label_index
-    atl_number = get_ATL_number(booking)
-    Bookings.objects.filter(id=booking.id).update(fp_atl_number=atl_number)
-    atl_number = f"C{str(atl_number).zfill(9)}"
+        j = 1 + label_index    
     for booking_line in lines:
         for k in range(booking_line.e_qty):
+            atl_number = get_ATL_number(booking)
+            Bookings.objects.filter(id=booking.id).update(fp_atl_number=atl_number)
+            atl_number = f"C{str(atl_number).zfill(9)}"
             if one_page_label and k > 0:
                 continue
             t1_w = float(label_settings["label_image_size_width"]) / 10 * mm
@@ -438,21 +438,21 @@ def build_label(
                     ],
                     [
                         Paragraph(
-                            # "<b>AUTHORITY TO LEAVE</b>",
+                            "<b>AUTHORITY TO LEAVE</b>",
                             "",
                             style_center,
                         ),
-                        # code128.Code128(
-                        #     atl_number,
-                        #     barHeight=9 * mm,
-                        #     barWidth=0.9,
-                        #     humanReadable=False,
-                        # ),
-                        # Paragraph(
-                        #     "<font size=%s> <b>%s</b> </font>"
-                        #     % (label_settings["font_size_medium"], atl_number),
-                        #     style_center,
-                        # ),
+                        code128.Code128(
+                            atl_number,
+                            barHeight=9 * mm,
+                            barWidth=0.9,
+                            humanReadable=False,
+                        ),
+                        Paragraph(
+                            "<font size=%s> <b>%s</b> </font>"
+                            % (label_settings["font_size_medium"], atl_number),
+                            style_center,
+                        ),
                     ],
                 ],
                 [
