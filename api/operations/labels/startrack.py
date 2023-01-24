@@ -438,21 +438,21 @@ def build_label(
                     ],
                     [
                         Paragraph(
-                            # "<b>AUTHORITY TO LEAVE</b>",
+                            "<b>AUTHORITY TO LEAVE</b>",
                             "",
                             style_center,
                         ),
-                        # code128.Code128(
-                        #     atl_number,
-                        #     barHeight=9 * mm,
-                        #     barWidth=0.9,
-                        #     humanReadable=False,
-                        # ),
-                        # Paragraph(
-                        #     "<font size=%s> <b>%s</b> </font>"
-                        #     % (label_settings["font_size_medium"], atl_number),
-                        #     style_center,
-                        # ),
+                        code128.Code128(
+                            atl_number,
+                            barHeight=9 * mm,
+                            barWidth=0.9,
+                            humanReadable=False,
+                        ),
+                        Paragraph(
+                            "<font size=%s> <b>%s</b> </font>"
+                            % (label_settings["font_size_medium"], atl_number),
+                            style_center,
+                        ),
                     ],
                 ],
                 [
