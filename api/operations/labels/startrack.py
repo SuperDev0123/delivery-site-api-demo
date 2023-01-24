@@ -349,11 +349,11 @@ def build_label(
 
     if sscc:
         j = 1 + label_index    
+    atl_number = get_ATL_number(booking)
+    Bookings.objects.filter(id=booking.id).update(fp_atl_number=atl_number)
+    atl_number = f"C{str(atl_number).zfill(9)}"
     for booking_line in lines:
         for k in range(booking_line.e_qty):
-            atl_number = get_ATL_number(booking)
-            Bookings.objects.filter(id=booking.id).update(fp_atl_number=atl_number)
-            atl_number = f"C{str(atl_number).zfill(9)}"
             if one_page_label and k > 0:
                 continue
             t1_w = float(label_settings["label_image_size_width"]) / 10 * mm
