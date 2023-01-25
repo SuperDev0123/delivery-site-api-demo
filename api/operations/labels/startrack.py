@@ -214,6 +214,8 @@ def gen_barcode(booking, v_FPBookingNumber, item_no=0):
 
 
 def get_ATL_number(booking):
+    if booking.fp_atl_number:
+        return booking.fp_atl_number
     freight_provider = Fp_freight_providers.objects.filter(
         fp_company_name=booking.vx_freight_provider
     )
