@@ -192,7 +192,7 @@ def gen_QRcodeString(
     movement_type_indicator = "N"
     not_before_date = str("").ljust(12)
     not_after_date = str("").ljust(12)
-    atl_number = str(atl_number).ljust(10)
+    atl_number = str(atl_number if atl_number else "").ljust(10)
     rl_number = str("").ljust(10)
 
     label_code = f"{receiver_suburb}{postal_code}{consignment_num}{freight_item_id}{product_code}{payer_account}{sender_account}{consignment_quantity}{consignment_weight}{consignment_cube}{despatch_date}{receiver_name1}{receiver_name2}{unit_type}{destination_depot}{receiver_address1}{receiver_address2}{receiver_phone}{dangerous_goods_indicator}{movement_type_indicator}{not_before_date}{not_after_date}{atl_number}{rl_number}"
@@ -351,9 +351,11 @@ def build_label(
 
     if sscc:
         j = 1 + label_index    
-    atl_number = get_ATL_number(booking)
-    Bookings.objects.filter(id=booking.id).update(fp_atl_number=atl_number)
-    atl_number = f"C{str(atl_number).zfill(9)}"
+    atl_number = None
+    if booking.opt_authority_to_leave:
+        atl_number = get_ATL_number(booking)
+        Bookings.objects.filter(id=booking.id).update(fp_atl_number=atl_number)
+        atl_number = f"C{str(atl_number).zfill(9)}"
     for booking_line in lines:
         for k in range(booking_line.e_qty):
             if one_page_label and k > 0:
@@ -452,6 +454,11 @@ def build_label(
                         Paragraph(
                             "<font size=%s> <b>%s</b> </font>"
                             % (label_settings["font_size_medium"], atl_number),
+                            style_center,
+                        ),
+                    ] if booking.opt_authority_to_leave else [
+                        Paragraph(
+                            "",
                             style_center,
                         ),
                     ],

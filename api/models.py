@@ -1920,6 +1920,7 @@ class Bookings(models.Model):
         max_length=16, default=None, null=True, choices=PACKED_STATUS_CHOICES
     )
     fp_atl_number = models.IntegerField(default=0, blank=True, null=True)
+    opt_authority_to_leave = models.BooleanField(default=False, null=True)
 
     class Meta:
         db_table = "dme_bookings"
