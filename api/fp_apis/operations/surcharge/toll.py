@@ -40,7 +40,7 @@ def dg(param):
         return {
             "name": "Dangerous Goods",
             "description": "",
-            "value": 133.0,
+            "value": 142.25,
         }
     else:
         return None
@@ -107,7 +107,7 @@ def hd(param):
         return {
             "name": "Home Delivery/Residential",
             "description": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
-            "value": 33,
+            "value": 59.35,
         }
     else:
         return None
@@ -129,19 +129,19 @@ def ol(param):
         return {
             "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
-            "value": 122,
+            "value": 130.5,
         }
     elif param["max_dimension"] > 6 and param["max_dimension"] <= 7.3:
         return {
             "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
-            "value": 177.5,
+            "value": 189.85,
         }
     elif param["max_dimension"] > 7.3:
         return {
             "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
-            "value": 644,
+            "value": 710.15,
         }
     else:
         return None
@@ -248,13 +248,13 @@ def tgp_tgd(param):
             return {
                 "name": "Tail Lift Requirement",
                 "description": "When a consignment involving pallets or other heavy consignments requires the use of a tail lift or tilt tray truck.",
-                "value": 78,
+                "value": 83.45,
             }
         else:
             return {
                 "name": "Tail Lift Requirement",
                 "description": "When a consignment involving pallets or other heavy consignments requires the use of a tail lift or tilt tray truck.",
-                "value": 39 * pallet_count,
+                "value": 83.45 + 41.70 * (pallet_count - 2),
             }
     else:
         return None
@@ -312,7 +312,7 @@ def toll():
             # fup_fud,
             # ha,
             # hz,
-            # hd,
+            hd,
             # lp,
             # rd,
             # rrl,
