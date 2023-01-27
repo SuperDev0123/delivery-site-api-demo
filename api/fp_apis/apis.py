@@ -185,8 +185,8 @@ def tracking(request, fp_name):
 
                 signatures = consignmentTrackDetail["signatures"]
                 if signatures:
-                    if "signatureImage" in signatures[0]:
-                        posData = signatures[0]["signatureImage"]
+                    if "signImg" in signatures[0]:
+                        posData = signatures[0]["signImg"]
                         _fp_name = fp_name.lower()
                         pos_file_name = f"allied_POS_{booking.pu_Address_State}_{toAlphaNumeric(booking.b_client_sales_inv_num)}_{str(datetime.now().strftime('%Y%m%d_%H%M%S'))}.png"
                         full_path = f"{S3_URL}/imgs/{_fp_name}_au/{pos_file_name}"
@@ -195,6 +195,7 @@ def tracking(request, fp_name):
                         f.write(base64.b64decode(posData))
                         f.close()
 
+                        booking.b_del_to_signed_name = signatures[0]["signerName"]
                         booking.z_pod_signed_url = (
                             f"{fp_name.lower()}_au/{pos_file_name}"
                         )
