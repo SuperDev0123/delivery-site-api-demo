@@ -22,10 +22,11 @@
 
 def dg(param):
     if param["has_dangerous_item"]:
+        
         return {
             "name": "Dangerous Goods",
             "description": "",
-            "value": 15,
+            "value": 75 if param['dead_weight'] <= 1000 else 150,
         }
     else:
         return None
@@ -110,23 +111,17 @@ def hd(param):
 
 
 def ol(param):
-    if param["max_dimension"] > 3 and param["max_dimension"] <= 6:
+    if param["max_dimension"] > 2.4 and param["max_dimension"] <= 3.6:
         return {
             "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
-            "value": 105,
+            "value": 150,
         }
-    elif param["max_dimension"] > 6 and param["max_dimension"] <= 9:
+    elif param["max_dimension"] > 3.6:
         return {
             "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
-            "value": 315,
-        }
-    elif param["max_dimension"] > 9:
-        return {
-            "name": "Over-length Goods",
-            "description": "Where the length of the consignment matches the following dimensions.",
-            "value": 1000,
+            "value": 150,
         }
     else:
         return None
@@ -225,13 +220,25 @@ def ol(param):
 #     else:
 #         return None
 
+def get_pallet_count(param):
+    pallet_count = 0
+    try:
+        for line in param["lines_data"]:
+            if line["is_pallet"]:
+                pallet_count += line['quantity']
+    except Exception as e:
+        pallet_count = 0
+
+    return pallet_count
+
 
 def tgp_tgd(param):
+    pallet_count = get_pallet_count(param)
     if param["is_tail_lift"]:
         return {
             "name": "Tailgate",
             "description": "Pickups and/or deliveries requiring the use of a Tailgate vehicle.",
-            "value": 52,
+            "value": 75 if pallet_count <= 2 else 37.5,
         }
     else:
         return None
@@ -284,7 +291,7 @@ def sadliers():
         "order": [
             # asf,
             # al,
-            # dg,
+            dg,
             # et,
             # fup_fud,
             # ha,
@@ -298,13 +305,13 @@ def sadliers():
             # sw,
             # slpd,
             # sh,
-            # tgp_tgd,
+            tgp_tgd,
             # tl,
             # wt,
             # wht
         ],
         "line": [
-            # ol,
+            ol,
             # op
         ],
     }

@@ -24,8 +24,8 @@ def dg(param):
     if param["has_dangerous_item"]:
         return {
             "name": "Dangerous Goods",
-            "description": "",
-            "value": 75,
+            "description": "Dangerous Goods consignments incurr a 25% surcharge ontop of the freight rate + $15 Basic Charge",
+            "value": param["quote_obj"].fee * 0.25 + 15,
         }
     else:
         return None
@@ -92,7 +92,7 @@ def hd(param):
         return {
             "name": "Home Delivery/Residential",
             "description": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
-            "value": 45,
+            "value":  9.50 ,
         }
     else:
         return None
@@ -112,19 +112,19 @@ def hd(param):
 def ol(param):
     if param["max_dimension"] > 3 and param["max_dimension"] <= 6:
         return {
-            "name": "Over-length Freight - plus GST Capital Lanes",
+            "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
             "value": 105,
         }
     elif param["max_dimension"] > 6 and param["max_dimension"] <= 9:
         return {
-            "name": "Over-length Freight - plus GST Capital Lanes",
+            "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
             "value": 315,
         }
     elif param["max_dimension"] > 9:
         return {
-            "name": "Over-length Freight - plus GST Capital Lanes",
+            "name": "Over-length Goods",
             "description": "Where the length of the consignment matches the following dimensions.",
             "value": 1000,
         }
@@ -231,7 +231,7 @@ def tgp_tgd(param):
         return {
             "name": "Tailgate",
             "description": "Pickups and/or deliveries requiring the use of a Tailgate vehicle.",
-            "value": 85,
+            "value": 52,
         }
     else:
         return None
@@ -279,12 +279,12 @@ def tgp_tgd(param):
 #         return None
 
 
-def hitrans():
+def afs():
     return {
         "order": [
             # asf,
             # al,
-            dg,
+            # dg,
             # et,
             # fup_fud,
             # ha,
@@ -298,13 +298,13 @@ def hitrans():
             # sw,
             # slpd,
             # sh,
-            tgp_tgd,
+            # tgp_tgd,
             # tl,
             # wt,
             # wht
         ],
         "line": [
-            ol,
+            # ol,
             # op
         ],
     }

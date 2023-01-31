@@ -133,17 +133,18 @@ SURCHARGE_NAME_DESC = {
     },
     "BLACKS": {
         "Additional Labour": "Consignments requiring additional labour for services may incur Ad-hoc charges",
-        "Dangerous Goods": "Dangerous Goods consignments incurr a 25% surcharge ontop of the freight rate + $15 Basic Charge",
+        "Dangerous Goods": "25% surcharge ontop of the freight rate",
         "Hand Load/Unloda": "",
         "Home Delivery/Residential": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
         "Manual Connote": "Automatically charged based on entry method",
         "Over-length Freight - plus GST Capital Lanes": "Where the length of the consignment matches the following dimensions.",
     },
-    "BLANNER": {
+    "BLENNER": {
         "Additional Labour": "Consignments requiring additional labour for services may incur Ad-hoc charges",
         "Dangerous Goods": "Dangerous Goods consignments incurr a 25% surcharge ontop of the freight rate + $15 Basic Charge",
         "Hand Load/Unloda": "",
         "Home Delivery/Residential": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
+        "Tailgate": "Pickups and/or deliveries requiring the use of a Tailgate vehicle.",
         "Manual Connote": "Automatically charged based on entry method",
         "Over-length Freight - plus GST Capital Lanes": "Where the length of the consignment matches the following dimensions.",
     },
@@ -188,6 +189,14 @@ SURCHARGE_NAME_DESC = {
         "Oversize Charge": "",
     },
     "SADLIERS": {
+        "Additional Labour": "Consignments requiring additional labour for services may incur Ad-hoc charges",
+        "Dangerous Goods": "",
+        "Hand Load/Unloda": "",
+        "Home Delivery/Residential": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
+        "Dead Weight": "Base charge plus kilo charge",
+        "Oversize Charge": "",
+    },
+    "AFS": {
         "Additional Labour": "Consignments requiring additional labour for services may incur Ad-hoc charges",
         "Dangerous Goods": "",
         "Hand Load/Unloda": "",
