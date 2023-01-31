@@ -1,16 +1,13 @@
-
 def get_pallet_count(param):
     pallet_count = 0
     try:
         for line in param["lines_data"]:
             if line["is_pallet"]:
-                pallet_count += line['quantity']
+                pallet_count += line["quantity"]
     except Exception as e:
         pallet_count = 0
 
     return pallet_count
-
-
 
 
 # def asf(param):

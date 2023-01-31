@@ -8,7 +8,7 @@ from api.helpers.cubic import get_cubic_meter
 from api.models import Booking_lines, Surcharge, Fp_freight_providers, Client_FP
 from api.common.convert_price import apply_markups
 from api.fp_apis.utils import get_m3_to_kg_factor
-from api.common.constants import PALLETS
+from api.common.constants import PALLETS, SKIDS
 
 from api.fp_apis.operations.surcharge.tnt import tnt
 from api.fp_apis.operations.surcharge.allied import allied
@@ -127,7 +127,7 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
             line["e_weightUOM"]
         )
 
-        is_pallet = line["e_type_of_packaging"].upper() in PALLETS
+        is_pallet = line["e_type_of_packaging"].upper() in PALLETS or line["e_type_of_packaging"].upper() in SKIDS
         m3_to_kg_factor = get_m3_to_kg_factor(
             fp.fp_company_name,
             {
