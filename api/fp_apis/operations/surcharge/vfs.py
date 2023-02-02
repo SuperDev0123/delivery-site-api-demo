@@ -26,13 +26,13 @@ def dg(param):
             return {
                 "name": "Dangerous Goods",
                 "description": "",
-                "value": 25.5,
+                "value": 26.68,
             }
         else:
             return {
                 "name": "Dangerous Goods",
                 "description": "",
-                "value": 5.1,
+                "value": 5.34,
             }
     else:
         return None

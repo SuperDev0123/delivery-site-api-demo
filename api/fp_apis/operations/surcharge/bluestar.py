@@ -25,7 +25,7 @@ def dg(param):
         return {
             "name": "Dangerous Goods",
             "description": "",
-            "value": 29.61,
+            "value": 32.055,
         }
     else:
         return None
@@ -92,7 +92,7 @@ def hd(param):
         return {
             "name": "Home Delivery/Residential",
             "description": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
-            "value": 33,
+            "value": 37.398,
         }
     else:
         return None
@@ -114,19 +114,19 @@ def ol(param):
         return {
             "name": "Over size surcharges",
             "description": "Over Dimensional freight (>2.4M length) may incur additional transit time.",
-            "value": 29.61,
+            "value": 32.055,
         }
     elif param["max_dimension"] > 6 and param["max_dimension"] <= 8:
         return {
             "name": "Over size surcharges",
             "description": "Over Dimensional freight (>2.4M length) may incur additional transit time.",
-            "value": 93.765,
+            "value": 101.508,
         }
     elif param["max_dimension"] > 8:
         return {
             "name": "Over size surcharges",
             "description": "Over Dimensional freight (>2.4M length) may incur additional transit time.",
-            "value": 113.51,
+            "value": 122.878,
         }
     else:
         return None
@@ -231,7 +231,7 @@ def tgp_tgd(param):
         return {
             "name": "Tailgate",
             "description": "Pickups and/or deliveries requiring the use of a Tailgate vehicle.",
-            "value": 52,
+            "value": 37.398,
         }
     else:
         return None
@@ -289,7 +289,7 @@ def bluestar():
             # fup_fud,
             # ha,
             # hz,
-            # hd,
+            hd,
             # lp,
             # rd,
             # rrl,
@@ -298,7 +298,7 @@ def bluestar():
             # sw,
             # slpd,
             # sh,
-            # tgp_tgd,
+            tgp_tgd,
             # tl,
             # wt,
             # wht

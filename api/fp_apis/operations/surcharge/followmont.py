@@ -25,7 +25,7 @@ def dg(param):
         return {
             "name": "Dangerous Goods",
             "description": "",
-            "value": 15,
+            "value": 43.8,
         }
     else:
         return None
@@ -92,7 +92,7 @@ def hd(param):
         return {
             "name": "Home Delivery/Residential",
             "description": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
-            "value": 33,
+            "value": 35,
         }
     else:
         return None
@@ -231,7 +231,7 @@ def tgp_tgd(param):
         return {
             "name": "Tailgate",
             "description": "Pickups and/or deliveries requiring the use of a Tailgate vehicle.",
-            "value": 52,
+            "value": 50,
         }
     else:
         return None
@@ -284,12 +284,12 @@ def followmont():
         "order": [
             # asf,
             # al,
-            # dg,
+            dg,
             # et,
             # fup_fud,
             # ha,
             # hz,
-            # hd,
+            hd,
             # lp,
             # rd,
             # rrl,
@@ -298,7 +298,7 @@ def followmont():
             # sw,
             # slpd,
             # sh,
-            # tgp_tgd,
+            tgp_tgd,
             # tl,
             # wt,
             # wht

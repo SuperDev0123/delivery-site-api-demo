@@ -8,7 +8,7 @@ from api.helpers.cubic import get_cubic_meter
 from api.models import Booking_lines, Surcharge, Fp_freight_providers, Client_FP
 from api.common.convert_price import apply_markups
 from api.fp_apis.utils import get_m3_to_kg_factor
-from api.common.constants import PALLETS
+from api.common.constants import PALLETS, SKIDS
 
 from api.fp_apis.operations.surcharge.tnt import tnt
 from api.fp_apis.operations.surcharge.allied import allied
@@ -25,6 +25,7 @@ from api.fp_apis.operations.surcharge.startrack import startrack
 from api.fp_apis.operations.surcharge.dxt import dxt
 from api.fp_apis.operations.surcharge.followmont import followmont
 from api.fp_apis.operations.surcharge.sadliers import sadliers
+from api.fp_apis.operations.surcharge.afs import afs
 
 
 logger = logging.getLogger(__name__)
@@ -126,7 +127,7 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
             line["e_weightUOM"]
         )
 
-        is_pallet = line["e_type_of_packaging"].upper() in PALLETS
+        is_pallet = line["e_type_of_packaging"].upper() in PALLETS or line["e_type_of_packaging"].upper() in SKIDS
         m3_to_kg_factor = get_m3_to_kg_factor(
             fp.fp_company_name,
             {
@@ -282,6 +283,8 @@ def find_surcharges(booking_obj, line_objs, quote_obj, fp, data_type="bok_1"):
         surcharge_opt_funcs = followmont()
     elif fp.fp_company_name.lower() == "sadliers":
         surcharge_opt_funcs = sadliers()
+    elif fp.fp_company_name.lower() == "afs":
+        surcharge_opt_funcs = afs()
 
     if surcharge_opt_funcs:
         for opt_func in surcharge_opt_funcs["order"]:

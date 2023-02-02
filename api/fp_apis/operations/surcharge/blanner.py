@@ -62,15 +62,18 @@ def dg(param):
 #         return None
 
 
-# def ha(param):
-#     if () and ():
-#         return {
-#             "name": "Hand Load/Unload",
-#             "description": "Goods with a maximum item weight of 25 kilograms which require hand loading or offloading. Multiple consignments booked on the same job will have the time calculated on the total job. Charges will be calculated in 15-minute increments from time of arrival onsite.",
-#             "value": "$35 per 15 mins",
-#         }
-#     else:
-#         return None
+def ha(param):
+    if (
+        param["pu_address_type"].lower() == "residential"
+        or param["de_to_address_type"] == "residential"
+    ):
+        return {
+            "name": "Home Delivery/Residential",
+            "description": "Pickups and/or deliveries to private addresses. Hand load/unload, tailgate and waiting time fees may also apply where applicable.",
+            "value": 40.05,
+        }
+    else:
+        return None
 
 
 # def hz(param):
@@ -231,7 +234,7 @@ def tgp_tgd(param):
         return {
             "name": "Tailgate",
             "description": "Pickups and/or deliveries requiring the use of a Tailgate vehicle.",
-            "value": 52,
+            "value": 18.89,
         }
     else:
         return None
@@ -289,7 +292,7 @@ def blanner():
             # fup_fud,
             # ha,
             # hz,
-            # hd,
+            hd,
             # lp,
             # rd,
             # rrl,
@@ -298,7 +301,7 @@ def blanner():
             # sw,
             # slpd,
             # sh,
-            # tgp_tgd,
+            tgp_tgd,
             # tl,
             # wt,
             # wht
