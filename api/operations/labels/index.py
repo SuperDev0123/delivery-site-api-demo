@@ -131,7 +131,7 @@ def _get_pre_data(booking):
             _pre_data["routing"] = routing
             _pre_data["orig_depot"] = orig_depot
         else:
-            msg = f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}, {routing_group}"
+            msg = f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}"
             logger.info(msg)
     elif fp_name == "allied":
         try:
