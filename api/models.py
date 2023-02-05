@@ -3517,6 +3517,11 @@ class Api_booking_confirmation_lines(models.Model):
     fp_event_time = models.TimeField(blank=True, null=True)
     fp_scan_data = models.CharField(max_length=64, blank=True, null=True, default=None)
     tally = models.IntegerField(blank=True, null=True, default=0)
+    barcode_data = models.CharField(max_length=64, blank=True, null=True, default=None)
+    barcode_time = models.DateTimeField(null=True, blank=True)
+    barcode_scanned_by = models.CharField(
+        max_length=64, blank=True, null=True, default=None
+    )
     z_createdByAccount = models.CharField(
         verbose_name=_("Created by account"), max_length=64, blank=True, null=True
     )
