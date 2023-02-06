@@ -129,7 +129,7 @@ def myLaterPages(canvas, doc):
 
 
 def gen_ReceiverBarcode(booking, location_info):
-    service_name = get_serviceName(str(booking.vx_serviceName))
+    service_name = get_serviceLabelCode(str(booking.vx_serviceName))
     postal_code = str(booking.de_To_Address_PostalCode)
     depote_code = str(location_info["R1"] or "")
 
@@ -223,11 +223,20 @@ def get_ATL_number(booking):
     freight_provider.update(last_atl_number=last_atl_number + 1)
     return last_atl_number + 1
 
-def get_serviceName(temp):
+
+def get_serviceLabelCode(temp):
     return "PRM" if temp == "FPP" else temp
 
+
 def build_label(
-    booking, filepath, pre_data, lines, label_index, sscc, sscc_cnt=1, one_page_label=True
+    booking,
+    filepath,
+    pre_data,
+    lines,
+    label_index,
+    sscc,
+    sscc_cnt=1,
+    one_page_label=True,
 ):
     logger.info(
         f"#110 [{booking.vx_freight_provider} LABEL] Started building label... (Booking ID: {booking.b_bookingID_Visual}, Lines: {lines})"
@@ -350,7 +359,7 @@ def build_label(
         )
 
     if sscc:
-        j = 1 + label_index    
+        j = 1 + label_index
     atl_number = None
     if booking.opt_authority_to_leave:
         atl_number = get_ATL_number(booking)
@@ -365,6 +374,9 @@ def build_label(
                 r"./static/assets/xlsx/startrack_rt1_rt2_LOCATION-20210606.xls"
             )
             location_info = {}
+
+            booking.label_code = get_serviceLabelCode(booking.vx_serviceName)
+
             for index in range(len(locations)):
                 if str(locations["Postcode"][index]) == str(
                     booking.de_To_Address_PostalCode
@@ -390,9 +402,9 @@ def build_label(
                             "<font color='%s'><b>%s</b></font>"
                             % (
                                 colors.white
-                                if booking.vx_serviceName == "PRM" or booking.vx_serviceName == "FPP"
+                                if booking.label_code == "PRM"
                                 else colors.black,
-                                booking.vx_serviceName,
+                                booking.label_code,
                             ),
                             style_PRD,
                         ),
@@ -404,7 +416,7 @@ def build_label(
                     *tableStyle,
                     *(
                         [("BACKGROUND", (0, 0), (-1, -1), "black")]
-                        if booking.vx_serviceName == "PRM" or booking.vx_serviceName == "FPP"
+                        if booking.label_code == "PRM"
                         else []
                     ),
                 ],
@@ -456,7 +468,9 @@ def build_label(
                             % (label_settings["font_size_medium"], atl_number),
                             style_center,
                         ),
-                    ] if booking.opt_authority_to_leave else [
+                    ]
+                    if booking.opt_authority_to_leave
+                    else [
                         Paragraph(
                             "",
                             style_center,
@@ -658,15 +672,15 @@ def build_label(
                                 [
                                     Paragraph("FROM: ", style_left_small),
                                     Paragraph(
-                                        "%s<br/> %s %s <br/> %s %s %s"
+                                        "%s     PH: %s<br/> %s %s <br/> %s %s"
                                         % (
                                             booking.puCompany or "",
+                                            booking.pu_Phone_Main or "",
                                             booking.pu_Address_Street_1 or "",
                                             ("<br/>" + booking.pu_Address_street_2)
                                             if booking.pu_Address_street_2
                                             else "",
                                             booking.pu_Address_Suburb or "",
-                                            booking.pu_Address_State or "",
                                             booking.pu_Address_PostalCode or "",
                                         ),
                                         style_left_small,
