@@ -668,10 +668,9 @@ def build_label(
                                 [
                                     Paragraph("FROM: ", style_left_small),
                                     Paragraph(
-                                        "%s     PH: %s<br/> %s %s <br/> %s %s"
+                                        "%s<br/>%s %s <br/>%s %s"
                                         % (
                                             booking.puCompany or "",
-                                            booking.pu_Phone_Main or "",
                                             booking.pu_Address_Street_1 or "",
                                             ("<br/>" + booking.pu_Address_street_2)
                                             if booking.pu_Address_street_2
