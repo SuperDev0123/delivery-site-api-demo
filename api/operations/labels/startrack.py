@@ -488,14 +488,10 @@ def build_label(
                                         style_left_large,
                                     ),
                                     Paragraph(
-                                        "<font size=%s>%s %s <br/> %s %s <br/> %s %s %s </font>"
+                                        "<font size=%s>%s <br/> %s %s <br/> %s %s %s </font>"
                                         % (
                                             label_settings["font_size_large"],
-                                            booking.de_to_Contact_F_LName or "",
-                                            ""
-                                            if booking.de_to_Contact_F_LName
-                                            == booking.deToCompanyName
-                                            else (booking.deToCompanyName or ""),
+                                            booking.deToCompanyName or "",
                                             booking.de_To_Address_Street_1 or "",
                                             ("<br/>" + booking.de_To_Address_Street_2)
                                             if booking.de_To_Address_Street_2
