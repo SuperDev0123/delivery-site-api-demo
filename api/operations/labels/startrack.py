@@ -764,7 +764,7 @@ def build_label(
                                                     "WEIGHT: %skg"
                                                     % (
                                                         round(
-                                                            booking_line.e_Total_KG_weight,
+                                                            booking_line.e_weightPerEach,
                                                             0,
                                                         ),
                                                     ),
