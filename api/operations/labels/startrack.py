@@ -404,7 +404,7 @@ def build_label(
                                 colors.white
                                 if booking.label_code == "PRM"
                                 else colors.black,
-                                booking.label_code,
+                                booking.vx_serviceName,
                             ),
                             style_PRD,
                         ),
