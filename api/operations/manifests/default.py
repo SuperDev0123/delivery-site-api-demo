@@ -292,6 +292,7 @@ def make_pagenumber(number, page_number):
 
 
 def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
+    LOG_ID = "[DEFAULT_MANIFEST]"
     fp_name = bookings[0].vx_freight_provider
     fp_info = Fp_freight_providers.objects.get(fp_company_name=fp_name)
 
@@ -320,6 +321,7 @@ def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
             ):
                 continue
 
+            logger.info(f"{LOG_ID} {line.pk}")
             total_qty += line.e_qty
             kg += (
                 line.e_weightPerEach * _get_weight_amount(line.e_weightUOM) * line.e_qty
@@ -343,6 +345,9 @@ def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
         packages_per_order.append(packages)
         kg_per_booking.append(round(kg, 3))
         cubic_per_booking.append(round(cubic, 3))
+        logger.info(
+            f"{LOG_ID} {booking.b_bookingID_Visual}, {pallets_per_order}, {packages_per_order}, {kg_per_booking}, {cubic_per_booking}"
+        )
         total_dead_weight += kg
         total_cubic += cubic
 

@@ -4437,6 +4437,7 @@ def get_xml(request):
 @permission_classes((IsAuthenticated,))
 @authentication_classes([JSONWebTokenAuthentication])
 def get_manifest(request):
+    LOG_ID = "[GET_MANIFEST]"
     body = literal_eval(request.body.decode("utf8"))
     booking_ids = body["bookingIds"]
     vx_freight_provider = body["vx_freight_provider"]
