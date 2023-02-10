@@ -48,7 +48,7 @@ def mapBokToBooking(request):
 
             if headers_count > 0:
                 dme_client = DME_clients.objects.get(
-                    dme_account_num=headers[0].fk_client_id
+                    dme_account_num=bok_headers[0].fk_client_id
                 )
 
                 for header in bok_headers:
