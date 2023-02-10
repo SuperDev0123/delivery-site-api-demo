@@ -47,13 +47,6 @@ label_settings = {
     "margin_h": "0",
 }
 
-kg_per_booking, cubic_per_booking, pallets_per_order, packages_per_order = (
-    [],
-    [],
-    [],
-    [],
-)
-
 if settings.ENV == "local":
     production = False  # Local
 else:
@@ -157,7 +150,15 @@ class InteractiveCheckBox(Flowable):
 checkbox = InteractiveCheckBox("")
 
 
-def make_table(bookings, start, end):
+def build_table(
+    bookings,
+    start,
+    end,
+    pallets_per_order,
+    packages_per_order,
+    kg_per_booking,
+    cubic_per_booking,
+):
     data = []
     t1_w = float(label_settings["label_image_size_width"]) * (4 / 32) * mm
     t2_w = float(label_settings["label_image_size_width"]) * (6 / 32) * mm
@@ -306,6 +307,11 @@ def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
 
     m3_to_kg_factor = 250
     total_dead_weight, total_cubic, total_qty = 0, 0, 0
+    kg_per_booking = []
+    cubic_per_booking = []
+    pallets_per_order = []
+    packages_per_order = []
+
     for booking in bookings:
         lines = [
             item
@@ -722,14 +728,30 @@ def build_manifest(bookings, booking_lines, username, need_truck, timestamp):
     while True:
         index += 1
         if end > available:
-            booking_table = make_table(bookings, start, available)
+            booking_table = build_table(
+                bookings,
+                start,
+                available,
+                pallets_per_order,
+                packages_per_order,
+                kg_per_booking,
+                cubic_per_booking,
+            )
             Story.append(booking_table)
             start = available
             Story.append(TopPadder(make_pagenumber(index, page_number)))
             Story.append(PageBreak())
             available += page_rows
         else:
-            booking_table = make_table(bookings, start, end)
+            booking_table = build_table(
+                bookings,
+                start,
+                end,
+                pallets_per_order,
+                packages_per_order,
+                kg_per_booking,
+                cubic_per_booking,
+            )
             Story.append(booking_table)
             rest = available - end
             if rest > sign_rows:
