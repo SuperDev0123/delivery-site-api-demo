@@ -84,8 +84,9 @@ def mapBok(header, dme_client, delivery_times):
     try:
         # *** EDI solutions start ***#
         de_company = header.b_054_b_del_company
-        de_street_1 = header.b_055_b_del_address_street_1
-        de_street_2 = header.b_056_b_del_address_street_2
+        de_street_1 = header.b_055_b_del_address_street_1 or ""
+        de_street_1 = de_street_1.strip()
+        de_street_2 = header.b_056_b_del_address_street_2 or ""
         de_phone_main = header.b_064_b_del_phone_main
         de_contact = header.b_061_b_del_contact_full_name
 
@@ -126,7 +127,7 @@ def mapBok(header, dme_client, delivery_times):
                 bookingStatus = "Picking"
                 bookingStatusCategory = "Pre Booking"
 
-        booking = Bookings.objects.create(
+        booking = Bookings(
             pk_booking_id=header.pk_header_id,
             b_clientReference_RA_Numbers=sliceString(
                 header.b_000_1_b_clientReference_RA_Numbers, 100
