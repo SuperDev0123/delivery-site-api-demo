@@ -2176,7 +2176,7 @@ class BookingViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"])
     def create_booking(self, request, format=None):
         bookingData = request.data
-        bookingData["b_bookingID_Visual"] = Bookings.get_max_b_bookingID_Visual() + 1
+        bookingData["b_bookingID_Visual"] = Bookings.get_new_booking_visual_id()
         bookingData["pk_booking_id"] = str(uuid.uuid1())
         bookingData["b_client_booking_ref_num"] = bookingData["pk_booking_id"]
         serializer = BookingSerializer(data=request.data)
@@ -2284,7 +2284,7 @@ class BookingViewSet(viewsets.ViewSet):
                 "de_service": booking.pu_service,
             }
 
-        newBooking["b_bookingID_Visual"] = Bookings.get_max_b_bookingID_Visual() + 1
+        newBooking["b_bookingID_Visual"] = Bookings.get_new_booking_visual_id()
         newBooking["fk_client_warehouse"] = booking.fk_client_warehouse_id
         newBooking["b_client_warehouse_code"] = booking.b_client_warehouse_code
         newBooking["b_clientPU_Warehouse"] = booking.b_clientPU_Warehouse

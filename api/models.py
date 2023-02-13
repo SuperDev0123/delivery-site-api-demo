@@ -1925,11 +1925,9 @@ class Bookings(models.Model):
     class Meta:
         db_table = "dme_bookings"
 
-    def get_max_b_bookingID_Visual():
-        max = Bookings.objects.all().aggregate(Max("b_bookingID_Visual"))[
-            "b_bookingID_Visual__max"
-        ]
-        return int(max)
+    def get_new_booking_visual_id():
+        bookings = Bookings.objects.all().order_by("id")
+        return bookings.last().pk + 1 + 15000
 
     def had_status(self, status):
         results = Dme_status_history.objects.filter(

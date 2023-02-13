@@ -127,8 +127,9 @@ def mapBok(header, dme_client, delivery_times):
                 bookingStatus = "Picking"
                 bookingStatusCategory = "Pre Booking"
 
-        booking = Bookings(
+        booking = Bookings.objects.create(
             pk_booking_id=header.pk_header_id,
+            b_bookingID_Visual=0,
             b_clientReference_RA_Numbers=sliceString(
                 header.b_000_1_b_clientReference_RA_Numbers, 100
             ),
@@ -238,9 +239,11 @@ def mapBok(header, dme_client, delivery_times):
             client_sales_total=header.b_094_client_sales_total,
             is_quote_locked=header.b_092_is_quote_locked,
         )
+        booking.b_bookingID_Visual = booking.pk + 15000
         logger.info(
             f"{LOG_ID} {booking.b_bookingID_Visual} is mapped! --- {booking.pk_booking_id}"
         )
+        booking.save()
         header.success = 1
         header.save()
 
@@ -372,12 +375,6 @@ def mapBok(header, dme_client, delivery_times):
                 1 + booking_quote.mu_percentage_fuel_levy
             )
 
-        max_visual_id = (
-            Bookings.objects.filter()
-            .aggregate(max_visual_id=Max("b_bookingID_Visual"))
-            .get("max_visual_id")
-        )
-        booking.b_bookingID_Visual = max_visual_id + 1
         booking.save()
     except Exception as e:
         logger.info(f"{LOG_ID} Error: {str(e)}\n Header: {header}")
