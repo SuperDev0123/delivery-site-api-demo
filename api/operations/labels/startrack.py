@@ -360,22 +360,24 @@ def build_label(
 
     if sscc:
         j = 1 + label_index
+
     atl_number = None
     if booking.opt_authority_to_leave:
         atl_number = get_ATL_number(booking)
         Bookings.objects.filter(id=booking.id).update(fp_atl_number=atl_number)
         atl_number = f"C{str(atl_number).zfill(9)}"
+
+    locations = pd.read_excel(
+        r"./static/assets/xlsx/startrack_rt1_rt2_LOCATION-20210606.xls"
+    )
+    booking.label_code = get_serviceLabelCode(booking.vx_serviceName)
+
     for booking_line in lines:
         for k in range(booking_line.e_qty):
             if one_page_label and k > 0:
                 continue
             t1_w = float(label_settings["label_image_size_width"]) / 10 * mm
-            locations = pd.read_excel(
-                r"./static/assets/xlsx/startrack_rt1_rt2_LOCATION-20210606.xls"
-            )
             location_info = {}
-
-            booking.label_code = get_serviceLabelCode(booking.vx_serviceName)
 
             for index in range(len(locations)):
                 if str(locations["Postcode"][index]) == str(
