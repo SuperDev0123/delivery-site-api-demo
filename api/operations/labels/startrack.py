@@ -376,12 +376,13 @@ def build_label(
         for k in range(booking_line.e_qty):
             if one_page_label and k > 0:
                 continue
+
             t1_w = float(label_settings["label_image_size_width"]) / 10 * mm
             location_info = {}
 
             for index in range(len(locations)):
                 if str(locations["Postcode"][index]) == str(
-                    booking.de_To_Address_PostalCode
+                    int(booking.de_To_Address_PostalCode)
                 ) and str(
                     locations["Suburb"][index].lower()
                     == str(booking.de_To_Address_Suburb or "").lower()
