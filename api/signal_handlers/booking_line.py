@@ -44,7 +44,10 @@ def post_save_handler(instance, created, update_fields):
             return
 
         # Genesis
-        if booking.b_dateBookedDate:
+        if (
+            booking.b_dateBookedDate
+            and booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002"
+        ):
             create_shared_lines(booking)
 
         logger.info(f"{LOG_ID} Created new or updated important field.")
