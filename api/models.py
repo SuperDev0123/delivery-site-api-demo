@@ -2504,18 +2504,18 @@ class Booking_lines(models.Model):
 #     pre_save_handler(instance)
 
 
-@receiver(post_save, sender=Booking_lines)
-def post_save_booking_line(sender, instance, created, update_fields, **kwargs):
-    from api.signal_handlers.booking_line import post_save_handler
+# @receiver(post_save, sender=Booking_lines)
+# def post_save_booking_line(sender, instance, created, update_fields, **kwargs):
+#     from api.signal_handlers.booking_line import post_save_handler
 
-    post_save_handler(instance, created, update_fields)
+#     post_save_handler(instance, created, update_fields)
 
 
-@receiver(post_delete, sender=Booking_lines)
-def post_delete_booking_line(sender, instance, **kwargs):
-    from api.signal_handlers.booking_line import post_delete_handler
+# @receiver(post_delete, sender=Booking_lines)
+# def post_delete_booking_line(sender, instance, **kwargs):
+#     from api.signal_handlers.booking_line import post_delete_handler
 
-    post_delete_handler(instance)
+#     post_delete_handler(instance)
 
 
 class Booking_lines_data(models.Model):
