@@ -716,6 +716,13 @@ def push_boks(request):
                 username=user.username,
                 method=request.method,
             )
+        elif (
+            dme_account_num == "7EAA4B16-484B-3944-902E-BC936BFEF535"
+        ):  # Biopak
+            result = biopak.push_boks(
+                payload=request.data,
+                client=client,
+            )
         else:  # Standard Client
             result = standard.push_boks(request.data, client)
 
