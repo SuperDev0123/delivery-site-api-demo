@@ -98,6 +98,7 @@ def update_biopak(booking, fp, status, event_at):
         csv_name,
     )
 
+
 def push_boks(payload, client):
     """
     PUSH api (bok_1, bok_2, bok_3)
@@ -106,7 +107,14 @@ def push_boks(payload, client):
     bok_1 = payload["booking"]
     bok_1["pk_header_id"] = str(uuid.uuid4())
     bok_2s = payload["booking_lines"]
-    if BOK_1_headers.objects.filter(b_000_1_b_clientReference_RA_Numbers=bok_1['b_000_1_b_clientReference_RA_Numbers']).count() > 0:
+    if (
+        BOK_1_headers.objects.filter(
+            b_000_1_b_clientReference_RA_Numbers=bok_1[
+                "b_000_1_b_clientReference_RA_Numbers"
+            ]
+        ).count()
+        > 0
+    ):
         res_json = {"success": False, "message": "FFL number is duplicated"}
         return res_json
     with transaction.atomic():
