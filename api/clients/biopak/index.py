@@ -5,7 +5,13 @@ from datetime import datetime
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from api.common import common_times as dme_time_lib, constants as dme_constants
-from api.models import Client_warehouses, BOK_2_lines, BOK_1_headers
+from api.models import (
+    Bookings,
+    Booking_lines,
+    Client_warehouses,
+    BOK_2_lines,
+    BOK_1_headers,
+)
 
 from django.conf import settings
 
@@ -14,6 +20,7 @@ from api.common import sftp, trace_error
 from api.serializers_client import *
 
 logger = logging.getLogger(__name__)
+
 
 def reprint_label(params, client):
     """
