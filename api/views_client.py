@@ -718,7 +718,7 @@ def push_boks(request):
             )
         elif (
             dme_account_num == "7EAA4B16-484B-3944-902E-BC936BFEF535"
-        ):  # Anchor Packaging
+        ):  # Biopak
             result = biopak.push_boks(
                 payload=request.data,
                 client=client,
