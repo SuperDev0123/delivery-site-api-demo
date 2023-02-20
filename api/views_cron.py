@@ -47,11 +47,14 @@ def mapBokToBooking(request):
             logger.info(f"{LOG_ID} {headers_count} can be mapped.")
 
             if headers_count > 0:
-                dme_client = DME_clients.objects.get(
-                    dme_account_num=bok_headers[0].fk_client_id
-                )
+                dme_clients = DME_clients.objects.all()
 
                 for header in bok_headers:
+                    client = None
+                    for dme_client in dme_clients:
+                        if dme_client.dme_account_num == header.fk_client_id:
+                            client = dme_client
+
                     try:
                         delivery_times = Utl_fp_delivery_times.objects.filter(
                             fp_name=header.b_001_b_freight_provider,
@@ -61,7 +64,7 @@ def mapBokToBooking(request):
                     except:
                         pass
 
-                    mapBok(header, dme_client, delivery_times)
+                    mapBok(header, client, delivery_times)
                 message = f"Rows moved to dme_bookings = {headers_count}"
 
             option_value.is_running = 0
