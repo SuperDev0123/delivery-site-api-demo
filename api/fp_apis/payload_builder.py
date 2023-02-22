@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)  # Payload Builder
 def get_account_detail(booking, fp_name):
     _fp_name = fp_name.lower()
     _b_client_name = booking.b_client_name.lower()
-    account_code = None
     account_detail = None
 
     if _fp_name not in FP_CREDENTIALS:
@@ -38,12 +37,14 @@ def get_account_detail(booking, fp_name):
 
                 if detail["accountCode"] == account_code:
                     account_detail = detail
+                    return account_detail
 
     if _fp_name in ["startrack"]:
         for client_name in FP_CREDENTIALS[_fp_name].keys():
             for key in FP_CREDENTIALS[_fp_name][client_name].keys():
                 if key == booking.b_client_warehouse_code:
                     account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
+                    return account_detail
 
     if _fp_name in ["allied"]:
         if settings.ENV != "prod":
@@ -72,6 +73,18 @@ def get_service_provider(fp_name, upper=True):
     except Fp_freight_providers.DoesNotExist:
         logger.error("#810 - Not supported FP!")
         return None
+
+
+def get_service_name(fp_name, service_code):
+    if fp_name in ["startrack", "auspost"]:
+        if service_code == "EXP":
+            return "EXPRESS"
+        elif service_code == "PRM":
+            return "PREMIUM"
+        elif service_code == "FPP":
+            return "1,3 & 5KG FIXED PRICE PREMIUM"
+        else:
+            return None
 
 
 def _set_error(booking, error_msg):
@@ -993,7 +1006,7 @@ def get_pricing_payload(
             }
 
             if fp_name == "startrack":
-                item["itemId"] = "EXP"
+                # item["itemId"] = "EXP"
                 item["packagingType"] = (
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )

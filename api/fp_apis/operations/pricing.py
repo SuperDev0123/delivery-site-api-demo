@@ -527,6 +527,10 @@ def build_threads(
             b_client_name = booking.b_client_name.lower()
 
             for client_name in fp_client_names:
+                if _fp_name == "startrack":
+                    # Only built-in pricing for Startrack
+                    continue
+
                 if client_name == "test":
                     pass
                 elif b_client_name in fp_client_names and b_client_name != client_name:
@@ -537,9 +541,17 @@ def build_threads(
                 ]:
                     continue
 
-                logger.info(f"#905 [PRICING] - {_fp_name}, {client_name}")
-
+                logger.info(
+                    f"#905 [PRICING] - {_fp_name}, {client_name}, {booking.b_client_warehouse_code}"
+                )
                 for key in FP_CREDENTIALS[_fp_name][client_name].keys():
+                    # if _fp_name == "startrack":
+                    #     if not booking.b_client_warehouse_code:
+                    #         continue
+                    #     elif booking.b_client_warehouse_code != key:
+                    #         continue
+
+                    logger.info(f"#905 [PRICING] - {key}")
                     account_detail = FP_CREDENTIALS[_fp_name][client_name][key]
 
                     # Allow live pricing credentials only on PROD

@@ -3,14 +3,16 @@ import logging
 
 from django.conf import settings
 
-from api.fp_apis.payload_builder import get_service_provider
+from api.fp_apis.payload_builder import get_service_provider, get_service_name
 from api.common import trace_error
 from api.models import DME_clients, Fp_freight_providers, DME_Error
+from api.fps.startrack import get_account_code as get_startrack_account_code
 
 logger = logging.getLogger(__name__)
 
 
 def _built_in(booking, fp_name, dme_client, json_data, account_code):
+    _fp_name = fp_name.lower()
     results = []
     msg = f"#510 Built-in result: {json_data}"
     logger.info(msg)
@@ -20,7 +22,16 @@ def _built_in(booking, fp_name, dme_client, json_data, account_code):
 
     for price in json_data["price"]:
         result = {}
-        result["account_code"] = account_code
+
+        if _fp_name == "startrack":
+            _account_code = get_startrack_account_code(booking)
+            result["account_code"] = _account_code
+
+            if not _account_code:
+                continue
+        else:
+            result["account_code"] = account_code
+
         result["api_results_id"] = json_data["requestId"]
         result["fk_booking_id"] = booking.pk_booking_id
         result["fk_client_id"] = dme_client.company_name
@@ -36,7 +47,7 @@ def _built_in(booking, fp_name, dme_client, json_data, account_code):
         )
         result["vehicle"] = price.get("vehicle")
 
-        if fp_name.lower() == "hunter":
+        if _fp_name == "hunter":
             result["freight_provider"] = "Hunter"
 
         results.append(result)
@@ -131,10 +142,16 @@ def _api(booking, fp_name, dme_client, json_data, account_code):
             result["api_results_id"] = json_data["requestId"]
             result["fk_booking_id"] = booking.pk_booking_id
             result["fk_client_id"] = dme_client.company_name
-            result["freight_provider"] = get_service_provider(fp_name)
+            result["freight_provider"] = get_service_provider(fp_name, False)
             result["fee"] = price["netPrice"]
             result["tax_value_1"] = price["totalTaxes"]
             result["service_code"] = service_code
+            service_name = get_service_name(fp_name, service_code)
+
+            # Only support `EXP`, `FPP`, `PRM`
+            if not service_name:
+                continue
+
             result["service_name"] = service_name
             results.append(result)
     elif (

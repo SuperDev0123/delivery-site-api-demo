@@ -47,7 +47,7 @@ BUILT_IN_PRICINGS = {
     "blacks": {"service_types": ["Road Service"]},
     "blanner": {"service_types": ["Road Service"]},
     "bluestar": {"service_types": ["Road Service"]},
-    "startrack": {"service_types": ["Road Service"]},
+    "startrack": {"service_types": ["EXPRESS"]},
     "hi-trans": {"service_types": ["Road Service"]},
     "vfs": {"service_types": ["Road Service"]},
     "sadleirs": {"service_types": ["Road Service"]},
@@ -91,52 +91,65 @@ FP_CREDENTIALS = {
     },
     "startrack": {
         "test": {
-            "test_bed_0": {
-                "accountCode": "00956684",  # Original
-                "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
-                "accountPassword": "xab801a41e663b5cb889",
-            },
-            "test_bed_1": {
-                "accountCode": "00251522",  # ST Premium and ST Express
-                "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
-                "accountPassword": "x9083d2fed4d50aa2ad5",
-            },
-            "test_bed_2": {
-                "accountCode": "3006871123",  # Same Day Services (Stephen)
-                "accountKey": "77003860-d920-42d8-a776-1643d65ab179",
-                "accountPassword": "x06503301e1ddfb58a7a",
-            },
-            "test_bed_3": {
-                "accountCode": "06871123",  # ST Premium and ST Express (Stephen)
-                "accountKey": "77003860-d920-42d8-a776-1643d65ab179",
-                "accountPassword": "x06503301e1ddfb58a7a",
+            # "test_bed_0": {
+            #     "accountCode": "00956684",  # Original
+            #     "accountKey": "4a7a2e7d-d301-409b-848b-2e787fab17c9",
+            #     "accountPassword": "xab801a41e663b5cb889",
+            # },
+            # "test_bed_1": {
+            #     "accountCode": "00251522",  # ST Premium and ST Express
+            #     "accountKey": "71eb98b2-fa8d-4a38-b1b7-6fb2a5c5c486",
+            #     "accountPassword": "x9083d2fed4d50aa2ad5",
+            # },
+            # "test_bed_2": {
+            #     "accountCode": "3006871123",  # Same Day Services (Stephen)
+            #     "accountKey": "77003860-d920-42d8-a776-1643d65ab179",
+            #     "accountPassword": "x06503301e1ddfb58a7a",
+            # },
+            # "test_bed_3": {
+            #     "accountCode": "06871123",  # ST Premium and ST Express (Stephen)
+            #     "accountKey": "77003860-d920-42d8-a776-1643d65ab179",
+            #     "accountPassword": "x06503301e1ddfb58a7a",
+            # },
+            "test_bed_4": {
+                "accountCode": "01002618",  # ST Postman Collection
+                "accountKey": "7be21f35-a067-4ac8-8e12-3f748a792ca3",
+                "accountPassword": "uD5W23Kc7YY6cn3shtMy",
             },
         },
         "dme": {
             "DELIVERME_YGBZ": {
                 "accountCode": "10170477",
-                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
-                "accountPassword": "x81775935aece65541c9",
+                "accountKey": "99c0e9da-59d1-4494-957c-2a54354c79c4",
+                "accountPassword": "iF4eScdu6xxY4TEFob9y",
+                "suburb": "WETHERILL PARK",
+                "postcode": "2164",
+                "state": "NSW",
+                "country": "AU",
             },
             "DELIVERME_QLS_YGCZ": {
                 "accountCode": "10170478",
-                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
-                "accountPassword": "x81775935aece65541c9",
+                "accountKey": "99c0e9da-59d1-4494-957c-2a54354c79c4",
+                "accountPassword": "iF4eScdu6xxY4TEFob9y",
+                "suburb": "BLACKTOWN",
+                "postcode": "2148",
+                "state": "NSW",
+                "country": "AU",
             },
             "DELIVERME_XPOZ": {
                 "accountCode": "10170226",
-                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
-                "accountPassword": "x81775935aece65541c9",
+                "accountKey": "99c0e9da-59d1-4494-957c-2a54354c79c4",
+                "accountPassword": "iF4eScdu6xxY4TEFob9y",
             },
             "DELIVERME_QLD_XPXZ": {
                 "accountCode": "10170227",
-                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
-                "accountPassword": "x81775935aece65541c9",
+                "accountKey": "99c0e9da-59d1-4494-957c-2a54354c79c4",
+                "accountPassword": "iF4eScdu6xxY4TEFob9y",
             },
-            "DELIVERME_VIC_XPXZ": {
+            "DELIVERME_VIC_XPZZ": {
                 "accountCode": "10170228",
-                "accountKey": "d36fca86-53da-4db8-9a7d-3029975aa134",
-                "accountPassword": "x81775935aece65541c9",
+                "accountKey": "99c0e9da-59d1-4494-957c-2a54354c79c4",
+                "accountPassword": "iF4eScdu6xxY4TEFob9y",
             },
         },
         "biopak": {

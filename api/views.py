@@ -3232,7 +3232,8 @@ class WarehouseViewSet(viewsets.ModelViewSet):
 
             if client_employee_role == "company":
                 clientWarehouseObject_list = Client_warehouses.objects.filter(
-                    fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id)
+                    Q(fk_id_dme_client_id=int(client_employee.fk_id_dme_client_id))
+                    | Q(fk_id_dme_client_id=100)
                 ).order_by("client_warehouse_code")
                 queryset = clientWarehouseObject_list
                 return queryset
@@ -4627,16 +4628,15 @@ def build_label(request):
         f"{LOG_ID} \nsscc_list: {sscc_list}\nsscc_lines: {sscc_lines}\nTotal QTY: {total_qty}"
     )
 
+    if not booking.puPickUpAvailFrom_Date:
+        booking.puPickUpAvailFrom_Date = convert_to_AU_SYDNEY_tz(datetime.now()).date()
+
+    file_path = (
+        f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+    )
+
     try:
         # Build label with SSCC - one sscc should have one page label
-        if not booking.puPickUpAvailFrom_Date:
-            booking.puPickUpAvailFrom_Date = convert_to_AU_SYDNEY_tz(
-                datetime.now()
-            ).date()
-
-        file_path = (
-            f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
-        )
         label_data = build_label_oper(
             booking=booking,
             file_path=file_path,

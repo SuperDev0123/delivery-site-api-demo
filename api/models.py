@@ -3129,6 +3129,7 @@ class BOK_1_headers(models.Model):
     b_092_is_quote_locked = models.BooleanField(default=False, null=True)
     b_093_b_promo_code = models.CharField(max_length=32, default=None, null=True)
     b_094_client_sales_total = models.FloatField(blank=True, default=None, null=True)
+    b_095_authority_to_leave = models.BooleanField(blank=True, default=False, null=True)
     z_test = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_101_text_1 = models.CharField(max_length=64, blank=True, null=True, default=None)
     zb_102_text_2 = models.CharField(max_length=64, blank=True, null=True, default=None)
