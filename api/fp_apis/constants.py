@@ -47,7 +47,7 @@ BUILT_IN_PRICINGS = {
     "blacks": {"service_types": ["Road Service"]},
     "blanner": {"service_types": ["Road Service"]},
     "bluestar": {"service_types": ["Road Service"]},
-    "startrack": {"service_types": ["EXPRESS"]},
+    "startrack": {"service_types": ["EXP"]},
     "hi-trans": {"service_types": ["Road Service"]},
     "vfs": {"service_types": ["Road Service"]},
     "sadleirs": {"service_types": ["Road Service"]},
