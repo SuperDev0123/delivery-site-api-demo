@@ -37,7 +37,6 @@ def get_account_detail(booking, fp_name):
 
                 if detail["accountCode"] == account_code:
                     account_detail = detail
-                    return account_detail
 
     if _fp_name in ["startrack"]:
         for client_name in FP_CREDENTIALS[_fp_name].keys():
