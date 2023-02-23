@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)  # Payload Builder
 def get_account_detail(booking, fp_name):
     _fp_name = fp_name.lower()
     _b_client_name = booking.b_client_name.lower()
+    account_code = None
     account_detail = None
 
     if _fp_name not in FP_CREDENTIALS:
