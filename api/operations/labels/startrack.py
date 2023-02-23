@@ -129,7 +129,7 @@ def myLaterPages(canvas, doc):
 
 
 def gen_ReceiverBarcode(booking, location_info):
-    service_name = get_serviceLabelCode(str(booking.v_service_Type))
+    service_name = get_serviceLabelCode(str(booking.vx_serviceName))
     postal_code = str(booking.de_To_Address_PostalCode)
     depote_code = str(location_info["R1"] or "")
 
@@ -152,7 +152,7 @@ def gen_QRcodeString(
     receiver_suburb = str(booking.de_To_Address_Suburb).ljust(30)
     postal_code = str(booking.de_To_Address_PostalCode).ljust(4)
     consignment_num = str(v_FPBookingNumber).ljust(12)
-    product_code = str(booking.v_service_Type)
+    product_code = str(booking.vx_serviceName)
     freight_item_id = consignment_num + product_code + item_index
     payer_account = str("").ljust(8)
     sender_account = ""
@@ -205,7 +205,7 @@ def number_format(num):
 
 
 def gen_barcode(booking, v_FPBookingNumber, item_no=0):
-    service_name = str(booking.v_service_Type)
+    service_name = str(booking.vx_serviceName)
     item_index = str(item_no).zfill(5)
 
     label_code = f"{v_FPBookingNumber}{service_name}{item_index}"
@@ -370,7 +370,7 @@ def build_label(
     locations = pd.read_excel(
         r"./static/assets/xlsx/startrack_rt1_rt2_LOCATION-20210606.xls"
     )
-    booking.label_code = get_serviceLabelCode(booking.v_service_Type)
+    booking.label_code = get_serviceLabelCode(booking.vx_serviceName)
 
     for booking_line in lines:
         for k in range(booking_line.e_qty):
@@ -387,7 +387,7 @@ def build_label(
                     locations["Suburb"][index].lower()
                     == str(booking.de_To_Address_Suburb or "").lower()
                 ):
-                    if booking.v_service_Type == "EXP":
+                    if booking.vx_serviceName == "EXP":
                         location_info = {
                             "R1": locations["Primary Port"][index],
                             "R2": locations["Nearest Depot"][index],
@@ -407,7 +407,7 @@ def build_label(
                                 colors.white
                                 if booking.label_code == "PRM"
                                 else colors.black,
-                                booking.v_service_Type,
+                                booking.vx_serviceName,
                             ),
                             style_PRD,
                         ),
@@ -581,7 +581,7 @@ def build_label(
                         "<b>%s</b>"
                         % (
                             ""
-                            if booking.v_service_Type == "EXP"
+                            if booking.vx_serviceName == "EXP"
                             else (location_info["R1"] or "")
                         ),
                         style_extra_large,
