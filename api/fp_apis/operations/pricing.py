@@ -541,9 +541,7 @@ def build_threads(
                 ]:
                     continue
 
-                logger.info(
-                    f"#905 [PRICING] - {_fp_name}, {client_name}, {booking.b_client_warehouse_code}"
-                )
+                logger.info(f"#905 [PRICING] - {_fp_name}, {client_name}")
                 for key in FP_CREDENTIALS[_fp_name][client_name].keys():
                     # if _fp_name == "startrack":
                     #     if not booking.b_client_warehouse_code:
