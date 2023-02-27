@@ -25,7 +25,9 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
         raise Exception(error_msg)
 
     for service_type in service_types:
-        logger.info(f"@830 {LOG_ID} {fp_name.upper()}, {service_type.upper()}")
+        logger.info(
+            f"@830 {LOG_ID} {fp_name.upper()}, {service_type.upper()}, {pu_zone}, {de_zone}"
+        )
 
         rules = FP_pricing_rules.objects.filter(
             freight_provider_id=fp.id,

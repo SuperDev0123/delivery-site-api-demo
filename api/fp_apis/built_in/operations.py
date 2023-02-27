@@ -534,14 +534,14 @@ def find_rule_ids_by_weight(booking_lines, rules, fp):
                 continue
             if cost.start_qty and cost.start_qty > qty:
                 continue
-            if c_weight < max_weight:
+            if c_weight and c_weight < max_weight:
                 continue
         else:
             if cost.end_qty and cost.end_qty < total_weight:
                 continue
             if cost.start_qty and cost.start_qty > total_weight:
                 continue
-            if c_weight < total_weight:
+            if c_weight and c_weight < total_weight:
                 continue
 
         rule_ids.append(rule.id)
