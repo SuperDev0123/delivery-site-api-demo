@@ -2745,8 +2745,11 @@ class BookingViewSet(viewsets.ViewSet):
                     is_available = doesFileExist(file_path, file_name)
                     label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-                    with open(f"{file_path}/{file_name}", "rb") as file:
-                        pdf_data = str(b64encode(file.read()))[2:-1]
+                    try:
+                        with open(f"{file_path}/{file_name}", "rb") as file:
+                            pdf_data = str(b64encode(file.read()))[2:-1]
+                    except:
+                        pdf_data = ""
 
                     result_with_sscc[str(sscc)].append(
                         {
@@ -2783,8 +2786,11 @@ class BookingViewSet(viewsets.ViewSet):
                 is_available = doesFileExist(file_path, file_name)
                 label_url = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
 
-                with open(f"{file_path}/{file_name}", "rb") as file:
-                    pdf_data = str(b64encode(file.read()))[2:-1]
+                try:
+                    with open(f"{file_path}/{file_name}", "rb") as file:
+                        pdf_data = str(b64encode(file.read()))[2:-1]
+                except:
+                    pdf_data = ""
 
                 result_with_sscc[str(sscc)].append(
                     {
@@ -2808,8 +2814,11 @@ class BookingViewSet(viewsets.ViewSet):
             pdf_data = None
             file_name = f"DME{booking.b_bookingID_Visual}.pdf"
 
-            with open(f"{file_path}/{file_name}", "rb") as file:
-                pdf_data = str(b64encode(file.read()))[2:-1]
+            try:
+                with open(f"{file_path}/{file_name}", "rb") as file:
+                    pdf_data = str(b64encode(file.read()))[2:-1]
+            except:
+                pdf_data = ""
 
             full_label_name = f"{booking.vx_freight_provider.lower()}_au/{file_name}"
         except:

@@ -716,9 +716,7 @@ def push_boks(request):
                 username=user.username,
                 method=request.method,
             )
-        elif (
-            dme_account_num == "7EAA4B16-484B-3944-902E-BC936BFEF535"
-        ):  # Biopak
+        elif dme_account_num == "7EAA4B16-484B-3944-902E-BC936BFEF535":  # Biopak
             result = biopak.push_boks(
                 payload=request.data,
                 client=client,
@@ -776,7 +774,11 @@ def scanned(request):
         logger.info(
             f"\n#838 {LOG_ID} Requester: {user.username}\nSpent time: {str(int(round(time2 - time1)))}s\n"
         )
-        res_json = {"success": False, "message": str(e)}
+        res_json = {
+            "success": False,
+            "message": str(e),
+            "labelUrl": f"{settings.WEB_SITE_URL}/label/scan-failed?reason=unknown",
+        }
         return Response(res_json, status=HTTP_400_BAD_REQUEST)
 
 

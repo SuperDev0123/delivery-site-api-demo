@@ -1016,7 +1016,13 @@ def scanned(payload, client):
 
     # Update DE address if not booked
     if not booking.b_dateBookedDate:
-        address = get_address(b_client_order_num)
+        try:
+            address = get_address(b_client_order_num)
+        except:
+            label_url = f"{settings.WEB_SITE_URL}/label/scan-failed/?reason=address"
+            res_json = {"labelUrl": label_url}
+            return res_json
+
         booking.de_To_Address_Street_1 = address["street_1"]
         booking.de_To_Address_Street_2 = address["street_2"]
         booking.de_To_Address_State = address["state"]
@@ -1034,7 +1040,12 @@ def scanned(payload, client):
     #     raise Exception("Booking doens't have quote.")
 
     # Fetch SSCC data by using `Talend` app
-    picked_items = get_picked_items(b_client_order_num, sscc)
+    try:
+        picked_items = get_picked_items(b_client_order_num, sscc)
+    except:
+        label_url = f"{settings.WEB_SITE_URL}/label/scan-failed/?reason=sscc"
+        res_json = {"labelUrl": label_url}
+        return res_json
 
     if sscc and not picked_items:
         message = f"Wrong SSCC - {sscc}"
