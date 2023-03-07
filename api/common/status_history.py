@@ -10,11 +10,13 @@ from api.operations.email_senders import send_status_update_email
 from api.helpers.phone import is_mobile, format_mobile
 from api.operations.packing.booking import scanned_repack as booking_scanned_repack
 from api.common import common_times as dme_time_lib
+from api.common.thread import background
 from api.utils import get_eta_pu_by, get_eta_de_by
 
 logger = logging.getLogger(__name__)
 
 
+@background
 def notify_user_via_email_sms(booking, category_new, category_old, username):
     LOG_ID = "[EMAIL_SMS]"
     from api.helpers.etd import get_etd
