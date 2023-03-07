@@ -2932,7 +2932,10 @@ def get_pu_by(booking):
     pu_by = None
 
     if booking.b_dateBookedDate:
-        return booking.b_dateBookedDate
+        if isinstance(booking.b_dateBookedDate, str):
+            return datetime.strptime(booking.b_dateBookedDate[:19], "%Y-%m-%dT%H:%M:%S")
+        else:
+            return booking.b_dateBookedDate
     elif booking.pu_PickUp_By_Date:
         pu_PickUp_By_Date = booking.pu_PickUp_By_Date
 
