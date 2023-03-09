@@ -4152,6 +4152,26 @@ def download(request):
                 file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
                 booking.z_downloaded_shipping_label_timestamp = str(datetime.now())
                 booking.save()
+    elif download_option == 'merged_label':
+        label_urls = []
+        label_numbers = []
+        for booking in bookings:
+            if booking.z_label_url and len(booking.z_label_url) > 0:
+                if "http" in booking.z_label_url:
+                    fp_name = f"{booking.vx_freight_provider.lower()}_au"
+                    label_url = f"{fp_name}/DME{booking.b_bookingID_Visual}.pdf"
+                else:
+                    label_url = booking.z_label_url
+                logger.info(booking.b_clientReference_RA_Numbers)
+                label_numbers.append(booking.b_clientReference_RA_Numbers if booking.b_clientReference_RA_Numbers else booking.v_FPBookingNumber)
+                label_urls.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
+        file_path = (
+            f"{settings.STATIC_PUBLIC}/pdfs"
+        )
+        if len(label_numbers) > 0:
+            entire_label_url = f"{file_path}/{label_numbers[0]}_{label_numbers[-1]}.pdf"
+            pdf_merge(label_urls, entire_label_url)
+            file_paths.append(entire_label_url)
     elif download_option == "pod":
         for booking in bookings:
             if booking.z_pod_url is not None and len(booking.z_pod_url) > 0:
