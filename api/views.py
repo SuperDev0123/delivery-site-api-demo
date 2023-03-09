@@ -4112,7 +4112,7 @@ def download(request):
             pass
         else:
             bookingIds = body["ids"]
-            bookings = Bookings.objects.filter(id__in=bookingIds)
+            bookings = Bookings.objects.filter(id__in=bookingIds).order_by("id")
 
     if download_option == "pricing-only":
         src_file_path = f"./static/uploaded/pricing_only/achieve/{file_name}"
@@ -4152,7 +4152,7 @@ def download(request):
                 file_paths.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
                 booking.z_downloaded_shipping_label_timestamp = str(datetime.now())
                 booking.save()
-    elif download_option == 'merged_label':
+    elif download_option == "merged_label":
         label_urls = []
         label_numbers = []
         for booking in bookings:
@@ -4163,11 +4163,13 @@ def download(request):
                 else:
                     label_url = booking.z_label_url
                 logger.info(booking.b_clientReference_RA_Numbers)
-                label_numbers.append(booking.b_clientReference_RA_Numbers if booking.b_clientReference_RA_Numbers else booking.v_FPBookingNumber)
+                label_numbers.append(
+                    booking.b_clientReference_RA_Numbers
+                    if booking.b_clientReference_RA_Numbers
+                    else booking.v_FPBookingNumber
+                )
                 label_urls.append(f"{settings.STATIC_PUBLIC}/pdfs/{label_url}")
-        file_path = (
-            f"{settings.STATIC_PUBLIC}/pdfs"
-        )
+        file_path = f"{settings.STATIC_PUBLIC}/pdfs"
         if len(label_numbers) > 0:
             entire_label_url = f"{file_path}/{label_numbers[0]}_{label_numbers[-1]}.pdf"
             pdf_merge(label_urls, entire_label_url)
