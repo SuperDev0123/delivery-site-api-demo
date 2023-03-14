@@ -1244,22 +1244,35 @@ def scanned(payload, client):
                 send_email_to_admins("No FC result", message)
 
     # Reset all Api_booking_confirmation_lines
-    Api_booking_confirmation_lines.objects.filter(
-        fk_booking_id=booking.pk_booking_id
-    ).delete()
+    # Api_booking_confirmation_lines.objects.filter(
+    #     fk_booking_id=booking.pk_booking_id
+    # ).delete()
 
     # Build built-in label with SSCC - one sscc should have one page label
-    file_path = (
-        f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
-    )
-    label_data = build_label_oper(
-        booking=booking,
-        file_path=file_path,
-        total_qty=len(sscc_list),
-        sscc_list=sscc_list,
-        sscc_lines=sscc_lines,
-        need_zpl=True,
-    )
+    try:
+        file_path = (
+            f"{settings.STATIC_PUBLIC}/pdfs/{booking.vx_freight_provider.lower()}_au"
+        )
+    except:
+        label_url = f"{settings.WEB_SITE_URL}/label/scan-failed?reason=no-fp-selected"
+        res_json = {"labelUrl": label_url}
+        return
+
+    try:
+        label_data = build_label_oper(
+            booking=booking,
+            file_path=file_path,
+            total_qty=len(sscc_list),
+            sscc_list=sscc_list,
+            sscc_lines=sscc_lines,
+            need_zpl=True,
+        )
+    except:
+        label_url = (
+            f"{settings.WEB_SITE_URL}/label/scan-failed?reason=failed-label-build"
+        )
+        res_json = {"labelUrl": label_url}
+        return
 
     if label_data["urls"]:
         entire_label_url = f"{file_path}/DME{booking.b_bookingID_Visual}.pdf"

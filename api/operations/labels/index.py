@@ -132,7 +132,10 @@ def _get_pre_data(booking):
             _pre_data["orig_depot"] = orig_depot
         else:
             msg = f"#114 [TNT LABEL] FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}"
-            logger.info(msg)
+            logger.error(msg)
+            raise Exception(
+                f"FPRouting does not exist: {booking.de_To_Address_Suburb}, {booking.de_To_Address_PostalCode}, {booking.de_To_Address_State}"
+            )
     elif fp_name == "allied":
         try:
             carrier = FP_zones.objects.get(
