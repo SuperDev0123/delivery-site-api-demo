@@ -77,7 +77,7 @@ def _apply_mu(quote, fp, client, client_fp, de_addr):
     else:
         client_mu = client.client_mark_up_percent
 
-        if fp.id in [83, 84, 85, 86, 87, 101, 105]:
+        if fp.id in [83, 84, 85, 86, 87, 105]:
             client_mu = 0
 
     client_min_markup_startingcostvalue = client.client_min_markup_startingcostvalue
