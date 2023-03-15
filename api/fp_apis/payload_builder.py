@@ -1006,7 +1006,7 @@ def get_pricing_payload(
             }
 
             if fp_name == "startrack":
-                # item["itemId"] = "EXP"
+                item["itemId"] = "EXP"
                 item["packagingType"] = (
                     "PLT" if is_pallet(line.e_type_of_packaging) else "CTN"
                 )
