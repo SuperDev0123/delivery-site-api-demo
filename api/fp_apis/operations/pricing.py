@@ -529,8 +529,8 @@ def build_threads(
             for client_name in fp_client_names:
                 if _fp_name == "startrack":
                     # Only built-in pricing for Startrack
-                    # continue
-                    pass
+                    continue
+                    # pass
 
                 if client_name == "test":
                     pass
