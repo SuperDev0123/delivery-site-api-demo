@@ -272,6 +272,7 @@ def get_book_payload(booking, fp_name):
             "instruction"
         ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
+    de_To_Address_Street_1 = (de_To_Address_Street_1 or "").strip()
     de_street_1 = de_To_Address_Street_1 or de_To_Address_Street_2 or ""
     de_street_2 = de_To_Address_Street_2 or ""
 
@@ -623,6 +624,7 @@ def get_getlabel_payload(booking, fp_name):
             "instruction"
         ] += f" {booking.de_to_Pick_Up_Instructions_Contact}"
 
+    de_To_Address_Street_1 = (de_To_Address_Street_1 or "").strip()
     de_street_1 = de_To_Address_Street_1 or de_To_Address_Street_2 or ""
     de_street_2 = de_To_Address_Street_2 or ""
 
