@@ -4,7 +4,8 @@ from datetime import datetime, date
 from django.conf import settings
 
 from api.models import Dme_status_history, DME_clients
-from api.outputs import tempo
+from api.clients.tempo.index import update_via_api as tempo_update_via_api
+from api.clients.jason_l.index import update_via_api as jasonL_push_via_api
 from api.operations.sms_senders import send_status_update_sms
 from api.operations.email_senders import send_status_update_email
 from api.helpers.phone import is_mobile, format_mobile
@@ -146,8 +147,15 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
             )
 
 
+@background
 def notify_user_via_api(booking, event_timestamp):
-    tempo.push_via_api(booking, event_timestamp)
+    # "Tempo"
+    if booking.kf_client_id != "37C19636-C5F9-424D-AD17-05A056A8FBDB":
+        tempo_update_via_api(booking, event_timestamp)
+
+    # JasonL
+    if booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002":
+        jasonL_push_via_api(booking, event_timestamp)
 
 
 def post_new_status(booking, dme_status_history, new_status, event_timestamp, username):

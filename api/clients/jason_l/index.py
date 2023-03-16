@@ -2,6 +2,7 @@ import os
 import json
 import uuid
 import logging
+import requests
 from datetime import datetime, date
 from base64 import b64encode
 
@@ -1299,3 +1300,17 @@ def scanned(payload, client):
 
     res_json = {"labelUrl": booking.z_label_url}
     return res_json
+
+
+def update_via_api(booking, timestamp):
+    url = "https://poptopdesk.com/campaign/deliverme/getDelivermeData"
+    data = {
+        "bookingId": booking.b_bookingID_Visual,
+        "orderNumber": booking.b_client_order_num,
+        "freightProvider": booking.vx_freight_provider,
+        "consignmentNumber": booking.v_FPBookingNumber,
+        "status": booking.b_status,
+        "timestamp": timestamp,
+    }
+    response = requests.post(url, data=json.dumps(data))
+    res_data = response.json()

@@ -82,7 +82,6 @@ from api.fp_apis.utils import (
 )
 from api.fp_apis.constants import SPECIAL_FPS
 from api.fp_apis.operations.tracking import create_fp_status_history
-from api.outputs import tempo
 from api.outputs.email import send_email
 from api.common import status_history
 from api.common.common_times import (
