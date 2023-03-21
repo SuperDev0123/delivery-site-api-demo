@@ -1315,6 +1315,6 @@ def update_via_api(booking, timestamp):
         "b_client_booking_ref_num": booking.b_client_booking_ref_num,
     }
     code = f"DME-{booking.b_bookingID_Visual}-{b_client_order_num}"
-    headers = {"Authentication": sha256(code).hexdigest()}
+    headers = {"Authentication": sha256(code.encode("utf-8")).hexdigest()}
     response = requests.post(url, data=json.dumps(data), headers=headers)
     res_data = response.json()
