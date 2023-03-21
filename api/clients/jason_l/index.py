@@ -4,6 +4,7 @@ import uuid
 import logging
 import requests
 from datetime import datetime, date
+from hashlib import sha256
 from base64 import b64encode
 
 from django.conf import settings
@@ -1311,6 +1312,9 @@ def update_via_api(booking, timestamp):
         "consignmentNumber": booking.v_FPBookingNumber,
         "status": booking.b_status,
         "timestamp": timestamp,
+        "b_client_booking_ref_num": booking.b_client_booking_ref_num,
     }
-    response = requests.post(url, data=json.dumps(data))
+    code = f"DME-{booking.b_bookingID_Visual}-{b_client_order_num}"
+    headers = {"Authentication": sha256(code).hexdigest()}
+    response = requests.post(url, data=json.dumps(data), headers=headers)
     res_data = response.json()
