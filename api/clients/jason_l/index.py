@@ -1315,9 +1315,9 @@ def update_via_api(booking, timestamp):
         "timestamp": timestamp,
         "b_client_booking_ref_num": booking.b_client_booking_ref_num,
     }
-    code = f"DME-{booking.b_bookingID_Visual}-{b_client_order_num}"
+    code = f"DME-{booking.b_bookingID_Visual}-{booking.b_client_order_num}"
     headers = {"Authentication": sha256(code.encode("utf-8")).hexdigest()}
     logger.info(f"{LOG_ID} endpoint URL: {url}\nheaders: {headers}\npayload: {data}")
     response = requests.post(url, data=json.dumps(data), headers=headers)
-    res_data = response.json()
-    logger.info(f"{LOG_ID} response: {res_data}")
+    # res_data = response.json()
+    logger.info(f"{LOG_ID} response: {response.text} <{response.status_code}>")
