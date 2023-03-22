@@ -150,11 +150,11 @@ def notify_user_via_email_sms(booking, category_new, category_old, username):
 @background
 def notify_user_via_api(booking, event_timestamp):
     # "Tempo"
-    if booking.kf_client_id != "37C19636-C5F9-424D-AD17-05A056A8FBDB":
+    if booking.kf_client_id == "37C19636-C5F9-424D-AD17-05A056A8FBDB":
         tempo_update_via_api(booking, event_timestamp)
 
     # JasonL
-    if booking.kf_client_id != "1af6bcd2-6148-11eb-ae93-0242ac130002":
+    if booking.kf_client_id == "1af6bcd2-6148-11eb-ae93-0242ac130002":
         jasonL_push_via_api(booking, event_timestamp)
 
 
