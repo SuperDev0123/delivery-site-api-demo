@@ -1304,6 +1304,7 @@ def scanned(payload, client):
 
 
 def update_via_api(booking, timestamp):
+    LOG_ID = "[JASON_L STATUS UPDATE]"
     url = "https://poptopdesk.com/campaign/deliverme/getDelivermeData"
     data = {
         "bookingId": booking.b_bookingID_Visual,
@@ -1316,5 +1317,7 @@ def update_via_api(booking, timestamp):
     }
     code = f"DME-{booking.b_bookingID_Visual}-{b_client_order_num}"
     headers = {"Authentication": sha256(code.encode("utf-8")).hexdigest()}
+    logger.info(f"{LOG_ID} endpoint URL: {url}\nheaders: {headers}\npayload: {data}")
     response = requests.post(url, data=json.dumps(data), headers=headers)
     res_data = response.json()
+    logger.info(f"{LOG_ID} response: {res_data}")
