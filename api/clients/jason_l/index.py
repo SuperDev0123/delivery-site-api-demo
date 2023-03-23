@@ -1305,7 +1305,11 @@ def scanned(payload, client):
 
 def update_via_api(booking, timestamp):
     LOG_ID = "[JASON_L STATUS UPDATE]"
-    url = "https://poptopdesk.com/campaign/deliverme/getDelivermeData"
+    # Test url
+    # url = "https://poptopdesk.com/campaign/deliverme/getDelivermeData"
+
+    # Live url
+    url = "https://prnt.jasonl.com.au/campaign/deliverme/getDelivermeData"
     data = {
         "bookingId": booking.b_bookingID_Visual,
         "orderNumber": booking.b_client_order_num,
