@@ -74,6 +74,10 @@ def get_pricing(
             prices = tnt.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones
             )
+        elif fp_name.lower() == "tnt__afs":
+            prices = tnt.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
         elif fp_name.lower() == "hunter":
             prices = hunter.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones

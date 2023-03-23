@@ -19,6 +19,7 @@ AVAILABLE_FPS_4_FC = [
     "Startrack",
     "AUSPost",
     "TNT",
+    "TNT__AFS",
     "Capital",
     "Hunter",
     "Sendle",
@@ -53,21 +54,22 @@ BUILT_IN_PRICINGS = {
     "sadleirs": {"service_types": ["Road Service"]},
     "followmont": {"service_types": ["Road Service"]},
     "dxt": {"service_types": ["Road Service"]},
-    # "tnt": {
-    #     "service_types": [
-    #         #         "Overnight - 9:00 Express*",
-    #         #         "Overnight - 10:00 Express",
-    #         #         "Overnight - 12:00 Express",
-    #         #         "Overnight - Express",
-    #         #         "Overnight - Pay As You Go Satchel Express",
-    #         "Road Express",
-    #         #         "Technology Express Premium",
-    #         #         "Technology Express Sensitive",
-    #         #         "Time Critical Nationwide",
-    #         #         "Failsafe Security Satchel ",
-    #         #         "Failsafe Secure Service",
-    #     ]
-    # },
+    "tnt": {
+        "service_types": [
+            #         "Overnight - 9:00 Express*",
+            #         "Overnight - 10:00 Express",
+            #         "Overnight - 12:00 Express",
+            #         "Overnight - Express",
+            #         "Overnight - Pay As You Go Satchel Express",
+            "Road Express",
+            #         "Technology Express Premium",
+            #         "Technology Express Sensitive",
+            #         "Time Critical Nationwide",
+            #         "Failsafe Security Satchel ",
+            #         "Failsafe Secure Service",
+        ]
+    },
+    "tnt__afs": {"service_types": ["Road Express"]},
     # "hunter": {"service_types": ["Road Express"]},
     # "allied": {  # Deactivated
     #     "service_types": [
