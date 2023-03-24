@@ -60,11 +60,25 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
         avail_pu_zone, avail_de_zone = None, None
         if pu_postal_code:
             avail_pu_zones = avail_pu_zones.filter(postal_code=pu_postal_code)
-            avail_pu_zone = avail_pu_zones.first().zone
         if de_postal_code:
             avail_de_zones = avail_de_zones.filter(postal_code=de_postal_code)
-            avail_de_zone = avail_de_zones.first().zone
+        
+        
+        avail_pu_zone = avail_pu_zones.first().zone
+        avail_de_zone = avail_de_zones.first().zone
+        
+        _rules = []
+        for pu_zone in list(avail_pu_zones):
+            for de_zone in list(avail_de_zones):
+                if len(_rules) > 0:
+                        break       
+                for rule in rules:
+                    if rule.pu_zone in pu_zone and rule.de_zone in de_zone:
+                        _rules.append(rule)     
+                        avail_pu_zone = pu_zone                        
+                        avail_de_zone = de_zone                        
 
+        rules = _rules
         if not avail_pu_zone or not avail_de_zone:
             logger.info(f"@831 {LOG_ID} {fp_name.upper()} - not supported address")
             continue
@@ -72,12 +86,6 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
             logger.info(
                 f"@831 {LOG_ID} PU zone: {avail_pu_zone}, DE zone: {avail_de_zone}"
             )
-
-        _rules = []
-        for rule in rules:
-            if rule.pu_zone in avail_pu_zone and rule.de_zone in avail_de_zone:
-                _rules.append(rule)
-        rules = _rules
 
         if not rules:
             logger.info(f"@831 {LOG_ID} {fp_name.upper()} - not supported address")
