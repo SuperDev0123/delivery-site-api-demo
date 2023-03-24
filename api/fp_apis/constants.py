@@ -26,6 +26,7 @@ AVAILABLE_FPS_4_FC = [
     "Allied",
     "Camerons",
     "Toll",
+    "Toll__AFS",
     "Century",
     "ATC",
     "Northline",  # Anchor Packaging
@@ -44,6 +45,7 @@ BUILT_IN_PRICINGS = {
     "century": {"service_types": ["standard", "vip", "priority"]},
     "camerons": {"service_types": ["standard", "express"]},
     "toll": {"service_types": ["Road Service"]},
+    "toll__afs": {"service_types": ["Road Service"]},
     "northline": {"service_types": ["standard"]},
     "blacks": {"service_types": ["Road Service"]},
     "blanner": {"service_types": ["Road Service"]},

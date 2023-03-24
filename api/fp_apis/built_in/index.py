@@ -58,6 +58,10 @@ def get_pricing(
             prices = toll.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones
             )
+        elif fp_name.lower() == "toll__afs":
+            prices = toll.get_pricing(
+                fp_name, booking, booking_lines, pu_zones, de_zones
+            )
         elif fp_name.lower() == "allied":
             prices = allied.get_pricing(
                 fp_name, booking, booking_lines, pu_zones, de_zones
