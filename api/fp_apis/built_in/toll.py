@@ -66,7 +66,7 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
         _rules = []
         for pu_zone in list(avail_pu_zones):
             for de_zone in list(avail_de_zones):
-                if _rules > 0:
+                if _rules:
                     break
 
                 for rule in rules:
