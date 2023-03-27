@@ -70,10 +70,10 @@ def get_pricing(fp_name, booking, booking_lines, pu_zones, de_zones):
                     break
 
                 for rule in rules:
-                    if rule.pu_zone in pu_zone and rule.de_zone in de_zone:
+                    if rule.pu_zone in pu_zone.zone and rule.de_zone in de_zone.zone:
                         _rules.append(rule)
-                        avail_pu_zone = pu_zone
-                        avail_de_zone = de_zone
+                        avail_pu_zone = pu_zone.zone
+                        avail_de_zone = de_zone.zone
 
         rules = _rules
         if not avail_pu_zone or not avail_de_zone:
